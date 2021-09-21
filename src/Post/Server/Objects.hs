@@ -7,12 +7,23 @@ import GHC.Generics (Generic)
 import Data.Aeson (camelTo2)
 import Data.Aeson.Types (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, fieldLabelModifier, genericParseJSON)
 
+-- Synonims
+type Id = Integer
+--type Token = Text
+type Password = Text
+type Login = Text
+type FirstName = Text
+type LastName = Text
+type Description = Text
+type Title = Text
+type Link = Text
+
 -- | Account
 data Account = Account {
-  account_id :: Integer,
+  account_id :: Id,
   account_token :: Text,
-  account_password :: Text,
-  account_login :: Text,
+  account_password :: Password,
+  account_login :: Login,
   account_user :: User
 } deriving (Show,Generic)
 
@@ -29,14 +40,15 @@ newtype Token = Token {
   token :: Text
   } deriving (Show,Generic,ToJSON,FromJSON)
 
+-- | Permission
 data Permission = AdminPerm | AuthorReadPerm | AuthorWritePerm | UserPerm | NoPerm deriving (Show, Eq, Ord)
 
 -- | User
 data User = User {
-  user_id :: Integer, -- Unique identifier for this User.
+  user_id :: Id, -- Unique identifier for this User.
   user_isAdmin :: Bool, -- True, if this user is a Admin.
-  user_firstName :: Text, -- User's first name.
-  user_lastName :: Text, -- User's last name.
+  user_firstName :: FirstName, -- User's first name.
+  user_lastName :: LastName, -- User's last name.
   user_photo :: Maybe Photo -- User's Photo.
   } deriving (Show,Generic)
 
@@ -51,7 +63,7 @@ instance ToJSON User where
 -- | Author
 data Author = Author {
   author_user :: User, -- User.
-  author_description :: Text -- Author's description.
+  author_description :: Description -- Author's description.
   } deriving (Show,Generic)
 
 instance FromJSON Author where
@@ -64,8 +76,8 @@ instance ToJSON Author where
 
 -- | Category
 data Category = Category {
-  category_id :: Integer, -- Unique identifier for this Category.
-  category_title :: Text, -- Title of Category.
+  category_id :: Id, -- Unique identifier for this Category.
+  category_title :: Title, -- Title of Category.
   category_subcategory :: Maybe Category -- Subcategory of Category.
   } deriving (Show,Generic)
 
@@ -79,8 +91,8 @@ instance ToJSON Category where
 
 -- | Tag
 data Tag = Tag {
-  tag_id :: Integer, -- Unique identifier for this Tag.
-  tag_title :: Text -- Title of Tag.
+  tag_id :: Id, -- Unique identifier for this Tag.
+  tag_title :: Title -- Title of Tag.
 } deriving (Show,Generic)
 
 instance FromJSON Tag where
@@ -93,9 +105,9 @@ instance ToJSON Tag where
 
 -- | Post
 data Post = Post {
-  post_id :: Integer, -- Unique identifier for this Post.
+  post_id :: Id, -- Unique identifier for this Post.
   post_author :: Author, -- Author of Post.
-  post_title :: Text, -- Title of Post.
+  post_title :: Title, -- Title of Post.
   post_createdAt :: Text, -- Date when the Post was created.
   post_category :: Category, -- Category of Post.
   post_tags :: Maybe [Tag], -- Array of Tag of Post.
@@ -115,7 +127,7 @@ instance ToJSON Post where
 
 -- | Comment
 data Comment = Comment {
-  comment_id :: Integer, -- Unique identifier for this Comment.
+  comment_id :: Id, -- Unique identifier for this Comment.
   comment_text :: Text -- Comment's text.
 } deriving (Show,Generic)
 
@@ -129,7 +141,7 @@ instance ToJSON Comment where
 
 -- | Draft
 data Draft = Draft {
-  draft_id :: Integer, -- Unique identifier for this Draft.
+  draft_id :: Id, -- Unique identifier for this Draft.
   draft_text :: Text -- Draft's text.
 } deriving (Show,Generic)
 
@@ -143,8 +155,8 @@ instance ToJSON Draft where
 
 -- | Photo
 data Photo = Photo {
-  photo_id :: Integer, -- Identifier for this Photo.
-  photo_link :: Text -- Link to Photo.
+  photo_id :: Id, -- Identifier for this Photo.
+  photo_link :: Link -- Link to Photo.
   } deriving (Show,Generic) 
 
 instance FromJSON Photo where
