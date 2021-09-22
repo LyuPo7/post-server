@@ -25,21 +25,22 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
       Post.Client.Client
+      Post.Config
       Post.DB.Account
       Post.DB.Author
       Post.DB.Category
       Post.DB.Comment
       Post.DB.Data
       Post.DB.DB
+      Post.DB.DBSpec
       Post.DB.Draft
       Post.DB.Photo
       Post.DB.Post
       Post.DB.Tag
       Post.DB.User
+      Post.Exception
       Post.Logger
-      Post.LoggerIO
       Post.Server.Methods.Account
       Post.Server.Methods.Author
       Post.Server.Methods.Category
@@ -53,6 +54,7 @@ library
       Post.Server.Responses
       Post.Server.Server
       Post.Server.Util
+      Post.Settings
   other-modules:
       Paths_post_server
   hs-source-dirs:
@@ -71,6 +73,7 @@ library
     , mtl
     , scrypt
     , text
+    , text-show
     , time
     , uuid
     , wai
@@ -100,6 +103,7 @@ executable post-server-exe
     , post-server
     , scrypt
     , text
+    , text-show
     , time
     , uuid
     , wai
@@ -130,6 +134,7 @@ test-suite post-server-test
     , post-server
     , scrypt
     , text
+    , text-show
     , time
     , uuid
     , wai

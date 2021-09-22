@@ -1,0 +1,16 @@
+{
+    "logger_settings" : 
+        {
+            "verbocity" : "debug"
+        },
+    "db_settings" :
+        {
+            "dbname" : "post-server",
+            "user" : "lyupo"
+        },
+    "server_settings" :
+        {
+            "host" : "localhost",
+            "port" : "3000"
+        }
+}

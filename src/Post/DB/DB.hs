@@ -6,17 +6,32 @@ import Control.Monad (when)
 import Database.HDBC (IConnection, handleSql, getTables, run, commit, quickQuery', fromSql, toSql)
 import Database.HDBC.PostgreSQL
 import Data.Text (Text)
+import qualified Data.Text as T
 
-import qualified Post.Logger as PL
-import qualified Post.LoggerIO as PLIO
+import Post.DB.DBSpec (Handle(..), Config(..))
+import qualified Post.Logger as Logger
+import qualified Post.Exception as E
 import qualified Post.Server.Objects as PSO
 
+withHandleIO :: Logger.Handle IO -> Config -> (Handle IO -> IO a) -> IO a
+withHandleIO logger config f = do
+  let db = "dbname=" <> dbname config
+  case user config of
+    Nothing -> do
+      dbh <- connect db
+      let handle = Handle logger dbh config
+      prepDB handle
+      f handle
+    Just user -> do
+      let db' = db <> " user=" <> user
+      dbh <- connect db'
+      let handle = Handle logger dbh config
+      prepDB handle
+      f handle
+
 -- | Initialize DB and return database Connection
-connect :: PL.Handle -> FilePath -> IO Connection
-connect logh dbFile = do 
-  dbHandle <- connectPostgreSQL "dbname=post-server user=lyupo"
-  prepDB logh dbHandle
-  return dbHandle
+connect :: Text -> IO Connection
+connect db = connectPostgreSQL (T.unpack db)
 
 {- | Prepare the database for data.
 Create two tables and ask the database engine to verify some info:
@@ -84,11 +99,13 @@ Create two tables and ask the database engine to verify some info:
     - post_id - Post id;
     - photo_id - Photo id;    
 -}
-prepDB :: IConnection conn => PL.Handle -> conn -> IO ()
-prepDB logh dbHandle =
-    do tables <- getTables dbHandle
-       when ("users" `notElem` tables) $ do
-            _ <- run dbHandle "CREATE TABLE users (\
+prepDB :: Handle IO -> IO ()
+prepDB handle = do
+  let dbh = hDB handle
+      logh = hLogger handle
+  tables <- getTables dbh
+  when ("users" `notElem` tables) $ do
+    _ <- run dbh "CREATE TABLE users (\
                        \id SERIAL PRIMARY KEY,\
                        \is_admin BOOLEAN NOT NULL,\
                        \first_name TEXT,\
@@ -96,111 +113,111 @@ prepDB logh dbHandle =
                        \login TEXT NOT NULL,\
                        \password TEXT NOT NULL,\
                        \token TEXT NOT NULL)" []
-            PL.logInfo logh "Table 'users' was successfully created!"
-            return ()
-       when ("authors" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE authors (\
+    Logger.logInfo logh "Table 'users' was successfully created!"
+    return ()
+  when ("authors" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE authors (\
                        \id SERIAL PRIMARY KEY,\
                        \description TEXT)" []
-            PL.logInfo logh "Table 'authors' was successfully created!"
-            return ()
-       when ("categories" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE categories (\
+    Logger.logInfo logh "Table 'authors' was successfully created!"
+    return ()
+  when ("categories" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE categories (\
                        \id SERIAL PRIMARY KEY,\
                        \title TEXT NOT NULL,\
                        \subcategory_id TEXT)" []
-            PL.logInfo logh "Info: Table 'categories' was successfully created!"
-            return ()
-       when ("tags" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE tags (\
+    Logger.logInfo logh "Info: Table 'categories' was successfully created!"
+    return ()
+  when ("tags" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE tags (\
                        \id SERIAL PRIMARY KEY,\
                        \title TEXT NOT NULL)" []
-            PL.logInfo logh "Info: Table 'tags' was successfully created!"
-            return ()
-       when ("posts" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE posts (\
+    Logger.logInfo logh "Info: Table 'tags' was successfully created!"
+    return ()
+  when ("posts" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE posts (\
                        \id SERIAL PRIMARY KEY,\
                        \title TEXT NOT NULL,\
                        \created_at TIMESTAMP,\
                        \text TEXT)" []
-            PL.logInfo logh "Info: Table 'posts' was successfully created!"
-            return ()
-       when ("comments" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE comments (\
+    Logger.logInfo logh "Info: Table 'posts' was successfully created!"
+    return ()
+  when ("comments" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE comments (\
                        \id SERIAL PRIMARY KEY,\
                        \text TEXT NOT NULL)" []
-            PL.logInfo logh "Info: Table 'comments' was successfully created!"
-            return ()
-       when ("drafts" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE drafts (\
+    Logger.logInfo logh "Info: Table 'comments' was successfully created!"
+    return ()
+  when ("drafts" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE drafts (\
                        \id SERIAL PRIMARY KEY,\
                        \text TEXT NOT NULL)" []
-            PL.logInfo logh "Info: Table 'drafts' was successfully created!"
-            return ()
-       when ("photos" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE photos (\
+    Logger.logInfo logh "Info: Table 'drafts' was successfully created!"
+    return ()
+  when ("photos" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE photos (\
                        \id SERIAL PRIMARY KEY,\
                        \link TEXT NOT NULL UNIQUE)" []
-            PL.logInfo logh "Info: Table 'photos' was successfully created!"
-            return ()
-       when ("user_photo" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE user_photo (\
+    Logger.logInfo logh "Info: Table 'photos' was successfully created!"
+    return ()
+  when ("user_photo" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE user_photo (\
                        \user_id INTEGER NOT NULL UNIQUE,\
                        \photo_id INTEGER)" []
-            PL.logInfo logh "Info: Table 'user_photo' was successfully created!"
-            return ()
-       when ("author_user" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE author_user (\
+    Logger.logInfo logh "Info: Table 'user_photo' was successfully created!"
+    return ()
+  when ("author_user" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE author_user (\
                        \author_id INTEGER NOT NULL UNIQUE,\
                        \user_id INTEGER NOT NULL UNIQUE)" []
-            PL.logInfo logh "Info: Table 'author_user' was successfully created!"
-            return ()
-       when ("comment_user" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE comment_user (\
+    Logger.logInfo logh "Info: Table 'author_user' was successfully created!"
+    return ()
+  when ("comment_user" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE comment_user (\
                        \comment_id INTEGER NOT NULL UNIQUE,\
                        \user_id INTEGER NOT NULL)" []
-            PL.logInfo logh "Info: Table 'comment_user' was successfully created!"
-            return ()
-       when ("post_author" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE post_author (\
+    Logger.logInfo logh "Info: Table 'comment_user' was successfully created!"
+    return ()
+  when ("post_author" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE post_author (\
                        \post_id INTEGER NOT NULL UNIQUE,\
                        \author_id INTEGER NOT NULL)" []
-            PL.logInfo logh "Info: Table 'post_author' was successfully created!"
-            return ()
-       when ("post_category" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE post_category (\
+    Logger.logInfo logh "Info: Table 'post_author' was successfully created!"
+    return ()
+  when ("post_category" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE post_category (\
                        \post_id INTEGER NOT NULL UNIQUE,\
                        \category_id INTEGER NOT NULL)" []
-            PL.logInfo logh "Info: Table 'post_category' was successfully created!"
-            return ()
-       when ("post_comment" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE post_comment (\
+    Logger.logInfo logh "Info: Table 'post_category' was successfully created!"
+    return ()
+  when ("post_comment" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE post_comment (\
                        \post_id INTEGER NOT NULL,\
                        \comment_id INTEGER UNIQUE)" []
-            PL.logInfo logh "Info: Table 'post_comment' was successfully created!"
-            return ()
-       when ("post_draft" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE post_draft (\
+    Logger.logInfo logh "Info: Table 'post_comment' was successfully created!"
+    return ()
+  when ("post_draft" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE post_draft (\
                        \post_id INTEGER NOT NULL,\
                        \draft_id INTEGER UNIQUE)" []
-            PL.logInfo logh "Info: Table 'post_draft' was successfully created!"
-            return ()
-       when ("post_tag" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE post_tag (\
+    Logger.logInfo logh "Info: Table 'post_draft' was successfully created!"
+    return ()
+  when ("post_tag" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE post_tag (\
                        \post_id INTEGER NOT NULL,\
                        \tag_id INTEGER)" []
-            PL.logInfo logh "Info: Table 'post_tag' was successfully created!"
-            return ()
-       when ("post_main_photo" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE post_main_photo (\
+    Logger.logInfo logh "Info: Table 'post_tag' was successfully created!"
+    return ()
+  when ("post_main_photo" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE post_main_photo (\
                        \post_id INTEGER NOT NULL UNIQUE,\
                        \photo_id INTEGER)" []
-            PL.logInfo logh "Info: Table 'post_main_photo' was successfully created!"
-            return ()
-       when ("post_add_photo" `notElem` tables) $ do 
-            _ <- run dbHandle "CREATE TABLE post_add_photo (\
+    Logger.logInfo logh "Info: Table 'post_main_photo' was successfully created!"
+    return ()
+  when ("post_add_photo" `notElem` tables) $ do 
+    _ <- run dbh "CREATE TABLE post_add_photo (\
                        \post_id INTEGER NOT NULL,\
                        \photo_id INTEGER)" []
-            PL.logInfo logh "Info: Table 'post_add_photo' was successfully created!"
-            return ()
-       commit dbHandle
+    Logger.logInfo logh "Info: Table 'post_add_photo' was successfully created!"
+    return ()
+  commit dbh

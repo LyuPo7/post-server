@@ -4,7 +4,8 @@ module Post.Server.Util where
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.UUID.V4 as V4
-
+import qualified Data.Text as T
+import Data.Text (Text)
 import Data.UUID (UUID(..))
 import Data.List (intercalate)
 import Network.HTTP.Types (Query)
@@ -15,8 +16,8 @@ import qualified Post.DB.Data as DbData
 
 -- types
 type Token = String
-type Admin = String
-type Server = String
+type Admin = Text
+type Server = Text
 type PostQuery = [(String, Maybe String)]
 
 createToken :: IO Token
@@ -31,15 +32,15 @@ server = "http://localhost:3000"
 allLookups :: Eq a => [(a, Maybe a)] -> [a] -> Maybe [a]
 allLookups assoc = mapM (\ k -> join $ lookup k assoc)
 
-extractRequired :: Query -> [BC.ByteString] -> Either String [String]
+extractRequired :: Query -> [BC.ByteString] -> Either Text [Text]
 extractRequired params paramNames = do
   case allLookups params paramNames of
     Nothing -> Left "Incorrect request"
-    Just res -> Right $ map BC.unpack res
+    Just res -> Right $ map (T.pack . BC.unpack) res
 
-extractOptional :: Query -> [BC.ByteString] -> [Maybe String]
+extractOptional :: Query -> [BC.ByteString] -> [Maybe Text]
 extractOptional params = map
-    (fmap BC.unpack . (\ param -> join $ lookup param params))
+    (fmap (T.pack . BC.unpack) . (\ param -> join $ lookup param params))
 
 createOptionalDict :: Query -> [BC.ByteString] -> PostQuery
 createOptionalDict params = map
@@ -180,3 +181,6 @@ orderByToDb [(key, value)] = case key of
   "order_by_photos" -> ") GROUP BY posts.id ORDER BY photo_count DESC;"
   "order_by_author" -> ") ORDER BY last_name, first_name;"
 orderByToDb _ = error "orderByToDb function: Too many elements in dictionary!"
+
+convert :: Show a => a -> Text
+convert = T.pack . show

@@ -38,6 +38,7 @@ dependencies:
 - scrypt
 - uuid
 - filepath
+- text-show
 
 library:
   source-dirs: src
