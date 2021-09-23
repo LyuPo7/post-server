@@ -39,17 +39,23 @@ dependencies:
 - uuid
 - filepath
 - text-show
+- transformers
 
 library:
   source-dirs: src
+  ghc-options: 
+    - -Wall 
+    - -Werror 
 
 executables:
   post-server-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
-    - -threaded
-    - -rtsopts
+    - -Wall 
+    - -Werror 
+    - -threaded 
+    - -rtsopts 
     - -with-rtsopts=-N
     dependencies:
     - post-server
@@ -59,6 +65,8 @@ tests:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
+    - -Wall 
+    - -Werror 
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N

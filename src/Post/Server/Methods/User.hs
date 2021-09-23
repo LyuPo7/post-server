@@ -2,20 +2,14 @@
 
 module Post.Server.Methods.User where
 
-import qualified Data.ByteString.Char8 as BC
-
-import Control.Exception.Lifted (handle)
 import Data.Maybe (fromMaybe)
-import Data.Aeson (object)
-import Data.Text (Text)
 import qualified Data.Text as T
-import Database.HDBC (IConnection)
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
 
-import Post.Server.ServerSpec (Handle(..), Config(..))
+import Post.Server.ServerSpec (Handle(..))
+import qualified Post.Logger as Logger
 import qualified Post.Server.Objects as PSO
-import qualified Post.Logger as PL
 import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
@@ -25,9 +19,11 @@ getUsersResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO Re
 getUsersResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: get User records"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [token] -> do
+    Right reqParams -> do
+      let [token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
       let action | perm == PSO.UserPerm = do
                     (users, msg) <- DBU.getUsers dbh
@@ -43,13 +39,15 @@ createUserResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO 
 createUserResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: create User record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [firstName, lastName, login, password] -> do
+    Right reqParams -> do
+      let [firstName, lastName, login, password] = reqParams
       msg <- DBU.createUser dbh firstName lastName login password
       case msg of
         Nothing -> sendResponce $ respSucc "User registred"
-        Just msg -> sendResponce $ respError msg
+        Just errMsg -> sendResponce $ respError errMsg
     where
       params = ["first_name", "last_name", "login", "password"]
 
@@ -57,15 +55,17 @@ removeUserResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO 
 removeUserResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: remove User record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [userId, token] -> do
+    Right reqParams -> do
+      let [userId, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     msg <- DBU.removeUser dbh (read (T.unpack userId) :: Integer)
                     case msg of
                       Nothing -> sendResponce $ respSucc "User removed"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
@@ -75,9 +75,11 @@ setUserPhotoResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> I
 setUserPhotoResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: add Photo to User record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [path, token] -> do
+    Right reqParams -> do
+      let [path, token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
       let action | perm == PSO.UserPerm = do
                     userIdMaybe <- DBAC.getUserId dbh token
@@ -85,7 +87,7 @@ setUserPhotoResp handle sendResponce query = do
                     msg <- DBU.setUserPhoto dbh userId path
                     case msg of
                       Nothing -> sendResponce $ respSucc "User photo uploaded"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where

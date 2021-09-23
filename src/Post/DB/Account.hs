@@ -3,14 +3,12 @@
 module Post.DB.Account where
 
 import qualified Data.ByteString.Char8 as BC
-import Control.Monad (when)
-import Database.HDBC (IConnection, handleSql, run, commit, quickQuery', fromSql, toSql)
-import Database.HDBC.PostgreSQL
+import Database.HDBC (handleSql, run, commit, quickQuery', fromSql, toSql)
 import qualified Data.Text as T
 import Data.Text (Text)
-import Crypto.Scrypt (encryptPassIO, defaultParams, getEncryptedPass, Pass(..), EncryptedPass(..), verifyPass)
+import Crypto.Scrypt (defaultParams, getEncryptedPass, Pass(..), EncryptedPass(..), verifyPass)
 
-import Post.DB.DBSpec (Handle(..), Config(..))
+import Post.DB.DBSpec (Handle(..))
 import qualified Post.Logger as Logger
 import qualified Post.DB.Post as DBP
 import Post.Server.Objects
@@ -19,51 +17,50 @@ import qualified Post.Server.Util as Util
 -- | DB methods for Account
 getToken :: Handle IO -> Login -> Password -> IO (Maybe Token, Text)
 getToken handle login password = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT password FROM users WHERE login = ?" [toSql login]
   case r of
-    [] -> do
-      Logger.logWarning logh $ "Incorrect login: " <> login
-      return (Nothing, "Incorrect login: " <> login)
     [[passwordDB]] -> do
       let encrypted = EncryptedPass {getEncryptedPass = BC.pack (fromSql passwordDB :: String)}
           (res, _) = verifyPass defaultParams (Pass $ BC.pack $ T.unpack password) encrypted
       if res 
         then do
-          token <- Util.createToken
-          _ <- run dbh "UPDATE users SET token = ? WHERE login = ?" [toSql token, toSql login]
+          userToken <- Util.createToken
+          _ <- run dbh "UPDATE users SET token = ? WHERE login = ?" [toSql userToken, toSql login]
           commit dbh
           Logger.logWarning logh $ "User with login: " <> login <> " entered."
-          return (Just $ newToken token, "Successfully entered!")
+          return (Just $ newToken userToken, "Successfully entered!")
         else return (Nothing, "Incorrect password!")
+    _ -> do
+      Logger.logWarning logh $ "Incorrect login: " <> login
+      return (Nothing, "Incorrect login: " <> login)
   where errorHandler e = do fail $ "Error: Error in getToken!\n" <> show e
-        newToken token = Token {token = T.pack token}
 
 checkAdminPerm :: Handle IO -> Text -> IO Permission
-checkAdminPerm handle token = handleSql errorHandler $ do
-  let dbh = hDB handle
+checkAdminPerm handle userToken = handleSql errorHandler $ do
+  let dbh = conn handle
       logh = hLogger handle
-  r <- quickQuery' dbh "SELECT is_admin FROM users WHERE token = ?" [toSql token]
+  r <- quickQuery' dbh "SELECT is_admin FROM users WHERE token = ?" [toSql userToken]
   case r of
-    [] -> do
-      Logger.logWarning logh $ "Incorrect token: " <> token
-      return NoPerm
     [[isAdmin]] -> do
       Logger.logInfo logh "Authentication is successfull."
       if (fromSql isAdmin :: Bool)
         then return AdminPerm
         else return NoPerm
+    _ -> do
+      Logger.logWarning logh $ "Incorrect token: " <> userToken
+      return NoPerm
   where errorHandler e = do fail $ "Error: Error in checkAdminPerm!\n" <> show e
 
 checkUserPerm :: Handle IO -> Text -> IO Permission
-checkUserPerm handle token = handleSql errorHandler $ do
-  let dbh = hDB handle
+checkUserPerm handle userToken = handleSql errorHandler $ do
+  let dbh = conn handle
       logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id FROM users WHERE token = ?" [toSql token]
+  r <- quickQuery' dbh "SELECT id FROM users WHERE token = ?" [toSql userToken]
   case r of
     [] -> do
-      Logger.logWarning logh $ "Incorrect token: " <> token
+      Logger.logWarning logh $ "Incorrect token: " <> userToken
       return NoPerm
     _ -> do
       Logger.logInfo logh "Authentication is successfull."
@@ -71,10 +68,9 @@ checkUserPerm handle token = handleSql errorHandler $ do
   where errorHandler e = do fail $ "Error: Error in checkUserPerm!\n" <> show e
 
 checkAuthorWritePerm :: Handle IO -> Text -> IO Permission
-checkAuthorWritePerm handle token = handleSql errorHandler $ do
-  let dbh = hDB handle
-      logh = hLogger handle
-  authorIdMaybe <- getAuthorId handle token
+checkAuthorWritePerm handle userToken = handleSql errorHandler $ do
+  let logh = hLogger handle
+  authorIdMaybe <- getAuthorId handle userToken
   case authorIdMaybe of
     Nothing -> do
       Logger.logError logh "This User isn't Author."
@@ -85,19 +81,18 @@ checkAuthorWritePerm handle token = handleSql errorHandler $ do
   where errorHandler e = do fail $ "Error: Error in checkAuthorWritePerm!\n" <> show e
 
 checkAuthorReadPerm :: Handle IO -> Text -> Id -> IO Permission
-checkAuthorReadPerm handle token postId = handleSql errorHandler $ do
-  let dbh = hDB handle
-      logh = hLogger handle
+checkAuthorReadPerm handle userToken postId = handleSql errorHandler $ do
+  let logh = hLogger handle
   authorPostIdMaybe <- DBP.getPostAuthorId handle postId
   case authorPostIdMaybe of
     Nothing -> do
       Logger.logError logh "No exists dependency between Post and Author."
       return NoPerm
     Just authorPostId -> do
-      authorIdMaybe <- getAuthorId handle token
+      authorIdMaybe <- getAuthorId handle userToken
       case authorIdMaybe of
         Nothing -> do
-          Logger.logWarning logh $ "Incorrect token: " <> token
+          Logger.logWarning logh $ "Incorrect token: " <> userToken
           return NoPerm
         Just authorId -> do
           Logger.logInfo logh "Authentication is successfull."
@@ -107,24 +102,24 @@ checkAuthorReadPerm handle token postId = handleSql errorHandler $ do
   where errorHandler e = do fail $ "Error: Error in checkAuthorReadPerm!\n" <> show e
 
 getUserId :: Handle IO -> Text -> IO (Maybe Id)
-getUserId handle token = handleSql errorHandler $ do
-  let dbh = hDB handle
+getUserId handle userToken = handleSql errorHandler $ do
+  let dbh = conn handle
       logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id FROM users WHERE token = ?" [toSql token]
+  r <- quickQuery' dbh "SELECT id FROM users WHERE token = ?" [toSql userToken]
   case r of
-    [] -> do
-      Logger.logWarning logh $ "Incorrect token: " <> token
-      return Nothing
-    [[id]] -> do
+    [[idUser]] -> do
       Logger.logInfo logh "Getting User Id corresponding token."
-      return $ Just (fromSql id :: Integer)
+      return $ Just (fromSql idUser :: Integer)
+    _ -> do
+      Logger.logWarning logh $ "Incorrect token: " <> userToken
+      return Nothing
   where errorHandler e = do fail $ "Error: Error in getUserId!\n" <> show e
 
 getAuthorId :: Handle IO -> Text -> IO (Maybe Id)
-getAuthorId handle token = handleSql errorHandler $ do
-  let dbh = hDB handle
+getAuthorId handle authorToken = handleSql errorHandler $ do
+  let dbh = conn handle
       logh = hLogger handle
-  authorIdMaybe <- getUserId handle token
+  authorIdMaybe <- getUserId handle authorToken
   case authorIdMaybe of
     Nothing -> do
       Logger.logWarning logh "No user corresponding token"
@@ -133,10 +128,13 @@ getAuthorId handle token = handleSql errorHandler $ do
       Logger.logInfo logh "Getting Author Id corresponding token."
       r <- quickQuery' dbh "SELECT author_id FROM author_user WHERE user_id = ?" [toSql userId]
       case r of
-        [] -> do
-          Logger.logWarning logh "No author corresponding token"
-          return Nothing
         [[authorId]] -> do
           Logger.logInfo logh "Getting Author Id corresponding token."
           return $ Just (fromSql authorId :: Integer)
+        _ -> do
+          Logger.logWarning logh "No author corresponding token"
+          return Nothing
   where errorHandler e = do fail $ "Error: Error in getAuthorId!\n" <> show e
+
+newToken :: String -> Token
+newToken userToken = Token {token = T.pack userToken}

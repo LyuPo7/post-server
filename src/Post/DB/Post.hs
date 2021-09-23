@@ -2,17 +2,15 @@
 
 module Post.DB.Post where
 
-import Control.Monad (when, liftM, join)
-import Database.HDBC (IConnection, SqlValue(..), handleSql, run, commit, quickQuery', fromSql, toSql)
-import Database.HDBC.PostgreSQL
+import Database.HDBC (SqlValue, handleSql, run, commit, quickQuery', fromSql, toSql)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.List (intersect, union, intercalate)
-import Data.Time.Clock (getCurrentTime, utctDay)
-import Data.Maybe (fromMaybe)
+import Data.Time.Clock (getCurrentTime)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 --import Data.Time.Clock (UTCTime(..), Day)
 
-import Post.DB.DBSpec (Handle(..), Config(..))
+import Post.DB.DBSpec (Handle(..))
 import qualified Post.Logger as Logger
 import qualified Post.DB.Author as DBA
 import qualified Post.DB.Category as DBC
@@ -26,10 +24,10 @@ import Post.Server.Util (convert)
 -- | DB methods for Post
 createPost :: Handle IO -> Title -> Text -> Id -> Id -> [Id] -> IO (Maybe Text)
 createPost handle title text authorId catId tagIds = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id FROM posts WHERE title = ?" [toSql title]
-  case r of
+  r1 <- quickQuery' dbh "SELECT id FROM posts WHERE title = ?" [toSql title]
+  case r1 of
     [] -> do
       time <- getCurrentTime
       --let createdAt = utctDay time
@@ -37,11 +35,8 @@ createPost handle title text authorId catId tagIds = handleSql errorHandler $ do
             [toSql title, toSql text, toSql time]
       commit dbh
       Logger.logInfo logh $ "Post with title: " <> title <> " was successfully inserted in db."
-      r <- quickQuery' dbh "SELECT id FROM posts ORDER BY id DESC LIMIT 1" []
-      case r of
-        [] -> do
-          Logger.logError logh "Error while inserting Post to db."
-          return $ Just "Error while inserting Post to db."
+      r2 <- quickQuery' dbh "SELECT id FROM posts ORDER BY id DESC LIMIT 1" []
+      case r2 of
         [[postId]] -> do
           createPostAuthorDep handle (fromSql postId :: Integer) authorId
           createPostCatDep handle (fromSql postId :: Integer) catId
@@ -50,13 +45,16 @@ createPost handle title text authorId catId tagIds = handleSql errorHandler $ do
           --createPostAddPhotoDep handle (fromSql postId :: Integer) tagsId
           return Nothing
         _ -> do
-          Logger.logWarning logh $ "Post with title: " <> title <> " already exists in db."
-          return $ Just $ "Post with title: " <> title <> " already exists."
+          Logger.logError logh "Error while inserting Post to db."
+          return $ Just "Error while inserting Post to db."
+    _ -> do
+      Logger.logWarning logh $ "Post with title: " <> title <> " already exists in db."
+      return $ Just $ "Post with title: " <> title <> " already exists."
   where errorHandler e = do fail $ "Error: Error in createPost!\n" <> show e
 
 getPosts :: Handle IO -> DbData.DbReq -> IO (Maybe [Post])
 getPosts handle dbReq = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   -- Request to DB table posts
   let dbPostQuery = "SELECT id FROM posts " <> fst (DbData.dbPostReq dbReq)
@@ -112,7 +110,7 @@ getPosts handle dbReq = handleSql errorHandler $ do
           nAll = length idAll
       Logger.logInfo logh "Sorting posts from db!"
       rMain <- quickQuery' dbh (DbData.orderQuery dbReq <> intercalate "," (replicate nAll "?") <> DbData.orderBy dbReq) idAll
-      case rAll of
+      case rMain of
         [] -> do
           Logger.logWarning logh "No posts in db!"
           return Nothing
@@ -121,47 +119,23 @@ getPosts handle dbReq = handleSql errorHandler $ do
           return $ sequence posts
   where errorHandler e = do fail $ "Error: Error in getPosts!\n" <> show e
 
-getPost :: Handle IO -> Integer -> IO (Maybe Post)
+getPost :: Handle IO -> Id -> IO (Maybe Post)
 getPost handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT id, title, created_at, text FROM posts WHERE id = ?" [toSql postId]
   case r of
-    [] -> do
+    [params] -> do
+      Logger.logInfo logh "Getting Post from db."
+      newPost handle params
+    _ -> do
       Logger.logWarning logh $ "No post with id: " <> convert postId  <> " in db!"
       return Nothing
-    [params@[id, title, created_at, text]] -> do
-      authorId <- getPostAuthorId handle postId
-      checkAuthor <- DBA.getAuthor handle (fromMaybe (-1) authorId)
-      let author = fromMaybe author0 checkAuthor
-      catId <- getPostCategoryId handle postId
-      checkCat <- DBC.getCat handle (fromMaybe (-1) catId)
-      let cat = fromMaybe cat0 checkCat
-      Logger.logInfo logh "Getting Post from db."
-      --tagIds <- getRelatedTagsId handle postId
-      --tags <- map (DBT.getTag dbh logh) $ fromMaybe [(-1)] tagIds
-      Just <$> newPost params author cat
   where errorHandler e = do fail $ "Error: Error in getPost!\n" <> show e
-        newPost [id, title, created_at, text] author cat = do
-          photoMainMaybe <- getPostMainPhoto handle (fromSql id :: Integer)
-          photosAddMaybe <- getPostAddPhotos handle (fromSql id :: Integer)
-          commentsMaybe <- getPostComments handle (fromSql id :: Integer)
-          return Post {
-            post_title = fromSql title :: Text,
-            post_createdAt = fromSql created_at :: Text,
-            post_category = cat,
-            post_tags = Nothing,
-            post_text = fromSql text :: Text,
-            post_mainPhoto = photoMainMaybe,
-            post_addPhotos = photosAddMaybe,
-            post_id = fromSql id :: Integer,
-            post_author = author,
-            post_comments = commentsMaybe
-          }
 
 removePost :: Handle IO -> Id -> IO (Maybe Text)
 removePost handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT id FROM posts WHERE user_id = ?" [toSql postId]
   case r of
@@ -184,7 +158,7 @@ removePost handle postId = handleSql errorHandler $ do
 
 setPostMainPhoto :: Handle IO -> Id -> Text -> IO (Maybe Text)
 setPostMainPhoto handle postId path = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   photoIdMaybe <- DBPh.savePhoto handle path
   case photoIdMaybe of
@@ -208,7 +182,7 @@ setPostMainPhoto handle postId path = handleSql errorHandler $ do
 
 setPostAddPhoto :: Handle IO -> Id -> Text -> IO (Maybe Text)
 setPostAddPhoto handle postId path = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   photoIdMaybe <- DBPh.savePhoto handle path
   case photoIdMaybe of
@@ -232,22 +206,22 @@ setPostAddPhoto handle postId path = handleSql errorHandler $ do
 
 getPostMainPhoto :: Handle IO -> Id -> IO (Maybe Photo)
 getPostMainPhoto handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT photo_id FROM post_main_photo WHERE post_id = ?" 
         [toSql postId]
   case r of
-    [] -> do
-      Logger.logWarning logh $ "No exists Main Photo for Post with id: " <> convert postId <> " in db!"
-      return Nothing
     [[photoId]] -> do
       Logger.logInfo logh $ "Getting Main Photo for Post with id: " <> convert postId <> "."
       DBPh.getPhoto handle (fromSql photoId :: Integer)
+    _ -> do
+      Logger.logWarning logh $ "No exists Main Photo for Post with id: " <> convert postId <> " in db!"
+      return Nothing
   where errorHandler e = do fail $ "Error: Error in getPostMainPhoto!\n" <> show e
 
 getPostAddPhotos :: Handle IO -> Id -> IO (Maybe [Photo])
 getPostAddPhotos handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT photo_id FROM post_add_photo WHERE post_id = ?" 
         [toSql postId]
@@ -264,7 +238,7 @@ getPostAddPhotos handle postId = handleSql errorHandler $ do
 
 getPostComments :: Handle IO -> Id -> IO (Maybe [Comment])
 getPostComments handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT comment_id FROM post_comment WHERE post_id = ?" 
         [toSql postId]
@@ -281,7 +255,7 @@ getPostComments handle postId = handleSql errorHandler $ do
 
 getPostAuthorId :: Handle IO -> Id -> IO (Maybe Id)
 getPostAuthorId handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT author_id FROM post_author WHERE post_id = ?" [toSql postId]
   case r of
@@ -295,7 +269,7 @@ getPostAuthorId handle postId = handleSql errorHandler $ do
 
 getPostCategoryId :: Handle IO -> Id -> IO (Maybe Id)
 getPostCategoryId handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT category_id FROM post_category WHERE post_id = ?" [toSql postId]
   case r of
@@ -309,36 +283,36 @@ getPostCategoryId handle postId = handleSql errorHandler $ do
 
 getPostTagsIds :: Handle IO -> Id -> IO (Maybe [Id])
 getPostTagsIds handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
-  r <- quickQuery' dbh "SELECT user_id FROM post_tags WHERE post_id = ?" [toSql postId]
+  r <- quickQuery' dbh "SELECT tag_id FROM post_tag WHERE post_id = ?" [toSql postId]
   case r of
     [xs] -> do
       Logger.logInfo logh "Getting tag_id corresponding to this Post from db."
       return $ Just $ map fromSql xs
     _ -> do
-      Logger.logError logh "No Tags corresponding to this Post in db!"
+      Logger.logWarning logh "No Tags corresponding to this Post in db!"
       return Nothing
   where errorHandler e = do fail $ "Error: Error in getPostTagsIds!\n" <> show e
 
 getPostDraftId :: Handle IO -> Id -> IO (Maybe Id, Text)
 getPostDraftId handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT draft_id FROM post_draft WHERE post_id = ?" 
         [toSql postId]
   case r of
-    [] -> do
-      Logger.logInfo logh "Dependency between Post and Draft doesn't exist."
-      return (Nothing, "Dependency between Post and Draft already exists.")
     [[draftId]] -> do 
       Logger.logError logh "Dependency between Post and Draft already exists."
       return (Just (fromSql draftId :: Integer), "Dependency between Post and Draft already exists.")
+    _ -> do
+      Logger.logInfo logh "Dependency between Post and Draft doesn't exist."
+      return (Nothing, "Dependency between Post and Draft already exists.")
   where errorHandler e = do fail $ "Error: Error in getPostDraftId!\n" <> show e
 
 createPostAuthorDep :: Handle IO -> Id -> Id -> IO ()
 createPostAuthorDep handle postId authorId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT author_id FROM post_author WHERE post_id = ?" 
         [toSql postId]
@@ -353,7 +327,7 @@ createPostAuthorDep handle postId authorId = handleSql errorHandler $ do
 
 createPostCatDep :: Handle IO -> Id -> Id -> IO ()
 createPostCatDep handle postId catId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT category_id FROM post_category WHERE post_id = ?" 
         [toSql postId]
@@ -368,7 +342,7 @@ createPostCatDep handle postId catId = handleSql errorHandler $ do
 
 createPostTagDep :: Handle IO -> Id -> Id -> IO ()
 createPostTagDep handle postId tagId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT tag_id FROM post_tag WHERE post_id = ? AND tag_id = ?" 
         [toSql postId, toSql tagId]
@@ -383,7 +357,7 @@ createPostTagDep handle postId tagId = handleSql errorHandler $ do
 
 createPostDraftDep :: Handle IO -> Id -> Id -> IO ()
 createPostDraftDep handle postId draftId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   (draftIdDbMaybe, msg) <- getPostDraftId handle postId
   case draftIdDbMaybe of
@@ -397,7 +371,7 @@ createPostDraftDep handle postId draftId = handleSql errorHandler $ do
 
 removePostAuthorDep :: Handle IO -> Id -> IO ()
 removePostAuthorDep handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT author_id FROM post_author WHERE post_id = ?" 
         [toSql postId]
@@ -411,7 +385,7 @@ removePostAuthorDep handle postId = handleSql errorHandler $ do
 
 removePostCatDep :: Handle IO -> Id -> IO ()
 removePostCatDep handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT author_id FROM post_category WHERE post_id = ?" 
         [toSql postId]
@@ -425,7 +399,7 @@ removePostCatDep handle postId = handleSql errorHandler $ do
 
 removePostTagDep :: Handle IO -> Id -> IO ()
 removePostTagDep handle postId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT author_id FROM post_tag WHERE post_id = ?" 
         [toSql postId]
@@ -437,71 +411,29 @@ removePostTagDep handle postId = handleSql errorHandler $ do
       Logger.logInfo logh "Removing dependency between Post and Tag."
   where errorHandler e = do fail $ "Error: Error in removePostTagDep!\n" <> show e
 
-user0 = User {
-  user_id = 1010, -- Unique identifier for this User.
-  user_isAdmin = False, -- True, if this user is a Admin.
-  user_firstName = "Jhon", -- User's first name.
-  user_lastName = "Thomson", -- User's last name.
-  user_photo = Nothing
-}
-
-author0 = Author {
-  author_user = user0, -- User.
-  author_description = "Adventures" -- Author's description.
-}
-
-cat0 = Category {
-  category_id = 0, -- Unique identifier for this Category.
-  category_title = "Sport", -- Title of Category.
-  category_subcategory = Just cat1
-}
-
-cat1 = Category {
-  category_id = 1, -- Unique identifier for this Category.
-  category_title = "Crossfit", -- Title of Category.
-  category_subcategory = Just cat2
-}
-
-cat2 = Category {
-  category_id = 1, -- Unique identifier for this Category.
-  category_title = "Crossfit Games", -- Title of Category.
-  category_subcategory = Nothing
-}
-
-tag0 = Tag {
-  tag_id = 0,
-  tag_title = "sport"
-}
-
-tag1 = Tag {
-  tag_id = 1,
-  tag_title = "crossfit"
-}
-
-post0 = Post {
-  post_id = 0, -- Unique identifier for this Announcement.
-  post_author = author0 , -- Author of Announcement.
-  post_title = "Crossfit Games 2021", -- Title of Announcement.
-  post_createdAt = "03.08.21", -- Date when the Announcement was created.
-  post_category = cat0, -- Category of Announcement.
-  post_tags = Just [tag0,tag1], -- Array of Tag of Announcement.
-  post_text = "Yesterday was the last day of competitions of the 2021 Crossfit Games", -- Text of Announcement.
-  post_mainPhoto = Nothing, -- Main Photo of Announcement.
-  post_addPhotos = Nothing, -- Array of Additional Photos of Announcement.
-  post_comments = Just [com0, com1] -- Array of Comments of Announcement.
-}
-
-com0 = Comment {
-  comment_id = 2, -- Unique identifier for this Comment.
-  comment_text = "Happy!"
-}
-
-com1 = Comment {
-  comment_id = 3, -- Unique identifier for this Comment.
-  comment_text = "Very Happy!"
-}
-
-draft0 = Draft {
-  draft_id = 0 , -- Unique identifier for this Draft.
-  draft_text = "No text"
-}
+newPost :: Handle IO -> [SqlValue] -> IO (Maybe Post)
+newPost handle [idPost, title, created_at, text] = do
+  let postId = fromSql idPost :: Integer
+  photoMainMaybe <- getPostMainPhoto handle postId
+  photosAddMaybe <- getPostAddPhotos handle postId
+  commentsMaybe <- getPostComments handle postId
+  runMaybeT $ do
+    authorId <- MaybeT $ getPostAuthorId handle postId
+    author <- MaybeT $ DBA.getAuthor handle authorId
+    catId <- MaybeT $ getPostCategoryId handle postId
+    cat <- MaybeT $ DBC.getCat handle catId
+    tagIds <- MaybeT $ getPostTagsIds handle postId
+    tags <- MaybeT $ DBT.getTags handle tagIds
+    return Post {
+      post_id = postId,
+      post_title = fromSql title :: Text,
+      post_createdAt = fromSql created_at :: Text,
+      post_text = fromSql text :: Text,
+      post_mainPhoto = photoMainMaybe,
+      post_addPhotos = photosAddMaybe,
+      post_comments = commentsMaybe,
+      post_tags = Just tags,
+      post_author = author,
+      post_category = cat
+    }
+newPost _ _ = return Nothing

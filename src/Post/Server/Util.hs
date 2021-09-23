@@ -6,10 +6,9 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.UUID.V4 as V4
 import qualified Data.Text as T
 import Data.Text (Text)
-import Data.UUID (UUID(..))
 import Data.List (intercalate)
 import Network.HTTP.Types (Query)
-import Control.Monad (join, liftM)
+import Control.Monad (join)
 import Database.HDBC (toSql, SqlValue(..))
 
 import qualified Post.DB.Data as DbData
@@ -89,6 +88,7 @@ keyPostToDb "created_at__lt" = "created_at < ? "
 keyPostToDb "created_at__gt" = "created_at > ? "
 keyPostToDb "find_in_title" = "title LIKE ?"
 keyPostToDb "find_in_text" = "text LIKE ?"
+keyPostToDb str = error $ "keyPostToDb function: Incorrect input: " ++ str
 
 queryCatToDb :: PostQuery -> DbData.DbQuery
 queryCatToDb params | not $ null args = (query, paramArgs)
@@ -101,6 +101,7 @@ queryCatToDb params | not $ null args = (query, paramArgs)
 
 keyCatToDb :: String -> String
 keyCatToDb "category" = "category_id = ? "
+keyCatToDb str = error $ "keyCatToDb function: Incorrect input: " ++ str
 
 queryTagToDb :: PostQuery -> DbData.DbQuery
 queryTagToDb [] = ("", [])
@@ -117,10 +118,11 @@ keyTagToDb :: String -> Int -> DbData.DbQueryString
 keyTagToDb "tag" _ = "tag_id = ?"
 keyTagToDb "tag__in" n = "tag_id IN (" ++ intercalate "," (replicate n "?") ++ ")"
 keyTagToDb "tag__all" n = intercalate " AND " $ replicate n "tag_id = ?"
+keyTagToDb str _ = error $ "keyTagToDb function: Incorrect input: " ++ str
 
 queryAuthorToDb :: PostQuery -> DbData.DbQuery
 queryAuthorToDb [] = ("", [])
-queryAuthorToDb [(key, value)] = case value of
+queryAuthorToDb [(_, value)] = case value of
   Nothing -> ("", [])
   Just param -> (query, map toSql $ words param) where
     query = "WHERE author_id = (SELECT author_id FROM author_user WHERE user_id = (SELECT id FROM users WHERE first_name = ? AND last_name = ?));"
@@ -128,33 +130,33 @@ queryAuthorToDb _ = error "queryAuthorToDb function: Too many elements in dictio
 
 searchPostToDb :: PostQuery -> DbData.DbQuery
 searchPostToDb [] = ("", [])
-searchPostToDb [(key, value)] = case value of
+searchPostToDb [(_, value)] = case value of
   Nothing -> ("", [])
-  Just param -> (query, map toSql [value, value]) where
+  Just _ -> (query, map toSql [value, value]) where
     query = "WHERE text LIKE ? OR title LIKE ? "
 searchPostToDb _ = error "searchPostToDb function: Too many elements in dictionary!"
 
 searchAuthorToDb :: PostQuery -> DbData.DbQuery
 searchAuthorToDb [] = ("", [])
-searchAuthorToDb [(key, value)] = case value of
+searchAuthorToDb [(_, value)] = case value of
   Nothing -> ("", [])
-  Just param -> (query, map toSql [value, value]) where
+  Just _ -> (query, map toSql [value, value]) where
     query = "WHERE author_id = (SELECT author_id FROM author_user WHERE user_id = (SELECT id FROM users WHERE first_name = ? OR last_name = ?));"
 searchAuthorToDb _ = error "searchAuthorToDb function: Too many elements in dictionary!"
 
 searchCatToDb :: PostQuery -> DbData.DbQuery
 searchCatToDb [] = ("", [])
-searchCatToDb [(key, value)] = case value of
+searchCatToDb [(_, value)] = case value of
   Nothing -> ("", [])
-  Just param -> (query, map toSql [value]) where
+  Just _ -> (query, map toSql [value]) where
     query = "WHERE category_id IN (SELECT id FROM categories WHERE title LIKE ? )"
 searchCatToDb _ = error "searchCatToDb function: Too many elements in dictionary!"
 
 searchTagToDb :: PostQuery -> DbData.DbQuery
 searchTagToDb [] = ("", [])
-searchTagToDb [(key, value)] = case value of
+searchTagToDb [(_, value)] = case value of
   Nothing -> ("", [])
-  Just param -> (query, map toSql [value]) where
+  Just _ -> (query, map toSql [value]) where
     query = "WHERE tag_id IN (SELECT id FROM tags WHERE title LIKE ? )"
 searchTagToDb _ = error "searchTagToDb function: Too many elements in dictionary!"
 
@@ -166,20 +168,22 @@ searchTagToDb _ = error "searchTagToDb function: Too many elements in dictionary
 
 orderQueryToDb :: PostQuery -> DbData.DbQueryString
 orderQueryToDb [] = "SELECT id FROM posts WHERE id IN ("
-orderQueryToDb [(key, value)] = case key of
+orderQueryToDb [(key, _)] = case key of
   "order_by_date" -> "SELECT id FROM posts WHERE id IN ("
   "order_by_category" -> "SELECT id FROM post_category JOIN categories ON post_category.category_id=categories.id WHERE post_id IN ("
   "order_by_photos" -> "SELECT posts.id, COUNT(*) as photo_count FROM posts LEFT JOIN post_add_photo ON posts.id=post_add_photo.post_id WHERE posts.id IN ("
   "order_by_author" -> "SELECT id FROM post_author INNER JOIN author_user ON post_author.author_id=author_user.author_id INNER JOIN users ON author_user.user_id=users.id WHERE id IN ("
+  _ -> error $ "orderQueryToDb function: Incorrect key: " ++ key
 orderQueryToDb _ = error "orderQueryToDb function: Too many elements in dictionary!"
 
 orderByToDb :: PostQuery -> DbData.DbQueryString
 orderByToDb [] = ") ORDER BY created_at"
-orderByToDb [(key, value)] = case key of
+orderByToDb [(key, _)] = case key of
   "order_by_date" -> ") ORDER BY created_at"
   "order_by_category" -> ") ORDER by title;"
   "order_by_photos" -> ") GROUP BY posts.id ORDER BY photo_count DESC;"
   "order_by_author" -> ") ORDER BY last_name, first_name;"
+  _ -> error $ "orderByToDb function: Incorrect key: " ++ key
 orderByToDb _ = error "orderByToDb function: Too many elements in dictionary!"
 
 convert :: Show a => a -> Text

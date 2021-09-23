@@ -2,7 +2,7 @@
 
 module Post.DB.Data where
 
-import Database.HDBC (toSql, SqlValue(..))
+import Database.HDBC (SqlValue(..))
 
 -- types
 type Param = String
@@ -23,6 +23,7 @@ data DbReq = DbReq {
   orderBy :: DbQueryString
 } deriving (Show)
 
+initialDbReq :: DbReq
 initialDbReq = DbReq {
   dbPostReq = ("", []),
   dbAuthorReq = ("", []),

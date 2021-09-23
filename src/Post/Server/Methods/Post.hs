@@ -2,20 +2,14 @@
 
 module Post.Server.Methods.Post where
 
-import qualified Data.ByteString.Char8 as BC
-
-import Control.Exception.Lifted (handle)
 import Data.Maybe (fromMaybe)
-import Data.Aeson (object)
-import Data.Text (Text)
 import qualified Data.Text as T
-import Database.HDBC (IConnection)
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
 
-import Post.Server.ServerSpec (Handle(..), Config(..))
+import Post.Server.ServerSpec (Handle(..))
+import qualified Post.Logger as Logger
 import qualified Post.Server.Objects as PSO
-import qualified Post.Logger as PL
 import qualified Post.DB.Post as DBP
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
@@ -25,9 +19,11 @@ getPostsResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO Re
 getPostsResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: get Post records"
   case Util.extractRequired query paramsReq of
     Left msgE -> sendResponce $ respError msgE
-    Right [token] -> do
+    Right reqParams -> do
+      let [token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
       let action | perm == PSO.UserPerm = do
                     let dbQueryParams = Util.createOptionalDict query paramsOpt
@@ -46,9 +42,11 @@ createPostResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO 
 createPostResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: create Post record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [title, text, cat_id, tag_ids, token] -> do
+    Right reqParams -> do
+      let [title, text, cat_id, tag_ids, token] = reqParams
       perm <- DBAC.checkAuthorWritePerm dbh token
       let action | perm == PSO.AuthorWritePerm = do
                     authorIdMaybe <- DBAC.getAuthorId dbh token
@@ -58,7 +56,7 @@ createPostResp handle sendResponce query = do
                     msg <- DBP.createPost dbh title text authorId catId tagIds
                     case msg of
                       Nothing -> sendResponce $ respSucc "Post created"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
@@ -68,15 +66,17 @@ removePostResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO 
 removePostResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: remove Post record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [postId, token] -> do
+    Right reqParams -> do
+      let [postId, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     msg <- DBP.removePost dbh (read (T.unpack postId) :: Integer)
                     case msg of
                       Nothing -> sendResponce $ respSucc "Post removed"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
@@ -86,15 +86,17 @@ setPostMainPhotoResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query 
 setPostMainPhotoResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: add main Photo to Post"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [postId, path, token] -> do
+    Right reqParams -> do
+      let [postId, path, token] = reqParams
       perm <- DBAC.checkAuthorReadPerm dbh token (read (T.unpack postId) :: Integer)
       let action | perm == PSO.AuthorReadPerm = do
                     msg <- DBP.setPostMainPhoto dbh (read (T.unpack postId) :: Integer) path
                     case msg of
                       Nothing -> sendResponce $ respSucc "Post Main Photo uploaded"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
@@ -104,15 +106,17 @@ setPostAddPhotoResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -
 setPostAddPhotoResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: add additional Photo to Post"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [postId, path, token] -> do
+    Right reqParams -> do
+      let [postId, path, token] = reqParams
       perm <- DBAC.checkAuthorReadPerm dbh token (read (T.unpack postId) :: Integer)
       let action | perm == PSO.AuthorReadPerm = do
                     msg <- DBP.setPostAddPhoto dbh (read (T.unpack postId) :: Integer) path
                     case msg of
                       Nothing -> sendResponce $ respSucc "Post Add Photo uploaded"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where

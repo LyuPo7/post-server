@@ -3,27 +3,27 @@
 module Post.DB.DB where
 
 import Control.Monad (when)
-import Database.HDBC (IConnection, handleSql, getTables, run, commit, quickQuery', fromSql, toSql)
-import Database.HDBC.PostgreSQL
+import Database.HDBC (getTables, run, commit)
+import Database.HDBC.PostgreSQL (Connection, connectPostgreSQL)
 import Data.Text (Text)
 import qualified Data.Text as T
 
 import Post.DB.DBSpec (Handle(..), Config(..))
 import qualified Post.Logger as Logger
-import qualified Post.Exception as E
-import qualified Post.Server.Objects as PSO
 
 withHandleIO :: Logger.Handle IO -> Config -> (Handle IO -> IO a) -> IO a
 withHandleIO logger config f = do
   let db = "dbname=" <> dbname config
   case user config of
     Nothing -> do
+      Logger.logDebug logger $ "Connecting to db: " <> db
       dbh <- connect db
       let handle = Handle logger dbh config
       prepDB handle
       f handle
-    Just user -> do
-      let db' = db <> " user=" <> user
+    Just dbUser -> do
+      let db' = db <> " user=" <> dbUser
+      Logger.logDebug logger $ "Connecting to db: " <> db'
       dbh <- connect db'
       let handle = Handle logger dbh config
       prepDB handle
@@ -101,7 +101,7 @@ Create two tables and ask the database engine to verify some info:
 -}
 prepDB :: Handle IO -> IO ()
 prepDB handle = do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   tables <- getTables dbh
   when ("users" `notElem` tables) $ do

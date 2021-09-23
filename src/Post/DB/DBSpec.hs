@@ -18,7 +18,6 @@ data Config = Config {
 -- | DB Handle
 data Handle m = Handle {
   hLogger :: Logger.Handle m,
-  hDB :: Connection,
+  conn :: Connection,
   cDB :: Config
 }
-

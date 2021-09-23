@@ -2,29 +2,23 @@
 
 module Post.Server.Methods.Photo where
 
-import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy.Char8 as L8
-
-import Control.Exception.Lifted (handle)
-import Data.Aeson (object)
 import qualified Data.Text as T
+import qualified System.IO as SIO
 import Data.Text (Text)
-import Network.Wai (Response)
-import Network.HTTP.Client (newManager, parseRequest, httpLbs, responseStatus, responseBody, Request(..))
+import Network.HTTP.Client (newManager, parseRequest, httpLbs, responseBody)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import System.FilePath.Posix (takeFileName)
-import qualified System.IO as SIO
 
 import Post.Logger (Handle(..))
 import qualified Post.Logger as Logger
-import qualified Post.Server.Util as Util
-import Post.Server.Responses (respOk, respError, respSucc, resp404)
+import Post.Server.Util (server)
 
 upload :: Handle IO -> Text -> IO Text
-upload logh path = do
-  let link = Util.server <> path
+upload logh pathToFile = do
+  let link = server <> pathToFile
       dir = "src/files/photos/"
-      fileName = takeFileName $ T.unpack path
+      fileName = takeFileName $ T.unpack pathToFile
       filePath = dir ++ fileName
   --(tempFileName, _) <- openTempFile dir (unpack title)
   manager <- newManager tlsManagerSettings

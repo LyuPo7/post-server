@@ -3,15 +3,12 @@
 module Post.DB.User where
 
 import qualified Data.ByteString.Char8 as BC
-
-import Control.Monad (when)
-import Database.HDBC (IConnection, handleSql, run, commit, quickQuery', fromSql, toSql)
-import Database.HDBC.PostgreSQL
+import Database.HDBC (SqlValue, handleSql, run, commit, quickQuery', fromSql, toSql)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Crypto.Scrypt (encryptPassIO, defaultParams, getEncryptedPass, Pass(..))
 
-import Post.DB.DBSpec (Handle(..), Config(..))
+import Post.DB.DBSpec (Handle(..))
 import qualified Post.Logger as Logger
 import qualified Post.DB.Photo as DBPh
 import Post.Server.Util (createToken, admins, convert)
@@ -20,17 +17,17 @@ import Post.Server.Objects
 -- | DB methods for User
 createUser :: Handle IO -> FirstName -> LastName -> Login -> Password -> IO (Maybe Text)
 createUser handle firstName lastName login password = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT id FROM users WHERE login = ?" [toSql login]
   case r of
     [] -> do
       encrypted <- encryptPassIO defaultParams (Pass $ BC.pack $ T.unpack password)
       let encryptedPass = getEncryptedPass encrypted
-      token <- createToken
+      newToken <- createToken
       let isAdmin = login `elem` admins
       _ <- run dbh "INSERT INTO users (is_admin, first_name, last_name, login, password, token) VALUES (?,?,?,?,?,?)"
-           [toSql isAdmin, toSql firstName, toSql lastName, toSql login, toSql encryptedPass, toSql token]
+           [toSql isAdmin, toSql firstName, toSql lastName, toSql login, toSql encryptedPass, toSql newToken]
       commit dbh
       Logger.logInfo logh $ "User with login: " <> login <> " was successfully inserted in db."
       return Nothing
@@ -41,7 +38,7 @@ createUser handle firstName lastName login password = handleSql errorHandler $ d
 
 getUsers :: Handle IO -> IO ([User], Text)
 getUsers handle = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT id, first_name, last_name, is_admin FROM users" []
   case r of
@@ -50,46 +47,32 @@ getUsers handle = handleSql errorHandler $ do
       return ([], "No users!")
     xs -> do
       Logger.logInfo logh "Getting Users from db."
-      users <- mapM newUser xs
-      return (users,"Getting Users from db.")
+      usersM <- mapM (newUser handle) xs
+      case sequenceA usersM of
+        Nothing -> do
+          Logger.logError logh "Invalid User in db."
+          return ([], "Invalid User in db.")
+        Just users -> return (users,"Getting Users from db.")
   where errorHandler e = do fail $ "Error: Error in getUsers!\n" <> show e
-        newUser [id, fn, ln, ia] = do
-          photoMaybe <- getUserPhoto handle (fromSql id :: Integer)
-          return User {
-            user_firstName = fromSql fn :: Text,
-            user_lastName = fromSql ln :: Text,
-            user_isAdmin = fromSql ia :: Bool,
-            user_photo = photoMaybe,
-            user_id = fromSql id :: Integer
-          }
 
 getUser :: Handle IO -> Id -> IO (Maybe User)
 getUser handle userId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT id, first_name, last_name, is_admin FROM users WHERE id = ?" 
         [toSql userId]
   case r of
-    [] -> do
-      Logger.logWarning logh $ "No user with id: " <> convert userId  <> " in db!"
-      return Nothing
     [x] -> do
       Logger.logInfo logh "Getting User from db."
-      Just <$> newUser x
+      newUser handle x
+    _ -> do
+      Logger.logWarning logh $ "No user with id: " <> convert userId  <> " in db!"
+      return Nothing
   where errorHandler e = do fail $ "Error: Error in getUser!\n" <> show e
-        newUser [id, fn, ln, ia] = do
-          photoMaybe <- getUserPhoto handle (fromSql id :: Integer)
-          return User {
-            user_firstName = fromSql fn :: Text,
-            user_lastName = fromSql ln :: Text,
-            user_isAdmin = fromSql ia :: Bool,
-            user_photo = photoMaybe,
-            user_id = fromSql id :: Integer
-          }
 
 removeUser :: Handle IO -> Id -> IO (Maybe Text)
 removeUser handle userId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT id FROM users WHERE id = ?" 
        [toSql userId]
@@ -107,7 +90,7 @@ removeUser handle userId = handleSql errorHandler $ do
 
 setUserPhoto :: Handle IO -> Id -> Text -> IO (Maybe Text)
 setUserPhoto handle userId path = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   photoIdMaybe <- DBPh.savePhoto handle path
   case photoIdMaybe of
@@ -131,16 +114,27 @@ setUserPhoto handle userId path = handleSql errorHandler $ do
 
 getUserPhoto :: Handle IO -> Id -> IO (Maybe Photo)
 getUserPhoto handle userId = handleSql errorHandler $ do
-  let dbh = hDB handle
+  let dbh = conn handle
       logh = hLogger handle
   r <- quickQuery' dbh "SELECT photo_id FROM user_photo WHERE user_id = ?" 
         [toSql userId]
   case r of
-    [] -> do
-      Logger.logWarning logh $ "No exists Photo for User with id: " <> convert userId <> " in db!"
-      return Nothing
     [[photoId]] -> do
       Logger.logInfo logh $ "Getting Photo for User with id: " <> convert userId <> "."
       DBPh.getPhoto handle (fromSql photoId :: Integer)
+    _ -> do
+      Logger.logWarning logh $ "No exists Photo for User with id: " <> convert userId <> " in db!"
+      return Nothing
   where errorHandler e = do fail $ "Error: Error in getUserPhoto!\n" <> show e
 
+newUser :: Handle IO -> [SqlValue] -> IO (Maybe User)
+newUser handle [idUser, fn, ln, ia] = do
+  photoMaybe <- getUserPhoto handle (fromSql idUser :: Integer)
+  return $ Just $ User {
+    user_firstName = fromSql fn :: Text,
+    user_lastName = fromSql ln :: Text,
+    user_isAdmin = fromSql ia :: Bool,
+    user_photo = photoMaybe,
+    user_id = fromSql idUser :: Integer
+  }
+newUser _ _ = return Nothing

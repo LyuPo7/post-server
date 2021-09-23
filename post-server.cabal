@@ -25,7 +25,6 @@ source-repository head
 
 library
   exposed-modules:
-      Post.Client.Client
       Post.Config
       Post.DB.Account
       Post.DB.Author
@@ -33,6 +32,8 @@ library
       Post.DB.Comment
       Post.DB.Data
       Post.DB.DB
+      Post.DB.DBQuery
+      Post.DB.DBQuerySpec
       Post.DB.DBSpec
       Post.DB.Draft
       Post.DB.Photo
@@ -53,12 +54,14 @@ library
       Post.Server.Objects
       Post.Server.Responses
       Post.Server.Server
+      Post.Server.ServerSpec
       Post.Server.Util
       Post.Settings
   other-modules:
       Paths_post_server
   hs-source-dirs:
       src
+  ghc-options: -Wall -Werror
   build-depends:
       HDBC
     , HDBC-postgresql
@@ -75,6 +78,7 @@ library
     , text
     , text-show
     , time
+    , transformers
     , uuid
     , wai
     , wai-conduit
@@ -87,7 +91,7 @@ executable post-server-exe
       Paths_post_server
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HDBC
     , HDBC-postgresql
@@ -105,6 +109,7 @@ executable post-server-exe
     , text
     , text-show
     , time
+    , transformers
     , uuid
     , wai
     , wai-conduit
@@ -115,10 +120,11 @@ test-suite post-server-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Test
       Paths_post_server
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HDBC
     , HDBC-postgresql
@@ -136,6 +142,7 @@ test-suite post-server-test
     , text
     , text-show
     , time
+    , transformers
     , uuid
     , wai
     , wai-conduit

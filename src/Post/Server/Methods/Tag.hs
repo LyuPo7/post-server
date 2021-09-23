@@ -2,19 +2,12 @@
 
 module Post.Server.Methods.Tag where
 
-import qualified Data.ByteString.Char8 as BC
-
-import Control.Exception.Lifted (handle)
-import Data.Aeson (object)
-import Data.Text (Text)
-import qualified Data.Text as T
-import Database.HDBC (IConnection)
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
 
-import Post.Server.ServerSpec (Handle(..), Config(..))
+import Post.Server.ServerSpec (Handle(..))
+import qualified Post.Logger as Logger
 import qualified Post.Server.Objects as PSO
-import qualified Post.Logger as PL
 import qualified Post.DB.Tag as DBT
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
@@ -24,12 +17,14 @@ getTagsResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO Res
 getTagsResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: get Post records"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [token] -> do
+    Right reqParams -> do
+      let [token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
       let action | perm == PSO.UserPerm = do
-                    (tags, msg) <- DBT.getTags dbh
+                    (tags, msg) <- DBT.getAllTags dbh
                     case tags of
                       [] -> sendResponce $ respError msg
                       _ -> sendResponce $ respOk tags
@@ -42,15 +37,17 @@ createTagResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO R
 createTagResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: create Tag record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [title, token] -> do
+    Right reqParams -> do
+      let [title, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     msg <- DBT.createTag dbh title
                     case msg of
                       Nothing -> sendResponce $ respSucc "Tag created"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
@@ -60,15 +57,17 @@ removeTagResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO R
 removeTagResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: remove Tag record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [tagTitle, token] -> do
+    Right reqParams -> do
+      let [tagTitle, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     msg <- DBT.removeTag dbh tagTitle
                     case msg of
                       Nothing -> sendResponce $ respSucc "Tag removed"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
@@ -78,15 +77,17 @@ editTagResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO Res
 editTagResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: edit Tag record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [oldTitle, newTitle, token] -> do
+    Right reqParams -> do
+      let [oldTitle, newTitle, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     msg <- DBT.editTag dbh oldTitle newTitle
                     case msg of
                       Nothing -> sendResponce $ respSucc "Tag edited"
-                      Just msg -> sendResponce $ respError msg
+                      Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where

@@ -2,13 +2,11 @@
 
 module Post.Server.Methods.Author where
 
-import Control.Exception.Lifted (handle)
-import Data.Text (Text)
 import qualified Data.Text as T
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
 
-import Post.Server.ServerSpec (Handle(..), Config(..))
+import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
 import qualified Post.Server.Objects as PSO
 import qualified Post.DB.Author as DBA
@@ -21,9 +19,11 @@ getAuthorsResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO 
 getAuthorsResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: get Author records"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [token] -> do
+    Right reqParams -> do
+      let [token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     (authors, msg) <- DBA.getAuthors dbh
@@ -39,9 +39,11 @@ createAuthorResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> I
 createAuthorResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: create Author record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [userId, description, token] -> do
+    Right reqParams -> do
+      let [userId, description, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     checkUser <- DBU.getUser dbh (read (T.unpack userId) :: Integer)
@@ -51,7 +53,7 @@ createAuthorResp handle sendResponce query = do
                         msg <- DBA.createAuthor dbh (read (T.unpack userId) :: Integer) description
                         case msg of
                           Nothing -> sendResponce $ respSucc "Author created"
-                          Just msg -> sendResponce $ respError msg
+                          Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
@@ -61,9 +63,11 @@ removeAuthorResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> I
 removeAuthorResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: remove Author record"
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
-    Right [userId, token] -> do
+    Right reqParams -> do
+      let [userId, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     checkUser <- DBU.getUser dbh (read (T.unpack userId) :: Integer)
@@ -73,7 +77,7 @@ removeAuthorResp handle sendResponce query = do
                         msg <- DBA.removeAuthor dbh (read (T.unpack userId) :: Integer)
                         case msg of
                           Nothing -> sendResponce $ respSucc "Author removed"
-                          Just msg -> sendResponce $ respError msg
+                          Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
@@ -83,9 +87,11 @@ editAuthorResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO 
 editAuthorResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
+  Logger.logInfo logh "Processing request: edit Author record"
   case Util.extractRequired query params of
     Left mesgE -> sendResponce $ respError mesgE
-    Right [userId, newDescription, token] -> do
+    Right reqParams -> do
+      let [userId, newDescription, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     checkUser <- DBU.getUser dbh (read (T.unpack userId) :: Integer)
@@ -95,7 +101,7 @@ editAuthorResp handle sendResponce query = do
                         msg <- DBA.editAuthor dbh (read (T.unpack userId) :: Integer) newDescription
                         case msg of
                           Nothing -> sendResponce $ respSucc "Author edited"
-                          Just msg -> sendResponce $ respError msg
+                          Just errMsg -> sendResponce $ respError errMsg
                  | otherwise = sendResponce resp404
       action
     where
