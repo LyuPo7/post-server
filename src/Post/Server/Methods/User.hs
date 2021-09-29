@@ -2,15 +2,17 @@
 
 module Post.Server.Methods.User where
 
-import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
+import Text.Read (readMaybe)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import qualified Post.Server.Objects as PSO
+import Post.Server.Objects (Permission(..))
 import qualified Post.DB.User as DBU
+import qualified Post.DB.Author as DBA
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
@@ -21,15 +23,21 @@ getUsersResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: get User records"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
-      let action | perm == PSO.UserPerm = do
+      let action | perm == UserPerm = do
                     (users, msg) <- DBU.getUsers dbh
                     case users of
-                      [] -> sendResponce $ respError msg
-                      _ -> sendResponce $ respOk users
+                      [] -> do
+                        Logger.logError logh msg
+                        sendResponce $ respError msg
+                      _ -> do
+                        Logger.logInfo logh "Users sent"
+                        sendResponce $ respOk users
                  | otherwise = sendResponce resp404
       action
     where
@@ -41,13 +49,19 @@ createUserResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: create User record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [firstName, lastName, login, password] = reqParams
       msg <- DBU.createUser dbh firstName lastName login password
       case msg of
-        Nothing -> sendResponce $ respSucc "User registred"
-        Just errMsg -> sendResponce $ respError errMsg
+        Just _ -> do
+          Logger.logInfo logh $ "User: " <> login <> " registred"
+          sendResponce $ respSucc $ "User: " <> login <> " registred"
+        Nothing -> do
+          Logger.logError logh "Error while User registration!"
+          sendResponce $ respError "Error while User registration!"
     where
       params = ["first_name", "last_name", "login", "password"]
 
@@ -57,15 +71,27 @@ removeUserResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: remove User record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
-      let [userId, token] = reqParams
+      let [idUser, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
-                    msg <- DBU.removeUser dbh (read (T.unpack userId) :: Integer)
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "User removed"
-                      Just errMsg -> sendResponce $ respError errMsg
+      let action | perm == AdminPerm = do
+                    userMsg <- runMaybeT $ do
+                      let (Just userId) = readMaybe $ T.unpack idUser
+                      msg <- MaybeT $ DBU.removeUser dbh userId
+                      return (userId, msg)
+                    case userMsg of
+                      Just (userId, _) -> do
+                        _ <- DBU.removeUserPhotoDeps dbh userId
+                        _ <- DBA.removeAuthor dbh userId
+                        _ <- DBA.removeAuthorUserDep dbh userId
+                        Logger.logInfo logh "User removed"
+                        sendResponce $ respSucc "User removed"
+                      Nothing -> do
+                        Logger.logError logh "Error while removing tag!"
+                        sendResponce $ respError "Error while removing tag!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -77,17 +103,24 @@ setUserPhotoResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: add Photo to User record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [path, token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
-      let action | perm == PSO.UserPerm = do
-                    userIdMaybe <- DBAC.getUserId dbh token
-                    let userId = fromMaybe (-1) userIdMaybe
-                    msg <- DBU.setUserPhoto dbh userId path
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "User photo uploaded"
-                      Just errMsg -> sendResponce $ respError errMsg
+      let action | perm == UserPerm = do
+                    msgM <- runMaybeT $ do
+                      userId <- MaybeT $ DBAC.getUserId dbh token
+                      msg <- MaybeT $ DBU.setUserPhoto dbh userId path
+                      return msg
+                    case msgM of
+                      Just _ -> do
+                        Logger.logInfo logh "User Photo was added"
+                        sendResponce $ respSucc "User Photo was added"
+                      Nothing -> do
+                        Logger.logError logh "Error while adding User Photo!"
+                        sendResponce $ respError "Error while adding User Photo!"
                  | otherwise = sendResponce resp404
       action
     where

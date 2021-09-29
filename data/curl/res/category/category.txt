@@ -1,0 +1,22 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   457    0   457    0     0  57125      0 --:--:-- --:--:-- --:--:-- 57125
+[{"subcategory":null,"id":1,"title":"woooooo"},{"subcategory":{"subcategory":{"subcategory":null,"id":1,"title":"woooooo"},"id":2,"title":"g"},"id":3,"title":"rooo2"},{"subcategory":null,"id":6,"title":"crossfit"},{"subcategory":{"subcategory":null,"id":1,"title":"woooooo"},"id":2,"title":"g"},{"subcategory":{"subcategory":{"subcategory":null,"id":1,"title":"woooooo"},"id":2,"title":"g"},"id":5,"title":"sport"},{"subcategory":null,"id":7,"title":"box"}]  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    41    0    41    0     0  13666      0 --:--:-- --:--:-- --:--:-- 13666
+Category with title: sport already exists  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    44    0    44    0     0  14666      0 --:--:-- --:--:-- --:--:-- 14666
+Category with title: crossfit already exists  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    39    0    39    0     0  13000      0 --:--:-- --:--:-- --:--:-- 13000
+Category with title: box already exists  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    41    0    41    0     0  10250      0 --:--:-- --:--:-- --:--:-- 10250
+Category with title: sport already exists  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    44    0    44    0     0  14666      0 --:--:-- --:--:-- --:--:-- 14666
+Category with title: crossfit already exists  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    39    0    39    0     0  13000      0 --:--:-- --:--:-- --:--:-- 13000
+Category with title: box already exists

@@ -19,13 +19,13 @@ upload logh pathToFile = do
   let link = server <> pathToFile
       dir = "src/files/photos/"
       fileName = takeFileName $ T.unpack pathToFile
-      filePath = dir ++ fileName
-  --(tempFileName, _) <- openTempFile dir (unpack title)
+      --filePath = dir ++ fileName
+  (tempFileName, _) <- SIO.openTempFile dir fileName
   manager <- newManager tlsManagerSettings
   request <- parseRequest $ T.unpack link
   response <- httpLbs request manager
-  file <- SIO.openBinaryFile filePath SIO.WriteMode
+  file <- SIO.openBinaryFile tempFileName SIO.WriteMode
   SIO.hPutStr file (L8.unpack $ responseBody response)
   SIO.hClose file
   Logger.logDebug logh "Photo uploaded to server"
-  return $  T.pack filePath
+  return $  T.pack tempFileName

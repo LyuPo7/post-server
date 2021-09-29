@@ -59,7 +59,7 @@ app serverh req sendResponse = handle (sendResponse . invalidJson) $ do
     ["createTag"] -> do MT.createTagResp serverh sendResponse options -- admins only
     ["editTag"] -> do MT.editTagResp serverh sendResponse options -- admins only
     ["removeTag"] -> do MT.removeTagResp serverh sendResponse options -- admins only
-    ["getDrafts"] -> do MD.getDraftsResp serverh sendResponse -- authors only + only theirs drafts
+    ["getDrafts"] -> do MD.getDraftsResp serverh sendResponse options -- authors only + only theirs drafts
     ["createDraft"] -> do MD.createDraftResp serverh sendResponse options -- authors only + only theirs drafts
     ["editDraft"] -> do MD.editDraftResp serverh sendResponse options -- authors only + only theirs drafts
     ["removeDraft"] -> do MD.removeDraftResp serverh sendResponse options -- authors only + only theirs drafts

@@ -19,15 +19,21 @@ getTagsResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: get Post records"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
       let action | perm == PSO.UserPerm = do
                     (tags, msg) <- DBT.getAllTags dbh
                     case tags of
-                      [] -> sendResponce $ respError msg
-                      _ -> sendResponce $ respOk tags
+                      [] -> do
+                        Logger.logError logh msg
+                        sendResponce $ respError msg
+                      _ -> do
+                        Logger.logInfo logh "Tags sent"
+                        sendResponce $ respOk tags
                  | otherwise = sendResponce resp404
       action
     where
@@ -39,15 +45,21 @@ createTagResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: create Tag record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [title, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     msg <- DBT.createTag dbh title
                     case msg of
-                      Nothing -> sendResponce $ respSucc "Tag created"
-                      Just errMsg -> sendResponce $ respError errMsg
+                      Just _ -> do
+                        Logger.logInfo logh "Tag created"
+                        sendResponce $ respSucc "Tag created"
+                      Nothing -> do
+                        Logger.logError logh "Error while creating tag!"
+                        sendResponce $ respError "Error while creating tag!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -59,15 +71,22 @@ removeTagResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: remove Tag record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [tagTitle, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     msg <- DBT.removeTag dbh tagTitle
                     case msg of
-                      Nothing -> sendResponce $ respSucc "Tag removed"
-                      Just errMsg -> sendResponce $ respError errMsg
+                      Just tagId -> do
+                         _ <- DBT.removeTagPostsDeps dbh tagId
+                         Logger.logInfo logh "Tag removed"
+                         sendResponce $ respSucc "Tag removed"
+                      Nothing -> do
+                        Logger.logError logh "Error while removing tag!"
+                        sendResponce $ respError "Error while removing tag!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -79,15 +98,21 @@ editTagResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: edit Tag record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [oldTitle, newTitle, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
                     msg <- DBT.editTag dbh oldTitle newTitle
                     case msg of
-                      Nothing -> sendResponce $ respSucc "Tag edited"
-                      Just errMsg -> sendResponce $ respError errMsg
+                      Just _ -> do
+                        Logger.logInfo logh "Tag edited"
+                        sendResponce $ respSucc "Tag edited"
+                      Nothing -> do
+                        Logger.logError logh "Error while editing tag!"
+                        sendResponce $ respError "Error while editing tag!"
                  | otherwise = sendResponce resp404
       action
     where

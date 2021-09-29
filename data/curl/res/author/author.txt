@@ -1,0 +1,88 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   679    0   679    0     0  48500      0 --:--:-- --:--:-- --:--:-- 48500
+[{"user":{"photo":null,"first_name":"Ann","last_name":"Dilly","is_admin":false,"id":4},"description":"The best"},{"user":{"photo":null,"first_name":"Ben","last_name":"Thomson","is_admin":false,"id":3},"description":"gggggggggggggggg"},{"user":{"photo":{"link":"http://localhost:3000/src/files/photos/dog4780-9.png","id":14},"first_name":"Lyu","last_name":"Po","is_admin":true,"id":2},"description":"head admin"},{"user":{"photo":null,"first_name":"Max","last_name":"Collins","is_admin":false,"id":11},"description":"'Sport articles and books'"},{"user":{"photo":null,"first_name":"Alan","last_name":"Estrada","is_admin":false,"id":12},"description":"'Sport articles and books'"}]  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    34    0    34    0     0   6800      0 --:--:-- --:--:-- --:--:--  6800
+User with id: 2 already is Author.  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    34    0    34    0     0  11333      0 --:--:-- --:--:-- --:--:-- 11333
+User with id: 3 already is Author.  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    34    0    34    0     0   8500      0 --:--:-- --:--:-- --:--:--  8500
+User with id: 4 already is Author.  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   9333      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   9333      0 --:--:-- --:--:-- --:--:--  9333
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   9333      0 --:--:-- --:--:-- --:--:--  9333
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    35    0    35    0     0   8750      0 --:--:-- --:--:-- --:--:-- 11666
+User with id: 11 already is Author.  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    35    0    35    0     0  11666      0 --:--:-- --:--:-- --:--:-- 11666
+User with id: 12 already is Author.  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   679    0   679    0     0  45266      0 --:--:-- --:--:-- --:--:-- 45266
+[{"user":{"photo":null,"first_name":"Ann","last_name":"Dilly","is_admin":false,"id":4},"description":"The best"},{"user":{"photo":null,"first_name":"Ben","last_name":"Thomson","is_admin":false,"id":3},"description":"gggggggggggggggg"},{"user":{"photo":{"link":"http://localhost:3000/src/files/photos/dog4780-9.png","id":14},"first_name":"Lyu","last_name":"Po","is_admin":true,"id":2},"description":"head admin"},{"user":{"photo":null,"first_name":"Max","last_name":"Collins","is_admin":false,"id":11},"description":"'Sport articles and books'"},{"user":{"photo":null,"first_name":"Alan","last_name":"Estrada","is_admin":false,"id":12},"description":"'Sport articles and books'"}]  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   9333      0 --:--:-- --:--:-- --:--:--  9333
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    13    0    13    0     0    500      0 --:--:-- --:--:-- --:--:--   500
+Author edited  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    13    0    13    0     0   1444      0 --:--:-- --:--:-- --:--:--  1444
+Author edited  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   679    0   679    0     0  52230      0 --:--:-- --:--:-- --:--:-- 52230
+[{"user":{"photo":null,"first_name":"Ann","last_name":"Dilly","is_admin":false,"id":4},"description":"The best"},{"user":{"photo":null,"first_name":"Ben","last_name":"Thomson","is_admin":false,"id":3},"description":"gggggggggggggggg"},{"user":{"photo":{"link":"http://localhost:3000/src/files/photos/dog4780-9.png","id":14},"first_name":"Lyu","last_name":"Po","is_admin":true,"id":2},"description":"head admin"},{"user":{"photo":null,"first_name":"Max","last_name":"Collins","is_admin":false,"id":11},"description":"'Sport articles and books'"},{"user":{"photo":null,"first_name":"Alan","last_name":"Estrada","is_admin":false,"id":12},"description":"'Sport articles and books'"}]  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   2000      0 --:--:-- --:--:-- --:--:--  2000
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   1333      0 --:--:-- --:--:-- --:--:--  1333
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   9333      0 --:--:-- --:--:-- --:--:--  9333
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   9333      0 --:--:-- --:--:-- --:--:--  9333
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0   2545      0 --:--:-- --:--:-- --:--:--  2545
+No exists User with such id!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    14    0    14    0     0   1000      0 --:--:-- --:--:-- --:--:--  1000
+Author removed  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    14    0    14    0     0   1000      0 --:--:-- --:--:-- --:--:--  1000
+Author removed

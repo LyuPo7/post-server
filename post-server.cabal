@@ -42,6 +42,7 @@ library
       Post.DB.User
       Post.Exception
       Post.Logger
+      Post.Proba
       Post.Server.Methods.Account
       Post.Server.Methods.Author
       Post.Server.Methods.Category

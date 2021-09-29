@@ -2,13 +2,14 @@
 
 module Post.Server.Methods.Comment where
 
-import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Network.HTTP.Types (Query)
+import Text.Read (readMaybe)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Network.Wai (ResponseReceived, Response)
 
 import Post.Server.ServerSpec (Handle(..))
-import qualified Post.Server.Objects as PSO
+import Post.Server.Objects (Permission(..))
 import qualified Post.Logger as Logger
 import qualified Post.DB.Comment as DBCo
 import qualified Post.DB.Account as DBAC
@@ -23,15 +24,21 @@ createCommentResp handle sendResponce query = do
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
     Right reqParams -> do
-      let [postId, text, token] = reqParams
+      let [idPost, text, token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
-      let action | perm == PSO.UserPerm = do
-                    userIdMaybe <- DBAC.getUserId dbh token
-                    let userId = fromMaybe (-1) userIdMaybe
-                    msg <- DBCo.createComment dbh (read (T.unpack postId) :: Integer) userId text
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "Comment created"
-                      Just errMsg -> sendResponce $ respError errMsg
+      let action | perm == UserPerm = do
+                    msgM <- runMaybeT $ do
+                      userId <- MaybeT $ DBAC.getUserId dbh token
+                      let (Just postId) = readMaybe $ T.unpack idPost
+                      msg <- MaybeT $ DBCo.createComment dbh postId userId text
+                      return msg
+                    case msgM of
+                      Just _ -> do
+                        Logger.logInfo logh "Comment was created"
+                        sendResponce $ respSucc "Comment was created"
+                      Nothing -> do
+                        Logger.logError logh "Error while creating Comment!"
+                        sendResponce $ respError "Error while creating Comment!"
                  | otherwise = sendResponce resp404
       action
     where

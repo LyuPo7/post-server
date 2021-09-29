@@ -2,14 +2,17 @@
 
 module Post.Server.Methods.Post where
 
-import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Network.HTTP.Types (Query)
+import Text.Read (readMaybe)
+import Control.Monad (guard)
+import Control.Monad.Trans (lift)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Network.Wai (ResponseReceived, Response)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import qualified Post.Server.Objects as PSO
+import Post.Server.Objects (Permission(..))
 import qualified Post.DB.Post as DBP
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
@@ -25,13 +28,17 @@ getPostsResp handle sendResponce query = do
     Right reqParams -> do
       let [token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
-      let action | perm == PSO.UserPerm = do
+      let action | perm == UserPerm = do
                     let dbQueryParams = Util.createOptionalDict query paramsOpt
-                    let dbQuery = Util.createDbRequest dbQueryParams
+                        dbQuery = Util.createDbRequest dbQueryParams
                     postsMaybe <- DBP.getPosts dbh dbQuery
                     case postsMaybe of
-                      Nothing -> sendResponce $ respError "No posts"
-                      Just posts -> sendResponce $ respOk posts
+                      Nothing -> do
+                        Logger.logError logh "No posts"
+                        sendResponce $ respError "No posts"
+                      Just posts -> do
+                        Logger.logInfo logh "Authors were sent"
+                        sendResponce $ respOk posts
                  | otherwise = sendResponce resp404
       action
     where
@@ -46,17 +53,22 @@ createPostResp handle sendResponce query = do
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
     Right reqParams -> do
-      let [title, text, cat_id, tag_ids, token] = reqParams
+      let [title, text, idCat, idsTag, token] = reqParams
       perm <- DBAC.checkAuthorWritePerm dbh token
-      let action | perm == PSO.AuthorWritePerm = do
-                    authorIdMaybe <- DBAC.getAuthorId dbh token
-                    let catId = read (T.unpack cat_id) :: Integer
-                        tagIds = read (T.unpack tag_ids) :: [Integer]
-                        authorId = fromMaybe (-1) authorIdMaybe
-                    msg <- DBP.createPost dbh title text authorId catId tagIds
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "Post created"
-                      Just errMsg -> sendResponce $ respError errMsg
+      let action | perm == AuthorWritePerm = do
+                    msgM <- runMaybeT $ do
+                      let (Just catId) = readMaybe $ T.unpack idCat
+                          (Just tagIds) = readMaybe $ T.unpack idsTag
+                      authorId <- MaybeT $ DBAC.getAuthorId dbh token
+                      msg <- MaybeT $ DBP.createPost dbh title text authorId catId tagIds
+                      return msg
+                    case msgM of
+                      Just _ -> do
+                        Logger.logInfo logh "Post was created"
+                        sendResponce $ respSucc "Post was created"
+                      Nothing -> do
+                        Logger.logError logh "Error while creating Post!"
+                        sendResponce $ respError "Error while creating Post!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -70,13 +82,20 @@ removePostResp handle sendResponce query = do
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
     Right reqParams -> do
-      let [postId, token] = reqParams
+      let [idPost, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
-                    msg <- DBP.removePost dbh (read (T.unpack postId) :: Integer)
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "Post removed"
-                      Just errMsg -> sendResponce $ respError errMsg
+      let action | perm == AdminPerm = do
+                    msgM <- runMaybeT $ do
+                      let (Just postId) = readMaybe $ T.unpack idPost
+                      msg <- MaybeT $ DBP.removePost dbh postId
+                      return msg
+                    case msgM of
+                      Just _ -> do
+                        Logger.logInfo logh "Post was removed"
+                        sendResponce $ respSucc "Post was removed"
+                      Nothing -> do
+                        Logger.logError logh "Error while removing Post!"
+                        sendResponce $ respError "Error while removing Post!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -90,15 +109,20 @@ setPostMainPhotoResp handle sendResponce query = do
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
     Right reqParams -> do
-      let [postId, path, token] = reqParams
-      perm <- DBAC.checkAuthorReadPerm dbh token (read (T.unpack postId) :: Integer)
-      let action | perm == PSO.AuthorReadPerm = do
-                    msg <- DBP.setPostMainPhoto dbh (read (T.unpack postId) :: Integer) path
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "Post Main Photo uploaded"
-                      Just errMsg -> sendResponce $ respError errMsg
-                 | otherwise = sendResponce resp404
-      action
+      let [idPost, path, token] = reqParams
+      msgM <- runMaybeT $ do
+        let (Just postId) = readMaybe $ T.unpack idPost
+        perm <- lift $ DBAC.checkAuthorReadPerm dbh token postId
+        guard $ perm == AuthorReadPerm
+        msg <- MaybeT $ DBP.setPostMainPhoto dbh postId path
+        return msg
+      case msgM of
+        Just _ -> do
+          Logger.logInfo logh "Post Main Photo was uploaded"
+          sendResponce $ respSucc "Post Main Photo was uploaded"
+        Nothing -> do
+          Logger.logError logh "Error while uploading Post's Main Photo!"
+          sendResponce resp404
     where
       params = ["post_id", "path", "token"]
 
@@ -110,14 +134,19 @@ setPostAddPhotoResp handle sendResponce query = do
   case Util.extractRequired query params of
     Left msgE -> sendResponce $ respError msgE
     Right reqParams -> do
-      let [postId, path, token] = reqParams
-      perm <- DBAC.checkAuthorReadPerm dbh token (read (T.unpack postId) :: Integer)
-      let action | perm == PSO.AuthorReadPerm = do
-                    msg <- DBP.setPostAddPhoto dbh (read (T.unpack postId) :: Integer) path
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "Post Add Photo uploaded"
-                      Just errMsg -> sendResponce $ respError errMsg
-                 | otherwise = sendResponce resp404
-      action
+      let [idPost, path, token] = reqParams
+      msgM <- runMaybeT $ do
+        let (Just postId) = readMaybe $ T.unpack idPost
+        perm <- lift $ DBAC.checkAuthorReadPerm dbh token postId
+        guard $ perm == AuthorReadPerm
+        msg <- MaybeT $ DBP.setPostAddPhoto dbh postId path
+        return msg
+      case msgM of
+        Just _ -> do
+          Logger.logInfo logh "Post Additional Photo was uploaded"
+          sendResponce $ respSucc "Post Additional Photo was uploaded"
+        Nothing -> do
+          Logger.logError logh "Error while uploading Post's Main Photo!"
+          sendResponce resp404
     where
       params = ["post_id", "path", "token"]

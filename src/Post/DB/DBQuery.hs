@@ -12,6 +12,7 @@ import qualified Post.DB.Category as DBC
 import qualified Post.DB.Tag as DBT
 import qualified Post.DB.Draft as DBD
 import qualified Post.DB.Photo as DBPh
+import qualified Post.DB.Comment as DBCom
 import qualified Post.DB.Account as DBAc
 
 withHandleIO :: Logger.Handle IO -> DBSpec.Handle IO -> DBSpec.Config -> (Handle IO -> IO a) -> IO a
@@ -35,12 +36,16 @@ withHandleIO logger dbh config f = do
     getPostTagsIds = DBP.getPostTagsIds dbh,
     getPostDraftId = DBP.getPostDraftId dbh,
     createPostAuthorDep = DBP.createPostAuthorDep dbh,
-    createPostCatDep = DBP.createPostCatDep dbh,
+    createPostCatDep = DBP.createPostCatDep dbh,  
     createPostTagDep = DBP.createPostTagDep dbh,
     createPostDraftDep = DBP.createPostDraftDep dbh,
     removePostAuthorDep = DBP.removePostAuthorDep dbh,
     removePostCatDep = DBP.removePostCatDep dbh,
     removePostTagDep = DBP.removePostTagDep dbh,
+    removePostMainPhotoDep = DBP.removePostMainPhotoDep dbh,
+    removePostAddPhotoDep = DBP.removePostAddPhotoDep dbh,
+    removePostCommentDep = DBP.removePostCommentDep dbh,
+    removePostDraftDep = DBP.removePostDraftDep dbh,
     newPost = DBP.newPost dbh,
   
     createUser = DBU.createUser dbh,
@@ -50,6 +55,7 @@ withHandleIO logger dbh config f = do
     setUserPhoto = DBU.setUserPhoto dbh,
     getUserPhoto = DBU.getUserPhoto dbh,
     newUser = DBU.newUser dbh,
+    removeUserPhotoDeps = DBU.removeUserPhotoDeps dbh,
   
     createAuthor = DBA.createAuthor dbh,
     createAuthorUserDep = DBA.createAuthorUserDep dbh,
@@ -80,9 +86,8 @@ withHandleIO logger dbh config f = do
     newTag = DBT.newTag,
 
     createDraft = DBD.createDraft dbh,
-    getDraft = DBD.getDraft dbh,
+    getDrafts = DBD.getDrafts dbh,
     removeDraft = DBD.removeDraft dbh,
-    removePostDraftDep = DBD.removePostDraftDep dbh,
     editDraft = DBD.editDraft dbh,
     publishDraft = DBD.publishDraft dbh,
     getDraftText = DBD.getDraftText dbh,
@@ -91,6 +96,12 @@ withHandleIO logger dbh config f = do
     savePhoto = DBPh.savePhoto dbh,
     getPhoto = DBPh.getPhoto dbh,
     newPhoto = DBPh.newPhoto,
+    
+    createComment = DBCom.createComment dbh,
+    createCommentUserDep = DBCom.createCommentUserDep dbh,
+    createPostCommentDep = DBCom.createPostCommentDep dbh,
+    getComment = DBCom.getComment dbh,
+    newComment = DBCom.newComment,
 
     getToken = DBAc.getToken dbh,
     checkAdminPerm = DBAc.checkAdminPerm dbh,

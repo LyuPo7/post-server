@@ -22,7 +22,11 @@ login handle sendResponce query = do
       let [userLogin, password] = reqParams
       (tokenMaybe, msg) <- DBAC.getToken dbh userLogin password
       case tokenMaybe of
-        Nothing -> sendResponce $ respError msg
-        Just token -> sendResponce $ respOk token 
+        Nothing -> do
+          Logger.logInfo logh "Comment was created"
+          sendResponce $ respError msg
+        Just token -> do
+          Logger.logInfo logh $ "New token was sent to User: " <> userLogin <> "."
+          sendResponce $ respOk token 
     where
       params = ["login", "password"]

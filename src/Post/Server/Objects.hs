@@ -8,7 +8,14 @@ import Data.Aeson (camelTo2)
 import Data.Aeson.Types (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, fieldLabelModifier, genericParseJSON)
 
 -- Synonims
-type Id = Integer
+type UserId = Integer
+type AuthorId = Integer
+type CategoryId = Integer
+type TagId = Integer
+type CommentId = Integer
+type DraftId = Integer
+type PostId = Integer
+type PhotoId = Integer
 --type Token = Text
 type Password = Text
 type Login = Text
@@ -20,7 +27,7 @@ type Link = Text
 
 -- | Account
 data Account = Account {
-  account_id :: Id,
+  account_id :: UserId,
   account_token :: Text,
   account_password :: Password,
   account_login :: Login,
@@ -45,7 +52,7 @@ data Permission = AdminPerm | AuthorReadPerm | AuthorWritePerm | UserPerm | NoPe
 
 -- | User
 data User = User {
-  user_id :: Id, -- Unique identifier for this User.
+  user_id :: UserId, -- Unique identifier for this User.
   user_isAdmin :: Bool, -- True, if this user is a Admin.
   user_firstName :: FirstName, -- User's first name.
   user_lastName :: LastName, -- User's last name.
@@ -76,7 +83,7 @@ instance ToJSON Author where
 
 -- | Category
 data Category = Category {
-  category_id :: Id, -- Unique identifier for this Category.
+  category_id :: CategoryId, -- Unique identifier for this Category.
   category_title :: Title, -- Title of Category.
   category_subcategory :: Maybe Category -- Subcategory of Category.
   } deriving (Show,Generic)
@@ -91,7 +98,7 @@ instance ToJSON Category where
 
 -- | Tag
 data Tag = Tag {
-  tag_id :: Id, -- Unique identifier for this Tag.
+  tag_id :: TagId, -- Unique identifier for this Tag.
   tag_title :: Title -- Title of Tag.
 } deriving (Show,Generic)
 
@@ -105,7 +112,7 @@ instance ToJSON Tag where
 
 -- | Post
 data Post = Post {
-  post_id :: Id, -- Unique identifier for this Post.
+  post_id :: PostId, -- Unique identifier for this Post.
   post_author :: Author, -- Author of Post.
   post_title :: Title, -- Title of Post.
   post_createdAt :: Text, -- Date when the Post was created.
@@ -127,7 +134,7 @@ instance ToJSON Post where
 
 -- | Comment
 data Comment = Comment {
-  comment_id :: Id, -- Unique identifier for this Comment.
+  comment_id :: CommentId, -- Unique identifier for this Comment.
   comment_text :: Text -- Comment's text.
 } deriving (Show,Generic)
 
@@ -141,7 +148,7 @@ instance ToJSON Comment where
 
 -- | Draft
 data Draft = Draft {
-  draft_id :: Id, -- Unique identifier for this Draft.
+  draft_id :: DraftId, -- Unique identifier for this Draft.
   draft_text :: Text -- Draft's text.
 } deriving (Show,Generic)
 
@@ -155,7 +162,7 @@ instance ToJSON Draft where
 
 -- | Photo
 data Photo = Photo {
-  photo_id :: Id, -- Identifier for this Photo.
+  photo_id :: PhotoId, -- Identifier for this Photo.
   photo_link :: Link -- Link to Photo.
   } deriving (Show,Generic) 
 

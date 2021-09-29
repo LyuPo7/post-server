@@ -4,11 +4,13 @@ module Post.Server.Methods.Author where
 
 import qualified Data.Text as T
 import Network.HTTP.Types (Query)
+import Text.Read (readMaybe)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Network.Wai (ResponseReceived, Response)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import qualified Post.Server.Objects as PSO
+import Post.Server.Objects (Permission(..))
 import qualified Post.DB.Author as DBA
 import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
@@ -21,15 +23,21 @@ getAuthorsResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: get Author records"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
+      let action | perm == AdminPerm = do
                     (authors, msg) <- DBA.getAuthors dbh
                     case authors of 
-                      [] -> sendResponce $ respError msg
-                      _ -> sendResponce $ respOk authors
+                      [] -> do
+                        Logger.logError logh msg
+                        sendResponce $ respError msg
+                      _ -> do
+                        Logger.logInfo logh "Authors were sent"
+                        sendResponce $ respOk authors
                  | otherwise = sendResponce resp404
       action
     where
@@ -41,19 +49,25 @@ createAuthorResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: create Author record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
-      let [userId, description, token] = reqParams
+      let [idUser, description, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
-                    checkUser <- DBU.getUser dbh (read (T.unpack userId) :: Integer)
-                    case checkUser of
-                      Nothing -> sendResponce $ respError "No exists User with such id!"
+      let action | perm == AdminPerm = do
+                    msgM <- runMaybeT $ do
+                      let (Just userId) = readMaybe $ T.unpack idUser
+                      _ <- MaybeT $ DBU.getUser dbh userId
+                      msg <- MaybeT $ DBA.createAuthor dbh userId description
+                      return msg
+                    case msgM of
                       Just _ -> do
-                        msg <- DBA.createAuthor dbh (read (T.unpack userId) :: Integer) description
-                        case msg of
-                          Nothing -> sendResponce $ respSucc "Author created"
-                          Just errMsg -> sendResponce $ respError errMsg
+                        Logger.logInfo logh "Author was created"
+                        sendResponce $ respSucc "Author was created"
+                      Nothing -> do
+                        Logger.logError logh "Error while creating Author!"
+                        sendResponce $ respError "Error while creating Author!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -65,19 +79,25 @@ removeAuthorResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: remove Author record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
-      let [userId, token] = reqParams
+      let [idUser, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
-                    checkUser <- DBU.getUser dbh (read (T.unpack userId) :: Integer)
-                    case checkUser of
-                      Nothing -> sendResponce $ respError "No exists User with such id!"
+      let action | perm == AdminPerm = do
+                    msgM <- runMaybeT $ do
+                      let (Just userId) = readMaybe $ T.unpack idUser
+                      _ <- MaybeT $ DBU.getUser dbh userId
+                      msg <- MaybeT $ DBA.removeAuthor dbh userId
+                      return msg
+                    case msgM of
                       Just _ -> do
-                        msg <- DBA.removeAuthor dbh (read (T.unpack userId) :: Integer)
-                        case msg of
-                          Nothing -> sendResponce $ respSucc "Author removed"
-                          Just errMsg -> sendResponce $ respError errMsg
+                        Logger.logInfo logh "Author was removed"
+                        sendResponce $ respSucc "Author was removed"
+                      Nothing -> do
+                        Logger.logError logh "Error while removing Author!"
+                        sendResponce $ respError "Error while removing Author!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -89,19 +109,25 @@ editAuthorResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: edit Author record"
   case Util.extractRequired query params of
-    Left mesgE -> sendResponce $ respError mesgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
-      let [userId, newDescription, token] = reqParams
+      let [idUser, newDescription, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
-                    checkUser <- DBU.getUser dbh (read (T.unpack userId) :: Integer)
-                    case checkUser of
-                      Nothing -> sendResponce $ respError "No exists User with such id!"
+      let action | perm == AdminPerm = do
+                    msgM <- runMaybeT $ do
+                      let (Just userId) = readMaybe $ T.unpack idUser
+                      _ <- MaybeT $ DBU.getUser dbh userId
+                      msg <- MaybeT $ DBA.editAuthor dbh userId newDescription
+                      return msg
+                    case msgM of
                       Just _ -> do
-                        msg <- DBA.editAuthor dbh (read (T.unpack userId) :: Integer) newDescription
-                        case msg of
-                          Nothing -> sendResponce $ respSucc "Author edited"
-                          Just errMsg -> sendResponce $ respError errMsg
+                        Logger.logInfo logh "Author was edited"
+                        sendResponce $ respSucc "Author was edited"
+                      Nothing -> do
+                        Logger.logError logh "Error while editing Author!"
+                        sendResponce $ respError "Error while editing Author!"
                  | otherwise = sendResponce resp404
       action
     where

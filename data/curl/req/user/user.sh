@@ -1,0 +1,22 @@
+#!/bin/bash
+### Tags
+## getUsers
+curl "http://localhost:3000/getUsers?token=2a874271-f5e5-451b-bb9f-fe6a281414bf"
+## createUser
+curl "http://localhost:3000/createUser?first_name=Tom&last_name=Marston&login=tom1&password=ggkjh6723"
+curl "http://localhost:3000/createUser?first_name=Ann&last_name=Watson&login=ann_watson&password=sdsdsdsds"
+curl "http://localhost:3000/createUser?first_name=Lyuba&last_name=Pornova&login=lyupo&password=17772FGH"
+curl "http://localhost:3000/createUser?first_name=Max&last_name=Collins&login=maX&password=ABCD"
+curl "http://localhost:3000/createUser?first_name=Alan&last_name=Estrada&login=alXM&password=&kopk()hk"
+curl "http://localhost:3000/createUser?first_name=Alex&last_name=Richardson&login=alex#rich&password=jkjksssjlYvgf"
+## getUsers
+curl "http://localhost:3000/getUsers?token=2a874271-f5e5-451b-bb9f-fe6a281414bf"
+## gsetUserPhoto
+curl "http://localhost:3000/setUserPhoto?path=/home/lyupo/Descargas/dog.png&token=2a874271-f5e5-451b-bb9f-fe6a281414bf"
+## createUser
+curl "http://localhost:3000/removeUser?id=5&&token=2a874271-f5e5-451b-bb9f-fe6a281414bf"
+curl "http://localhost:3000/removeUser?id=6&&token=2a874271-f5e5-451b-bb9f-fe6a281414bf"
+curl "http://localhost:3000/removeUser?id=7&&token=2a874271-f5e5-451b-bb9f-fe6a281414bf"
+curl "http://localhost:3000/removeUser?id=8&&token=2a874271-f5e5-451b-bb9f-fe6a281414bf"
+curl "http://localhost:3000/removeUser?id=9&&token=2a874271-f5e5-451b-bb9f-fe6a281414bf"
+curl "http://localhost:3000/removeUser?id=10&&token=2a874271-f5e5-451b-bb9f-fe6a281414bf"

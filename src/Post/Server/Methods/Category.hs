@@ -4,11 +4,13 @@ module Post.Server.Methods.Category where
 
 import qualified Data.Text as T
 import Network.HTTP.Types (Query)
+import Text.Read (readMaybe)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Network.Wai (ResponseReceived, Response)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import qualified Post.Server.Objects as PSO
+import Post.Server.Objects (Permission(..))
 import qualified Post.DB.Category as DBC
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
@@ -20,15 +22,21 @@ getCatsResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: get Category records"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [token] = reqParams
       perm <- DBAC.checkUserPerm dbh token
-      let action | perm == PSO.UserPerm = do
+      let action | perm == UserPerm = do
                     (cats, msg) <- DBC.getCats dbh
                     case cats of
-                      [] -> sendResponce $ respError msg
-                      _ -> sendResponce $ respOk cats
+                      [] -> do
+                        Logger.logError logh msg
+                        sendResponce $ respError msg
+                      _ -> do
+                        Logger.logInfo logh "Categories were sent"
+                        sendResponce $ respOk cats
                  | otherwise = sendResponce resp404
       action
     where
@@ -40,16 +48,22 @@ createCatResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: create Category record"
   case Util.extractRequired query paramsReq of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [title, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
+      let action | perm == AdminPerm = do
                     let [subcat] = Util.extractOptional query paramsOpt
                     msg <- DBC.createCat dbh title subcat
                     case msg of
-                      Nothing -> sendResponce $ respSucc "Category created"
-                      Just errMsg -> sendResponce $ respError errMsg
+                      Just _ -> do
+                        Logger.logInfo logh "Category was created"
+                        sendResponce $ respSucc "Category was created"
+                      Nothing -> do
+                        Logger.logError logh "Error while creating Category!"
+                        sendResponce $ respError "Error while creating Category!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -62,15 +76,25 @@ removeCatResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: remove Category record"
   case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [catId, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
-                    msg <- DBC.removeCat dbh (read (T.unpack catId) :: Integer)
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "Category removed"
-                      Just errMsg -> sendResponce $ respError errMsg
+      let action | perm == AdminPerm = do
+                    catMsg <- runMaybeT $ do
+                      let (Just idCat) = readMaybe $ T.unpack catId
+                      msg <- MaybeT $ DBC.removeCat dbh idCat
+                      return (idCat, msg)
+                    case catMsg of
+                      Just (idCat, _) -> do
+                        _ <- DBC.removeCatPostDeps dbh idCat
+                        Logger.logInfo logh "Category was removed"
+                        sendResponce $ respSucc "Category was removed"
+                      Nothing -> do
+                        Logger.logError logh "Error while removing Category!"
+                        sendResponce $ respError "Error while removing Category!"
                  | otherwise = sendResponce resp404
       action
     where
@@ -82,16 +106,25 @@ editCatResp handle sendResponce query = do
       dbh = hDB handle
   Logger.logInfo logh "Processing request: edit Category record"
   case Util.extractRequired query paramsReq of
-    Left msgE -> sendResponce $ respError msgE
+    Left msgE -> do
+      Logger.logError logh msgE
+      sendResponce $ respError msgE
     Right reqParams -> do
       let [idUser, newTitle, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == PSO.AdminPerm = do
+      let action | perm == AdminPerm = do
                     let [subNew] = Util.extractOptional query paramsOpt
-                    msg <- DBC.editCat dbh (read (T.unpack idUser) :: Integer) newTitle subNew
-                    case msg of
-                      Nothing -> sendResponce $ respSucc "Category updated"
-                      Just errMsg -> sendResponce $ respError errMsg
+                    catMsg <- runMaybeT $ do
+                      let (Just userId) = readMaybe $ T.unpack idUser
+                      msg <- MaybeT $  DBC.editCat dbh userId newTitle subNew
+                      return (userId, msg)
+                    case catMsg of
+                      Nothing -> do
+                        Logger.logError logh "Error while editing Category!"
+                        sendResponce $ respError "Error while editing Category!"
+                      Just _ -> do
+                        Logger.logInfo logh "Category was edited"
+                        sendResponce $ respSucc $ "Category was edited"
                  | otherwise = sendResponce resp404
       action
     where
