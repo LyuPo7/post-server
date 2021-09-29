@@ -2,17 +2,14 @@
 
 module Post.Server.Methods.User where
 
-import qualified Data.Text as T
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
-import Text.Read (readMaybe)
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
 import Post.Server.Objects (Permission(..))
 import qualified Post.DB.User as DBU
-import qualified Post.DB.Author as DBA
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
@@ -79,14 +76,12 @@ removeUserResp handle sendResponce query = do
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == AdminPerm = do
                     userMsg <- runMaybeT $ do
-                      let (Just userId) = readMaybe $ T.unpack idUser
+                      userId <- MaybeT $ Util.readMaybeMa idUser
                       msg <- MaybeT $ DBU.removeUser dbh userId
                       return (userId, msg)
                     case userMsg of
                       Just (userId, _) -> do
                         _ <- DBU.removeUserPhotoDeps dbh userId
-                        _ <- DBA.removeAuthor dbh userId
-                        _ <- DBA.removeAuthorUserDep dbh userId
                         Logger.logInfo logh "User removed"
                         sendResponce $ respSucc "User removed"
                       Nothing -> do

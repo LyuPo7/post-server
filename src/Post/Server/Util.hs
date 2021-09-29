@@ -7,6 +7,7 @@ import qualified Data.UUID.V4 as V4
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.List (intercalate)
+import Text.Read (readMaybe)
 import Network.HTTP.Types (Query)
 import Control.Monad (join)
 import Database.HDBC (toSql, SqlValue(..))
@@ -188,3 +189,6 @@ orderByToDb _ = error "orderByToDb function: Too many elements in dictionary!"
 
 convert :: Show a => a -> Text
 convert = T.pack . show
+
+readMaybeMa :: (Monad m, Read a) => Text -> m (Maybe a)
+readMaybeMa = return . readMaybe . T.unpack

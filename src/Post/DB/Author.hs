@@ -169,7 +169,7 @@ removeAuthorUserDep handle userId = handleSql errorHandler $ do
                        \WHERE user_id = ?" 
        [toSql userId]
   case r of
-    [] -> do Logger.logError logh "Dependency between Author and User doesn't exist."
+    [] -> do Logger.logWarning logh "Dependency between Author and User doesn't exist."
     _ -> do
       _ <- run dbh "DELETE FROM author_user \
                    \WHERE user_id = ?"

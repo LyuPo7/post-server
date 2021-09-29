@@ -31,11 +31,11 @@ createTag handle tagTitle = handleSql errorHandler $ do
       Logger.logInfo logh $ "Tag with title: '"
         <> tagTitle
         <> "' was successfully inserted in db."
-      return Nothing
+      return $ Just $ tagTitle
     _ -> do
-      Logger.logWarning logh $ "Tag with title: "
+      Logger.logWarning logh $ "Tag with title: '"
         <> tagTitle
-        <> " already exists in db."
+        <> "' already exists in db."
       return Nothing
   where errorHandler e = do
          Exc.throwIO $ E.DbError $ "Error: Error in createTag!\n"
@@ -98,14 +98,14 @@ removeTag handle tagTitle = handleSql errorHandler $ do
                    \WHERE title = ?"
            [toSql tagTitle]
       commit dbh
-      Logger.logInfo logh $ "Removing tag with title: "
+      Logger.logInfo logh $ "Removing tag with title: '"
         <> tagTitle
-        <> " from db."
+        <> "' from db."
       return $ Just $ fromSql tagId
     _ -> do
-      Logger.logWarning logh $ "No exists tag with title: "
+      Logger.logWarning logh $ "No exists tag with title: '"
         <> tagTitle
-        <> " in db!"
+        <> "' in db!"
       return Nothing
   where errorHandler e = do
           Exc.throwIO $ E.DbError $ "Error: Error in removeTag!\n"
@@ -132,9 +132,9 @@ editTag handle oldTitle newTitle = handleSql errorHandler $ do
         <> "."
       return $ Just newTitle
     _ -> do
-      Logger.logError logh $ "Tag with title: "
+      Logger.logError logh $ "Tag with title: '"
         <> oldTitle
-        <> " doesn't exist!"
+        <> "' doesn't exist!"
       return Nothing
   where errorHandler e = do
          Exc.throwIO $ E.DbError $ "Error: Error in editTag!\n"
@@ -151,7 +151,7 @@ removeTagPostsDeps handle tagId = handleSql errorHandler $ do
   case r of
     [] -> Logger.logWarning logh "No Posts corresponding to this Tag in db!"
     _ -> do
-      Logger.logInfo logh "Removing post_id corresponding to this Tag from db."
+      Logger.logInfo logh "Removing dependencies between Post and Tag from db."
       _ <- run dbh "DELETE FROM post_tag \
                    \WHERE tag_id = ?"
            [toSql tagId]

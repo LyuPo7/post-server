@@ -95,24 +95,36 @@ removeUser :: Handle IO -> UserId -> IO (Maybe UserId)
 removeUser handle userId = handleSql errorHandler $ do
   let dbh = conn handle
       logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id \
+  r1 <- quickQuery' dbh "SELECT id \
                        \FROM users \
                        \WHERE id = ?" 
        [toSql userId]
-  case r of
+  case r1 of
     [] -> do
       Logger.logWarning logh $ "No exists user with id: "
         <> convert userId
         <> " in db!"
       return Nothing
     _ -> do
-      _ <- run dbh "DELETE FROM users WHERE id = ?"
-           [toSql userId]
-      commit dbh
-      Logger.logInfo logh $ "Removing User with id: "
-        <> convert userId
-        <> " from db."
-      return $ Just userId
+      r2 <- quickQuery' dbh "SELECT author_id \
+                       \FROM author_user \
+                       \WHERE user_id = ?" 
+             [toSql userId]
+      case r2 of
+        [] -> do
+          _ <- run dbh "DELETE FROM users \
+                       \WHERE id = ?"
+               [toSql userId]
+          commit dbh
+          Logger.logInfo logh $ "Removing User with id: "
+            <> convert userId
+            <> " from db."
+          return $ Just userId
+        _ -> do
+          Logger.logError logh $ "User with id: "
+            <> convert userId
+            <> " is Author. You need before remove Author!"
+          return Nothing
   where errorHandler e = do 
          Exc.throwIO $ E.DbError $ "Error: Error in removeUser!\n"
            <> show e
@@ -150,7 +162,7 @@ setUserPhoto handle userId path = handleSql errorHandler $ do
                 [toSql photoId, toSql userId]
           commit dbh
           Logger.logInfo logh "User's Photo was successfully updated."
-          return Nothing
+          return $ Just photoId
   where errorHandler e = do
           Exc.throwIO $ E.DbError $ "Error: Error in setUserPhoto!\n"
             <> show e

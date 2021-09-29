@@ -17,7 +17,7 @@ getTagsResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO Res
 getTagsResp handle sendResponce query = do
   let logh = hLogger handle
       dbh = hDB handle
-  Logger.logInfo logh "Processing request: get Post records"
+  Logger.logInfo logh "Processing request: get Tag records"
   case Util.extractRequired query params of
     Left msgE -> do
       Logger.logError logh msgE
@@ -52,8 +52,8 @@ createTagResp handle sendResponce query = do
       let [title, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
-                    msg <- DBT.createTag dbh title
-                    case msg of
+                    tagIdM <- DBT.createTag dbh title
+                    case tagIdM of
                       Just _ -> do
                         Logger.logInfo logh "Tag created"
                         sendResponce $ respSucc "Tag created"
@@ -78,8 +78,8 @@ removeTagResp handle sendResponce query = do
       let [tagTitle, token] = reqParams
       perm <- DBAC.checkAdminPerm dbh token
       let action | perm == PSO.AdminPerm = do
-                    msg <- DBT.removeTag dbh tagTitle
-                    case msg of
+                    tagIdM <- DBT.removeTag dbh tagTitle
+                    case tagIdM of
                       Just tagId -> do
                          _ <- DBT.removeTagPostsDeps dbh tagId
                          Logger.logInfo logh "Tag removed"
