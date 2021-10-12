@@ -3,21 +3,21 @@
 module Post.Server.Methods.User where
 
 import Network.HTTP.Types (Query)
-import Network.Wai (ResponseReceived, Response)
+import Network.Wai (Response)
 import Control.Monad.Trans.Either
 import Control.Monad.Trans (lift)
 import Control.Monad (guard)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import Post.Server.Objects (Permission(..))
 import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
+import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
-getUsersResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-getUsersResp handle sendResponce query = do
+getUsersResp :: Monad m => Handle m -> Query -> m Response
+getUsersResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get User records"
@@ -28,19 +28,19 @@ getUsersResp handle sendResponce query = do
     guard $ perm == UserPerm
     return token
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right _ -> do
       usersE <- DBU.getUserRecords dbqh
       case usersE of
-        Left msg -> sendResponce $ respError msg
+        Left msg -> return $ respError msg
         Right users -> do
           Logger.logInfo logh "Users sent"
-          sendResponce $ respOk users
+          return $ respOk users
     where
       params = ["token"]
 
-createUserResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-createUserResp handle sendResponce query = do
+createUserResp :: Monad m => Handle m -> Query -> m Response
+createUserResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create User record"
@@ -53,13 +53,13 @@ createUserResp handle sendResponce query = do
     Right login -> do
       let msg = "User: '" <> login <> "' registred"
       Logger.logInfo logh msg
-      sendResponce $ respSucc msg
-    Left msg -> sendResponce $ respError msg
+      return $ respSucc msg
+    Left msg -> return $ respError msg
     where
       params = ["first_name", "last_name", "login", "password"]
 
-removeUserResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-removeUserResp handle sendResponce query = do
+removeUserResp :: Monad m => Handle m -> Query -> m Response
+removeUserResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove User record"
@@ -70,7 +70,7 @@ removeUserResp handle sendResponce query = do
     guard $ perm == AdminPerm
     return idUser
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right idUser -> do
       userIdE <- runEitherT $ do
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
@@ -81,13 +81,13 @@ removeUserResp handle sendResponce query = do
           _ <- DBU.removeUserPhotoDeps dbqh userId
           let msg = "User removed"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
-        Left msg -> sendResponce $ respError msg
+          return $ respSucc msg
+        Left msg -> return $ respError msg
     where
       params = ["id", "token"]
 
-setUserPhotoResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-setUserPhotoResp handle sendResponce query = do
+setUserPhotoResp :: Monad m => Handle m -> Query -> m Response
+setUserPhotoResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add Photo to User record"
@@ -98,7 +98,7 @@ setUserPhotoResp handle sendResponce query = do
     guard $ perm == UserPerm
     return (path, token)
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right (path, token) -> do
       photoIdE <- runEitherT $ do
         userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
@@ -107,7 +107,7 @@ setUserPhotoResp handle sendResponce query = do
         Right _ -> do
           let msg = "User Photo was loaded"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
-        Left msg -> sendResponce $ respError msg
+          return $ respSucc msg
+        Left msg -> return $ respError msg
     where
       params = ["path", "token"]

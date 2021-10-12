@@ -5,7 +5,9 @@ module Post.Server.Objects where
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Data.Aeson (camelTo2)
-import Data.Aeson.Types (ToJSON(..), FromJSON(..), genericToJSON, defaultOptions, fieldLabelModifier, genericParseJSON)
+import Data.Aeson.Types (ToJSON(..), FromJSON(..), 
+                         genericToJSON, defaultOptions, 
+                         fieldLabelModifier, genericParseJSON)
 
 -- Synonims
 type UserId = Integer
@@ -44,7 +46,12 @@ instance ToJSON Account where
     fieldLabelModifier = camelTo2 '_' . drop 8 }
 
 -- | Permission
-data Permission = AdminPerm | AuthorReadPerm | AuthorWritePerm | UserPerm | NoPerm deriving (Show, Eq, Ord)
+data Permission = AdminPerm 
+                | AuthorReadPerm 
+                | AuthorWritePerm 
+                | UserPerm 
+                | NoPerm
+                deriving (Show, Eq, Ord)
 
 -- | User
 data User = User {

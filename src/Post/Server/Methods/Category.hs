@@ -3,21 +3,21 @@
 module Post.Server.Methods.Category where
 
 import Network.HTTP.Types (Query)
-import Network.Wai (ResponseReceived, Response)
+import Network.Wai (Response)
 import Control.Monad.Trans.Either
 import Control.Monad (guard)
 import Control.Monad.Trans (lift)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import Post.Server.Objects (Permission(..))
 import qualified Post.DB.Category as DBC
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
+import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
-getCatsResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-getCatsResp handle sendResponce query = do
+getCatsResp :: Monad m => Handle m -> Query -> m Response
+getCatsResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Category records"
@@ -27,19 +27,19 @@ getCatsResp handle sendResponce query = do
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right _ -> do
       catsE <- DBC.getCats dbqh
       case catsE of
-        Left msg -> sendResponce $ respError msg
+        Left msg -> return $ respError msg
         Right cats -> do
           Logger.logInfo logh "Categories were sent"
-          sendResponce $ respOk cats
+          return $ respOk cats
     where
       params = ["token"]
 
-createCatResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-createCatResp handle sendResponce query = do
+createCatResp :: Monad m => Handle m -> Query -> m Response
+createCatResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Category record"
@@ -50,7 +50,7 @@ createCatResp handle sendResponce query = do
     guard $ perm == AdminPerm
     return title
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right title -> do
       optParams <- Util.extractOptional logh query paramsOpt
       let [subcat] = optParams
@@ -59,14 +59,14 @@ createCatResp handle sendResponce query = do
         Right _ -> do
           let msg = "Category was created"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
-        Left msg -> sendResponce $ respError msg
+          return $ respSucc msg
+        Left msg -> return $ respError msg
     where
       paramsReq = ["title", "token"]
       paramsOpt = ["subcategory"]
 
-removeCatResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-removeCatResp handle sendResponce query = do
+removeCatResp :: Monad m => Handle m -> Query -> m Response
+removeCatResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Category record"
@@ -77,7 +77,7 @@ removeCatResp handle sendResponce query = do
     guard $ perm == AdminPerm
     return idCat
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right idCat -> do
       catIdE <- runEitherT $ do
         catId <- EitherT $ Util.readEitherMa idCat "category_id"
@@ -87,13 +87,13 @@ removeCatResp handle sendResponce query = do
         Right _ -> do
           let msg = "Category was removed"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
-        Left msg -> sendResponce $ respError msg
+          return $ respSucc msg
+        Left msg -> return $ respError msg
     where
       params = ["id", "token"]
 
-editCatResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-editCatResp handle sendResponce query = do
+editCatResp :: Monad m => Handle m -> Query -> m Response
+editCatResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Category record"
@@ -104,7 +104,7 @@ editCatResp handle sendResponce query = do
     guard $ perm == AdminPerm
     return (idUser, newTitle)
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right (idUser, newTitle) -> do
       optParams <- Util.extractOptional logh query paramsOpt
       let [subNew] = optParams
@@ -112,11 +112,11 @@ editCatResp handle sendResponce query = do
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         EitherT $ DBC.editCat dbqh userId newTitle subNew
       case catIdE of
-        Left msg -> sendResponce $ respError msg
+        Left msg -> return $ respError msg
         Right _ -> do
           let msg = "Category was edited"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
+          return $ respSucc msg
     where
       paramsReq = ["id", "title", "token"]
       paramsOpt = ["subcategory"]

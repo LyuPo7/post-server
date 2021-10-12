@@ -4,14 +4,15 @@ module Post.Server.Responses where
 
 import qualified Data.Text as T
 import Data.Text (Text)
-import Data.String (fromString)
-import Data.Aeson
 import Control.Exception (SomeException)
-import Network.Wai
+import Network.Wai (Response, responseLBS)
+import Data.Aeson (ToJSON, (.=), object, encode)
+import Data.String (fromString)
 import Network.HTTP.Types (status200, status404, status400)
 
 respOk :: (ToJSON a) => a -> Response
-respOk body = responseLBS status200 [("Content-Type", "application/json")] $ encode body <> "\n"
+respOk body = responseLBS status200 [("Content-Type", "application/json")] 
+            $ encode body <> "\n"
 
 respSucc :: Text -> Response
 respSucc msg = responseLBS status200 [] $ fromString $ T.unpack msg ++ "\n"

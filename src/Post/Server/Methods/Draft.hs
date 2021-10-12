@@ -4,23 +4,23 @@ module Post.Server.Methods.Draft where
 
 import qualified Data.Text as T
 import Network.HTTP.Types (Query)
-import Network.Wai (ResponseReceived, Response)
+import Network.Wai (Response)
 import Control.Monad.Trans.Either
 import Control.Monad (guard)
 import Control.Monad.Trans (lift)
 
 import Post.Server.ServerSpec (Handle(..))
-import Post.Server.Objects (Permission(..), Post(..), User(..))
 import qualified Post.Logger as Logger
 import qualified Post.DB.Draft as DBD
 import qualified Post.DB.Post as DBP
 import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
+import Post.Server.Objects (Permission(..), Post(..), User(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
-getDraftsResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-getDraftsResp handle sendResponce query = do
+getDraftsResp :: Monad m => Handle m -> Query -> m Response
+getDraftsResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Draft records"
@@ -32,17 +32,19 @@ getDraftsResp handle sendResponce query = do
     let authorName = T.unpack $ user_firstName user <> " " <> user_lastName user
     posts <- EitherT $ DBP.getPosts dbqh [("author", Just authorName)]
     let postIds = map post_id posts
-    draftIds <- EitherT $ fmap sequenceA $ traverse (DBP.getPostDraftRecord dbqh) postIds
+    draftIds <- EitherT $ 
+                fmap sequenceA $ 
+                traverse (DBP.getPostDraftRecord dbqh) postIds
     EitherT $ DBD.getDraftRecords dbqh draftIds
   case draftsE of
     Right drafts -> do
       Logger.logInfo logh "Drafts were sent"
-      sendResponce $ respOk drafts
-    Left _ -> sendResponce resp404
+      return $ respOk drafts
+    Left _ -> return resp404
   where params = ["token"]
 
-createDraftResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-createDraftResp handle sendResponce query = do
+createDraftResp :: Monad m => Handle m -> Query -> m Response
+createDraftResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Draft record"
@@ -53,7 +55,7 @@ createDraftResp handle sendResponce query = do
     guard $ perm == AuthorWritePerm
     return (idPost, text)
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right (idPost, text) -> do
       msgE <- runEitherT $ do
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
@@ -62,13 +64,13 @@ createDraftResp handle sendResponce query = do
         Right _ -> do
           let msg = "Draft was created"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
-        Left msg -> sendResponce $ respError msg
+          return $ respSucc msg
+        Left msg -> return $ respError msg
     where
       params = ["post_id", "text", "token"]
 
-removeDraftResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-removeDraftResp handle sendResponce query = do
+removeDraftResp :: Monad m => Handle m -> Query -> m Response
+removeDraftResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Draft record"
@@ -79,7 +81,7 @@ removeDraftResp handle sendResponce query = do
     guard $ perm == AuthorWritePerm
     return idPost
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right idPost -> do
       msgE <- runEitherT $ do
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
@@ -89,13 +91,13 @@ removeDraftResp handle sendResponce query = do
         Right _ -> do
           let msg = "Draft was removed"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
-        Left msg -> sendResponce $ respError msg
+          return $ respSucc msg
+        Left msg -> return $ respError msg
     where
       params = ["post_id", "token"]
 
-editDraftResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-editDraftResp handle sendResponce query = do
+editDraftResp :: Monad m => Handle m -> Query -> m Response
+editDraftResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Draft record"
@@ -106,7 +108,7 @@ editDraftResp handle sendResponce query = do
     guard $ perm == AuthorWritePerm
     return (idPost, newText)
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right (idPost, newText) -> do
       msgE <- runEitherT $ do
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
@@ -116,13 +118,13 @@ editDraftResp handle sendResponce query = do
         Right _ -> do
           let msg = "Draft was edited"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
-        Left msg -> sendResponce $ respError msg
+          return $ respSucc msg
+        Left msg -> return $ respError msg
     where
       params = ["post_id", "text", "token"]
 
-publishDraftResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
-publishDraftResp handle sendResponce query = do
+publishDraftResp :: Monad m => Handle m -> Query -> m Response
+publishDraftResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: publish Draft"
@@ -134,7 +136,7 @@ publishDraftResp handle sendResponce query = do
     guard $ perm == AuthorReadPerm
     return postId
   case permParamsE of
-    Left _ -> sendResponce resp404
+    Left _ -> return resp404
     Right postId -> do
       draftE <- runEitherT $ do
         _ <- EitherT $ DBP.getPostRecord dbqh postId
@@ -143,7 +145,7 @@ publishDraftResp handle sendResponce query = do
         Right _ -> do
           let msg = "Draft was published"
           Logger.logInfo logh msg
-          sendResponce $ respSucc msg
-        Left msg -> sendResponce $ respError msg
+          return $ respSucc msg
+        Left msg -> return $ respError msg
     where
       params = ["post_id", "token"]
