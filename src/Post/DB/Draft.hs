@@ -2,184 +2,162 @@
 
 module Post.DB.Draft where
 
-import Database.HDBC (SqlValue, handleSql, run, commit, quickQuery', fromSql, toSql)
+import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.Text (Text)
-import Data.List (intercalate)
-import qualified Control.Exception as Exc
+import Control.Monad.Trans (lift)
+import Control.Monad.Trans.Either
 
-import Post.DB.DBSpec (Handle(..))
+import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
-import qualified Post.Exception as E
 import qualified Post.DB.Post as DBP
 import Post.Server.Objects
+import Post.DB.Data
 import Post.Server.Util (convert)
 
 -- | DB methods for Draft
-createDraft :: Handle IO -> PostId -> Text -> IO (Maybe DraftId)
-createDraft handle postId text = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r1 <- quickQuery' dbh "SELECT draft_id \
-                        \FROM post_draft \
-                        \WHERE post_id = ?" 
-        [toSql postId]
-  case r1 of
-    [] -> do
-      _ <- run dbh "INSERT INTO drafts (text) \
-                   \VALUES (?)"
-            [toSql text]
-      commit dbh
-      Logger.logInfo logh "Draft was successfully inserted in db."
-      r2 <- quickQuery' dbh "SELECT id \
-                            \FROM drafts \
-                            \ORDER BY id DESC LIMIT 1" []
-      case r2 of
-        [[draftId]] -> do
-          DBP.createPostDraftDep handle postId $ fromSql draftId
-          return $ Just $ fromSql draftId
-        _ -> do
-          Logger.logError logh "Error while inserting Draft to db."
-          return Nothing
-    _ -> do
-      Logger.logWarning logh $ "Post with id: "
-        <> convert postId
-        <> " already has Draft."
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in createDraft!\n"
-            <> show e
+createDraft :: Monad m => Handle m -> PostId -> Text -> m (Either Text DraftId)
+createDraft handle postId text = do
+  let logh = hLogger handle
+  draftIdE <- runEitherT $ do
+    _ <- EitherT $ DBP.getPostRecord handle postId
+    EitherT $ DBP.getPostDraftRecord handle postId
+  case draftIdE of
+    Left _ -> runEitherT $ do
+      _ <- lift $ insertDraftRecord handle text
+      draftId <- EitherT $ getLastDraftRecord handle
+      _ <- EitherT $ DBP.createPostDraftDep handle postId draftId
+      return draftId
+    Right _ -> do
+      let msg = "Post with id: "
+            <> convert postId
+            <> " already has Draft."
+      Logger.logWarning logh msg
+      return $ Left msg
 
-getDrafts :: Handle IO -> [DraftId] -> IO (Maybe [Draft])
-getDrafts handle draftIds = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-      ndrafts = length draftIds
-      query = "SELECT id, title \
-              \FROM tags \
-              \WHERE id IN ("
-        ++ (intercalate "," $ replicate ndrafts "?")
-        ++ ")"
-  r <- quickQuery' dbh query $ map toSql draftIds
-  case r of
+removeDraft :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
+removeDraft handle postId = runEitherT $ do
+  draftId <- EitherT $ DBP.getPostDraftRecord handle postId
+  lift $ deleteDraftRecord handle draftId
+  _ <- lift $ DBP.removePostDraftDep handle postId
+  return draftId
+
+editDraft :: Monad m => Handle m -> PostId -> Text -> m (Either Text DraftId)
+editDraft handle postId newText = runEitherT $ do
+  draftId <- EitherT $ DBP.getPostDraftRecord handle postId
+  EitherT $ updateDraftRecord handle draftId newText
+
+publishDraft :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
+publishDraft handle postId = do
+  let logh = hLogger handle
+  draftIdTextE <- runEitherT $ do
+    draftId <- EitherT $ DBP.getPostDraftRecord handle postId
+    text <- EitherT $ getDraftText handle draftId
+    return (draftId, text)
+  case draftIdTextE of
+    Left msg -> return $ Left msg
+    Right (draftId, text) -> do
+      _ <- updatePostRecord handle postId text
+      Logger.logWarning logh "Publishing Draft"
+      return $ Right draftId
+
+getDraftRecords :: Monad m => Handle m -> [DraftId] -> m (Either Text [Draft])
+getDraftRecords handle draftIds = do
+  let logh = hLogger handle
+  draftsSql <- selectFromWhereIn handle tableDrafts
+               [colIdDraft, colTextDraft]
+                colIdDraft
+                $ map toSql draftIds
+  case draftsSql of
     [] -> do
-      Logger.logWarning logh "No drafts in db!"
-      return Nothing
+      Logger.logWarning logh "No Drafts in db!"
+      return $ Left "No Drafts!"
     idTexts -> do
       Logger.logInfo logh "Getting Drafts from db."
       return $ traverse newDraft idTexts
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getDraft!\n"
-            <> show e
 
-removeDraft :: Handle IO -> PostId -> IO (Maybe DraftId)
-removeDraft handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT draft_id \
-                       \FROM post_draft \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [[draftId]] -> do
-      _ <- run dbh "DELETE FROM drafts \
-                   \WHERE id = ?"
-            [toSql draftId]
-      _ <- DBP.removePostDraftDep handle postId
-      commit dbh
-      Logger.logInfo logh $ "Removing Draft of Post with id: "
-        <> convert postId
-        <> " from db."
-      return $ Just $ fromSql draftId
+getLastDraftRecord :: Monad m => Handle m -> m (Either Text DraftId)
+getLastDraftRecord handle = do
+  let logh = hLogger handle
+  idDraftSql <- selectFromOrderLimit handle tableDrafts
+                 [colIdDraft]
+                  colIdDraft 1
+  case idDraftSql of
+    [[idDraft]] -> do
+      let draftId = fromSql idDraft
+      Logger.logInfo logh $ "Last Draft inserted in db with id: "
+        <> convert draftId
+      return $ Right draftId
     _ -> do
-      Logger.logWarning logh $ "Post with id: "
-        <> convert postId
-        <> " hasn't Draft!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removeDraft!\n"
-            <> show e
+      let msg = "No exist Drafts in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
 
-editDraft :: Handle IO -> PostId -> Text -> IO (Maybe DraftId)
-editDraft handle postId newText = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT draft_id \
-                       \FROM post_draft \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [[draftId]] -> do
-      _ <- run dbh "UPDATE drafts SET text = ? \
-                   \WHERE id = ?"
-            [toSql newText, toSql draftId]
-      commit dbh
-      Logger.logInfo logh $ "Updating Draft of Post with id: "
-        <> convert postId
-        <> "."
-      return $ Just $ fromSql draftId
-    _ -> do
-      Logger.logWarning logh $ "Post with id: "
-        <> convert postId
-        <> " hasn't Draft!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in editDraft!\n"
-            <> show e
+updateDraftRecord :: Monad m => Handle m -> DraftId -> Text -> m (Either Text DraftId)
+updateDraftRecord handle draftId text = do
+  let logh = hLogger handle
+  _ <- updateSetWhere handle tablePosts
+           [colTextDraft]
+           [colIdDraft]
+           [toSql text]
+           [toSql draftId]
+  Logger.logInfo logh $ "Updating Draft with id: "
+    <> convert draftId
+    <> "."
+  return $ Right draftId
 
-publishDraft :: Handle IO -> PostId -> IO (Maybe DraftId)
-publishDraft handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT draft_id \
-                       \FROM post_draft \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [[draftId]] -> do
-      draftTextMaybe <- getDraftText handle $ fromSql draftId
-      case draftTextMaybe of
-        Nothing -> do
-          Logger.logWarning logh "Draft hasn't text"
-          return Nothing
-        Just text -> do
-          _ <- run dbh "UPDATE posts \
-                       \SET text = ? \
-                       \WHERE id = ?"
-                [toSql text, toSql postId]
-          commit dbh
-          Logger.logWarning logh "Publishing Draft"
-          return $ Just $ fromSql draftId
-    _ -> do
-      Logger.logWarning logh $ "Post with id: "
-        <> convert postId
-        <> " hasn't Draft!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in publishDraft!\n"
-            <> show e
+updatePostRecord :: Monad m => Handle m -> PostId -> Text -> m (Either Text PostId)
+updatePostRecord handle postId text = do
+  let logh = hLogger handle
+  _ <- updateSetWhere handle tablePosts
+           [colTextPost]
+           [colIdPost]
+           [toSql text]
+           [toSql postId]
+  Logger.logInfo logh $ "Updating Post with id: "
+    <> convert postId
+    <> "in db."
+  return $ Right postId
 
-getDraftText :: Handle IO -> DraftId -> IO (Maybe Text)
-getDraftText handle draftId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT text \
-                       \FROM drafts \
-                       \WHERE id = ?"
-        [toSql draftId]
-  case r of
+getDraftText :: Monad m => Handle m -> DraftId -> m (Either Text Text)
+getDraftText handle draftId = do
+  let logh = hLogger handle
+  textSql <- selectFromWhere handle tableDrafts
+               [colTextDraft]
+               [colIdDraft]
+               [toSql draftId]
+  case textSql of
     [[text]] -> do
-      Logger.logWarning logh "Extracting text from Draft"
-      return $ Just $ fromSql text
+      Logger.logWarning logh $ "Extracting text from Draft with id: "
+        <> convert draftId
+      return $ Right $ fromSql text
     _ -> do
-      Logger.logWarning logh "Draft hasn't text"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getDraftText!\n"
-            <> show e
+      let msg = "Draft with id: "
+            <> convert draftId
+            <> " hasn't text"
+      Logger.logWarning logh msg
+      return $ Left msg
 
-newDraft :: [SqlValue] -> Maybe Draft
+insertDraftRecord :: Monad m => Handle m -> Text -> m ()
+insertDraftRecord handle text = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tableDrafts 
+        [colTextDraft] 
+        [toSql text]
+  Logger.logInfo logh "Draft was successfully inserted in db."
+
+deleteDraftRecord :: Monad m => Handle m -> DraftId -> m ()
+deleteDraftRecord handle draftId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tableDrafts
+        [colIdDraft]
+        [toSql draftId]
+  Logger.logInfo logh $ "Removing Draft with id: "
+    <> convert draftId
+    <> " from db."
+
+newDraft :: [SqlValue] -> Either Text Draft
 newDraft [idDraft, text] = return $ Draft {
   draft_text = fromSql text,
   draft_id = fromSql idDraft
 }
-newDraft _ = Nothing
+newDraft _ = Left "Invalid draft!"

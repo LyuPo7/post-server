@@ -16,7 +16,6 @@ type CommentId = Integer
 type DraftId = Integer
 type PostId = Integer
 type PhotoId = Integer
---type Token = Text
 type Password = Text
 type Login = Text
 type FirstName = Text
@@ -24,11 +23,13 @@ type LastName = Text
 type Description = Text
 type Title = Text
 type Link = Text
+type Admin = Text
+type Token = Text
 
 -- | Account
 data Account = Account {
   account_id :: UserId,
-  account_token :: Text,
+  account_token :: Token,
   account_password :: Password,
   account_login :: Login,
   account_user :: User
@@ -41,11 +42,6 @@ instance FromJSON Account where
 instance ToJSON Account where
   toJSON = genericToJSON defaultOptions {
     fieldLabelModifier = camelTo2 '_' . drop 8 }
-
--- | Token
-newtype Token = Token {
-  token :: Text
-  } deriving (Show,Generic,ToJSON,FromJSON)
 
 -- | Permission
 data Permission = AdminPerm | AuthorReadPerm | AuthorWritePerm | UserPerm | NoPerm deriving (Show, Eq, Ord)

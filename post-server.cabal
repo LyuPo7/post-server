@@ -32,8 +32,9 @@ library
       Post.DB.Comment
       Post.DB.Data
       Post.DB.DB
-      Post.DB.DBQuery
-      Post.DB.DBQuerySpec
+      Post.DB.DBQ
+      Post.DB.DBQImpl
+      Post.DB.DBQSpec
       Post.DB.DBSpec
       Post.DB.Draft
       Post.DB.Photo
@@ -42,7 +43,6 @@ library
       Post.DB.User
       Post.Exception
       Post.Logger
-      Post.Proba
       Post.Server.Methods.Account
       Post.Server.Methods.Author
       Post.Server.Methods.Category
@@ -55,6 +55,7 @@ library
       Post.Server.Objects
       Post.Server.Responses
       Post.Server.Server
+      Post.Server.ServerConfig
       Post.Server.ServerSpec
       Post.Server.Util
       Post.Settings
@@ -69,6 +70,8 @@ library
     , aeson
     , base >=4.7 && <5
     , bytestring
+    , either
+    , exceptions
     , filepath
     , http-client
     , http-client-tls
@@ -80,6 +83,7 @@ library
     , text-show
     , time
     , transformers
+    , transformers-either
     , uuid
     , wai
     , wai-conduit
@@ -99,6 +103,8 @@ executable post-server-exe
     , aeson
     , base >=4.7 && <5
     , bytestring
+    , either
+    , exceptions
     , filepath
     , http-client
     , http-client-tls
@@ -111,6 +117,7 @@ executable post-server-exe
     , text-show
     , time
     , transformers
+    , transformers-either
     , uuid
     , wai
     , wai-conduit
@@ -119,10 +126,9 @@ executable post-server-exe
 
 test-suite post-server-test
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: Test.hs
   other-modules:
-      Test
-      Paths_post_server
+      TestPost.DB.DBQSpec
   hs-source-dirs:
       test
   ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
@@ -132,7 +138,11 @@ test-suite post-server-test
     , aeson
     , base >=4.7 && <5
     , bytestring
+    , either
+    , exceptions
     , filepath
+    , hedgehog >=0.5 && <1.1
+    , hspec
     , http-client
     , http-client-tls
     , http-types
@@ -140,10 +150,15 @@ test-suite post-server-test
     , mtl
     , post-server
     , scrypt
+    , tasty
+    , tasty-golden
+    , tasty-hedgehog
+    , tasty-hspec
     , text
     , text-show
     , time
     , transformers
+    , transformers-either
     , uuid
     , wai
     , wai-conduit

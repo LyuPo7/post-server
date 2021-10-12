@@ -3,181 +3,190 @@
 module Post.DB.Account where
 
 import qualified Data.ByteString.Char8 as BC
-import Database.HDBC (handleSql, run, commit, quickQuery', fromSql, toSql)
+import Control.Monad.Trans.Either
+import Control.Monad (guard)
+import Database.HDBC (fromSql, toSql)
 import qualified Data.Text as T
 import Data.Text (Text)
 import Crypto.Scrypt (defaultParams, getEncryptedPass, Pass(..), EncryptedPass(..), verifyPass)
-import qualified Control.Exception as Exc
 
-import Post.DB.DBSpec (Handle(..))
+import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
-import qualified Post.Exception as E
 import qualified Post.DB.Post as DBP
 import Post.Server.Objects
-import qualified Post.Server.Util as Util
+import Post.DB.Data
+import Post.Server.Util (convert)
 
 -- | DB methods for Account
-getToken :: Handle IO -> Login -> Password -> IO (Maybe Token, Text)
-getToken handle login password = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT password \
-                       \FROM users \
-                       \WHERE login = ?"
-       [toSql login]
-  case r of
-    [[passwordDB]] -> do
-      let encrypted = EncryptedPass {
-            getEncryptedPass = BC.pack $ fromSql passwordDB
-          }
-          (res, _) = verifyPass defaultParams (Pass $ BC.pack $ T.unpack password) encrypted
-      if res 
-        then do
-          userToken <- Util.createToken
-          _ <- run dbh "UPDATE users \
-                       \SET token = ? \
-                       \WHERE login = ?" 
-               [toSql userToken, toSql login]
-          commit dbh
-          Logger.logWarning logh $ "User with login: "
-            <> login
-            <> " entered."
-          return (Just $ newToken userToken, "Successfully entered!")
-        else return (Nothing, "Incorrect password!")
-    _ -> do
-      Logger.logWarning logh $ "Incorrect login: "
-        <> login
-      return (Nothing, "Incorrect login: " <> login)
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getToken!\n"
-            <> show e
-
-checkAdminPerm :: Handle IO -> Text -> IO Permission
-checkAdminPerm handle userToken = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT is_admin \
-                       \FROM users \
-                       \WHERE token = ?"
-       [toSql userToken]
-  case r of
-    [[isAdmin]] -> do
-      Logger.logInfo logh "Authentication is successfull."
-      if fromSql isAdmin
-        then return AdminPerm
-        else return NoPerm
-    _ -> do
-      Logger.logWarning logh $ "Incorrect token: "
-        <> userToken
-      return NoPerm
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in checkAdminPerm!\n"
-            <> show e
-
-checkUserPerm :: Handle IO -> Text -> IO Permission
-checkUserPerm handle userToken = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id \
-                       \FROM users \
-                       \WHERE token = ?"
-       [toSql userToken]
-  case r of
-    [] -> do
-      Logger.logWarning logh $ "Incorrect token: "
-        <> userToken
-      return NoPerm
-    _ -> do
-      Logger.logInfo logh "Authentication is successfull."
-      return UserPerm
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in checkUserPerm!\n"
-            <> show e
-
-checkAuthorWritePerm :: Handle IO -> Text -> IO Permission
-checkAuthorWritePerm handle userToken = handleSql errorHandler $ do
+getToken :: Monad m => Handle m -> Login -> Password -> m (Either Text Token)
+getToken handle login password = do
   let logh = hLogger handle
-  authorIdMaybe <- getAuthorId handle userToken
-  case authorIdMaybe of
-    Nothing -> do
+  checkPass <- runEitherT $ do
+    intentPass <- EitherT $ getPasswordRecordByLogin handle login
+    EitherT $ checkPassword handle password intentPass
+  case checkPass of
+    Right _ -> do
+      newUserToken <- createToken handle
+      _ <- updateTokenRecord handle login newUserToken
+      Logger.logWarning logh $ "User with login: '"
+        <> login
+        <> "' entered."
+      return $ Right $ newUserToken
+    Left msg -> return $ Left msg
+
+checkPassword :: Monad m => Handle m -> Password -> Password -> m (Either Text ())
+checkPassword handle truePass intentPass = do
+  let logh = hLogger handle
+      encrypted = EncryptedPass {
+          getEncryptedPass = BC.pack $ T.unpack intentPass
+      }
+      (res, _) = verifyPass defaultParams (
+          Pass $ BC.pack $ T.unpack truePass) encrypted
+  case res of
+    True -> return $ Right ()
+    False -> do
+      let msg = "Incorrect password!"
+      Logger.logError logh msg 
+      return $ Left msg
+
+checkAdminPerm :: Monad m => Handle m -> Text -> m Permission
+checkAdminPerm handle userToken = do
+  let logh = hLogger handle
+  adminPerm <- runEitherT $ do
+    isAdmin <- EitherT $ getIsAdminRecordByToken handle userToken
+    guard $ isAdmin == True
+  case adminPerm of
+    Right _ -> do
+      Logger.logInfo logh "Admin authentication is successfull."
+      return AdminPerm
+    Left _ -> return NoPerm
+
+checkUserPerm :: Monad m => Handle m -> Text -> m Permission
+checkUserPerm handle userToken = do
+  let logh = hLogger handle
+  userIdE <- getUserIdRecordByToken handle userToken
+  case userIdE of
+    Left _ -> return NoPerm
+    Right _ -> do
+      Logger.logInfo logh "User authentication is successfull."
+      return UserPerm
+
+checkAuthorWritePerm :: Monad m => Handle m -> Text -> m Permission
+checkAuthorWritePerm handle userToken = do
+  let logh = hLogger handle
+  authorIdE <- getAuthorId handle userToken
+  case authorIdE of
+    Left _ -> do
       Logger.logError logh "This User isn't Author."
       return NoPerm
-    Just _ -> do
+    Right _ -> do
       Logger.logInfo logh "Given access for Post creation."
       return AuthorWritePerm
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in checkAuthorWritePerm!\n"
-            <> show e
 
-checkAuthorReadPerm :: Handle IO -> Text -> PostId -> IO Permission
-checkAuthorReadPerm handle userToken postId = handleSql errorHandler $ do
+checkAuthorReadPerm :: Monad m => Handle m -> Text -> PostId -> m Permission
+checkAuthorReadPerm handle userToken postId = do
   let logh = hLogger handle
-  authorPostIdMaybe <- DBP.getPostAuthorId handle postId
-  case authorPostIdMaybe of
-    Nothing -> do
-      Logger.logError logh "No exists dependency between Post and Author."
-      return NoPerm
-    Just authorPostId -> do
-      authorIdMaybe <- getAuthorId handle userToken
-      case authorIdMaybe of
-        Nothing -> do
-          Logger.logWarning logh $ "Incorrect token: "
-            <> userToken
-          return NoPerm
-        Just authorId -> do
-          Logger.logInfo logh "Authentication is successfull."
-          let action | authorId == authorPostId = return AuthorReadPerm
-                     | otherwise = return NoPerm
-          action
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in checkAuthorReadPerm!\n"
-            <> show e
+  perm <- runEitherT $ do
+    authorPostId <- EitherT $ DBP.getPostAuthorRecord handle postId
+    authorId <- EitherT $ getAuthorId handle userToken
+    guard $ authorId == authorPostId
+  case perm of
+    Right _ -> do
+      Logger.logInfo logh "Author authentication is successfull."
+      return AuthorReadPerm
+    Left _ -> return NoPerm
 
-getUserId :: Handle IO -> Text -> IO (Maybe UserId)
-getUserId handle userToken = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id \
-                       \FROM users \
-                       \WHERE token = ?"
-       [toSql userToken]
-  case r of
-    [[idUser]] -> do
-      Logger.logInfo logh "Getting User Id corresponding token."
-      return $ Just $ fromSql idUser
+getAuthorId :: Monad m => Handle m -> Text -> m (Either Text AuthorId)
+getAuthorId handle authorToken = runEitherT $ do
+  userId <- EitherT $ getUserIdRecordByToken  handle authorToken
+  EitherT $ getAuthorIdRecordByUserId handle userId
+
+getAuthorIdRecordByUserId :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
+getAuthorIdRecordByUserId handle userId = do
+  let logh = hLogger handle
+  Logger.logInfo logh $ "Getting AuthorId corresponding to User with id: "
+    <> convert userId
+    <> " from db."
+  authorIdSql <- selectFromWhere handle tableAuthorUser
+                 [colIdAuthorAuthorUser]
+                 [colIdUserAuthorUser]
+                 [toSql userId]
+  case authorIdSql of
+    [[authorId]] -> do
+      Logger.logInfo logh $ "Getting AuthorId corresponding to UserId: "
+        <> convert userId
+        <> " from db."
+      return $ Right $ fromSql authorId
     _ -> do
-      Logger.logWarning logh $ "Incorrect token: "
+      let msg = "No Author corresponding to UserId:"
+            <> convert userId
+      Logger.logWarning logh msg
+      return $ Left msg
+
+getUserIdRecordByToken :: Monad m => Handle m -> Text -> m (Either Text UserId)
+getUserIdRecordByToken handle userToken = do
+  let logh = hLogger handle
+  idUserSql <- selectFromWhere handle tableUsers
+               [colIdUser]
+               [colTokenUser]
+               [toSql userToken]
+  case idUserSql of
+    [[idUser]] -> do
+      Logger.logInfo logh $ "Getting UserId corresponding to token: '"
         <> userToken
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getUserId!\n"
-            <> show e
+        <> "' from db."
+      return $ Right $ fromSql idUser
+    _ -> do
+      let msg = "Incorrect token: '" 
+            <> userToken
+            <> "'."
+      Logger.logWarning logh msg 
+      return $ Left msg
 
-getAuthorId :: Handle IO -> Text -> IO (Maybe AuthorId)
-getAuthorId handle authorToken = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  authorIdMaybe <- getUserId handle authorToken
-  case authorIdMaybe of
-    Nothing -> do
-      Logger.logWarning logh "No user corresponding token"
-      return Nothing
-    Just userId -> do
-      Logger.logInfo logh "Getting Author Id corresponding token."
-      r <- quickQuery' dbh "SELECT author_id \
-                           \FROM author_user \
-                           \WHERE user_id = ?"
-           [toSql userId]
-      case r of
-        [[authorId]] -> do
-          Logger.logInfo logh "Getting Author Id corresponding token."
-          return $ Just $ fromSql authorId
-        _ -> do
-          Logger.logWarning logh "No author corresponding token"
-          return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getAuthorId!\n"
-            <> show e
+getIsAdminRecordByToken :: Monad m => Handle m -> Text -> m (Either Text Bool)
+getIsAdminRecordByToken handle userToken = do
+  let logh = hLogger handle
+  isAdminSql <- selectFromWhere handle tableUsers
+           [colIsAdminUser]
+           [colTokenUser]
+           [toSql userToken]
+  case isAdminSql of
+    [[isAdmin]] -> do
+      Logger.logInfo logh $ "Getting 'is_admin' corresponding to token: "
+        <> userToken
+        <> " from db."
+      return $ Right $ fromSql isAdmin
+    _ -> do
+      let msg = "Incorrect token: " <> userToken
+      Logger.logWarning logh msg 
+      return $ Left msg
 
-newToken :: String -> Token
-newToken userToken = Token {token = T.pack userToken}
+getPasswordRecordByLogin :: Monad m => Handle m -> Login -> m (Either Text Password)
+getPasswordRecordByLogin handle login = do
+  let logh = hLogger handle
+  passSql <- selectFromWhere handle tableUsers
+           [colPassUser]
+           [colLoginUser]
+           [toSql login]
+  case passSql of
+    [[passwordDB]] -> do
+      Logger.logInfo logh $ "Getting 'password' corresponding to login: '"
+        <> login
+        <> "' from db."
+      return $ Right $ fromSql passwordDB
+    _ -> do
+      let msg = "Incorrect login: " <> login
+      Logger.logError logh msg 
+      return $ Left msg
+
+updateTokenRecord :: Monad m => Handle m -> Login -> Token -> m ()
+updateTokenRecord handle login userToken = do
+  let logh = hLogger handle
+  _ <- updateSetWhere handle tableUsers
+        [colTokenUser]
+        [colLoginUser]
+        [toSql userToken]
+        [toSql login]
+  Logger.logInfo logh $ "Updating Token for User with login: "
+    <> login
+    <> " in db."

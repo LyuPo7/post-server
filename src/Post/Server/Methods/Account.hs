@@ -4,6 +4,7 @@ module Post.Server.Methods.Account where
 
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
+import Control.Monad.Trans.Either
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
@@ -11,22 +12,20 @@ import qualified Post.Server.Util as Util
 import Post.Server.Responses (respOk, respError)
 import qualified Post.DB.Account as DBAC
 
-login :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+login :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 login handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
-  Logger.logDebug logh "Login intent" 
-  case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
-    Right reqParams -> do
-      let [userLogin, password] = reqParams
-      (tokenMaybe, msg) <- DBAC.getToken dbh userLogin password
-      case tokenMaybe of
-        Nothing -> do
-          Logger.logInfo logh "Comment was created"
-          sendResponce $ respError msg
-        Just token -> do
-          Logger.logInfo logh $ "New token was sent to User: " <> userLogin <> "."
-          sendResponce $ respOk token 
+      dbqh = hDBQ handle
+  Logger.logDebug logh "Login intent"
+  tokenE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [userLogin, password] = reqParams
+    token <- EitherT $ DBAC.getToken dbqh userLogin password
+    return (userLogin, token)
+  case tokenE of
+    Left msg -> sendResponce $ respError msg
+    Right (userLogin, token) -> do
+      Logger.logInfo logh $ "New token was sent to User: " <> userLogin <> "."
+      sendResponce $ respOk token 
     where
       params = ["login", "password"]

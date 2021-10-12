@@ -12,13 +12,13 @@ import qualified Post.Exception as E
 import qualified Post.Settings as Settings
 import qualified Post.Logger as Logger
 import qualified Post.DB.DBSpec as DBSpec
-import qualified Post.Server.ServerSpec as ServerSpec
+import qualified Post.Server.ServerConfig as ServerConfig
 
 -- | General Bot Config
 data Config = Config {
   cLogger :: Logger.Config,
   cDB :: DBSpec.Config,
-  cServer :: ServerSpec.Config
+  cServer :: ServerConfig.Config
 } deriving (Show, Generic, Eq)
 
 instance A.FromJSON Config where
@@ -40,7 +40,7 @@ getConfig = do
 checkConfig :: Config -> Either E.PostError Config
 checkConfig config 
   | T.null $ DBSpec.dbname dbSet = Left $ E.ConfigDBNameEmptyError
-  | T.null $ ServerSpec.host serverSet = Left $ E.ConfigServerHostEmptyError
+  | T.null $ ServerConfig.host serverSet = Left $ E.ConfigServerHostEmptyError
   | Logger.cVerbocity logSet `notElem` [Just Logger.Debug, Just Logger.Info, Just Logger.Warning, Just Logger.Error, Nothing] = Left $ E.ConfigLoggerRangeError
   | otherwise = Right config where
       logSet = cLogger config

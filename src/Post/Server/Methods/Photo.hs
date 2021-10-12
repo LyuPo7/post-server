@@ -4,28 +4,32 @@ module Post.Server.Methods.Photo where
 
 import qualified Data.ByteString.Lazy.Char8 as L8
 import qualified Data.Text as T
-import qualified System.IO as SIO
 import Data.Text (Text)
-import Network.HTTP.Client (newManager, parseRequest, httpLbs, responseBody)
+import Network.HTTP.Client (parseRequest, responseBody)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import System.FilePath.Posix (takeFileName)
+import System.IO (IOMode(..))
+import Control.Monad.Catch (MonadThrow)
 
-import Post.Logger (Handle(..))
+import Post.DB.DBSpec (Handle(..))
+import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
-import Post.Server.Util (server)
 
-upload :: Handle IO -> Text -> IO Text
-upload logh pathToFile = do
-  let link = server <> pathToFile
+upload :: (MonadThrow m, Monad m) => Handle m -> Text -> m Text
+upload handle pathToFile = do
+  let logh = hLogger handle
+      hostServer = ServerConfig.host $ cServer handle
+      portServer = ServerConfig.port $ cServer handle
+      server = "http://" <> hostServer <> ":" <> portServer
+      link = server <> pathToFile
       dir = "src/files/photos/"
       fileName = takeFileName $ T.unpack pathToFile
-      --filePath = dir ++ fileName
-  (tempFileName, _) <- SIO.openTempFile dir fileName
-  manager <- newManager tlsManagerSettings
+  (tempFileName, _) <- openTempFile handle dir fileName
+  manager <- newManager handle tlsManagerSettings
   request <- parseRequest $ T.unpack link
-  response <- httpLbs request manager
-  file <- SIO.openBinaryFile tempFileName SIO.WriteMode
-  SIO.hPutStr file (L8.unpack $ responseBody response)
-  SIO.hClose file
+  response <- httpLbs handle request manager
+  file <- openBinaryFile handle tempFileName WriteMode
+  hPutStr handle file (L8.unpack $ responseBody response)
+  hClose handle file
   Logger.logDebug logh "Photo uploaded to server"
-  return $  T.pack tempFileName
+  return $ T.pack tempFileName

@@ -2,286 +2,301 @@
 
 module Post.DB.Category where
 
-import Database.HDBC (SqlValue, handleSql, run, commit, quickQuery', fromSql, toSql)
+import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.Text (Text)
-import qualified Control.Exception as Exc
+import Control.Monad.Trans.Either
+import Control.Monad.Trans (lift)
+import Data.Either.Combinators (rightToMaybe)
 
-import Post.DB.DBSpec (Handle(..))
-import qualified Post.Exception as E
+import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
 import Post.Server.Objects
+import Post.DB.Data
 import Post.Server.Util (convert)
 
 -- | DB methods for Category
-createCat :: Handle IO -> Title -> Maybe Title -> IO (Maybe Title)
-createCat handle title subcat = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  case subcat of
-    Nothing -> do
-      r <- quickQuery' dbh "SELECT id \
-                           \FROM categories \
-                           \WHERE title = ?"
-           [toSql title]
-      case r of
-        [] -> do
-          _ <- run dbh "INSERT INTO categories (title) \
-                       \VALUES (?)"
-               [toSql title]
-          commit dbh
-          Logger.logInfo logh "Category was successfully inserted in db."
-          return $ Just title
-        _ -> do
-          Logger.logWarning logh $ "Category with title: "
+createCat :: Monad m => Handle m -> Title -> Maybe Title -> m (Either Text Title)
+createCat handle title subcat = do
+  let logh = hLogger handle
+  checkCat <- getCatId handle title
+  case checkCat of
+    Left _ -> insertCat handle title subcat
+    Right _ -> do
+      let msg = "Category with title: '"
             <> title 
-            <> " already exists in db."
-          return Nothing
-    Just sub -> do
-      checkSubCat <- checkCatExists handle sub
-      case checkSubCat of
-        Nothing -> return Nothing
-        Just subCatId -> do
-          r <- quickQuery' dbh "SELECT id \
-                               \FROM categories \
-                               \WHERE title = ?"
-               [toSql title]
-          case r of
-            [] -> do
-              _ <- run dbh "INSERT INTO categories (title, subcategory_id) \
-                           \VALUES (?, ?)" 
-                    [toSql title, toSql subCatId]
-              commit dbh
-              Logger.logInfo logh "Category was successfully inserted in db."
-              return $ Just title
-            _ -> do
-              Logger.logWarning logh $ "Category with title: "
-                <> title
-                <> " already exists in db."
-              return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in createCat!\n"
-            <> show e
+            <> "' already exists in db!"
+      Logger.logInfo logh msg
+      return $ Left msg
 
-checkCatExists :: Handle IO -> Title -> IO (Maybe CategoryId)
-checkCatExists handle cat = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id \
-                        \FROM categories \
-                        \WHERE title = ?"
-       [toSql cat]
-  case r of
+insertCat :: Monad m => Handle m -> Title -> Maybe Title -> m (Either Text Title)
+insertCat handle title subcat = do
+  case subcat of
+    Nothing -> insertCatWOSubRecord handle title
+    Just subTitle -> insertCatWSub handle title subTitle
+
+editCat :: Monad m => Handle m -> 
+           CategoryId -> Title -> Maybe Title -> m (Either Text CategoryId)
+editCat handle catId newTitle newSub = runEitherT $ do
+  _ <- EitherT $ getCatRecordByCatId handle catId
+  EitherT $ updateCat handle catId newTitle newSub
+
+updateCat :: Monad m => Handle m ->
+             CategoryId -> Title -> Maybe Title -> m (Either Text CategoryId)
+updateCat handle catId newTitle newSub = do
+  let logh = hLogger handle
+  catIdNewE <- getCatId handle newTitle
+  case catIdNewE of
+    Right _ -> do
+      let msg = "Category with title: '"
+            <> newTitle
+            <> "' already exists in db!"
+      Logger.logError logh msg
+      return $ Left msg
+    Left _ -> do
+      case newSub of
+        Nothing -> updateCatWOSubRecord handle catId newTitle
+        Just subTitle -> updateCatWSub handle catId newTitle subTitle
+
+insertCatWSub :: Monad m => Handle m -> Title -> Title -> m (Either Text Title)
+insertCatWSub handle title subTitle = runEitherT $ do
+  _ <- EitherT $ checkIfChildCatIsValid handle title subTitle
+  subCatId <- EitherT $ getCatId handle subTitle
+  lift $ insertCatWSubRecord handle title subCatId
+  return title
+
+updateCatWSub :: Monad m => Handle m ->
+                 CategoryId -> Title -> Title -> m (Either Text CategoryId)
+updateCatWSub handle catId newTitle subTitle = runEitherT $ do
+  _ <- EitherT $ checkIfChildCatIsValid handle newTitle subTitle
+  subCatId <- EitherT $ getCatId handle subTitle
+  lift $ updateCatWSubRecord handle catId subCatId newTitle
+  return catId
+
+getCatId :: Monad m => Handle m -> Title -> m (Either Text CategoryId)
+getCatId handle title = do
+  let logh = hLogger handle
+  catIdSql <- selectFromWhere handle tableCats
+              [colIdCat]
+              [colTitleCat]
+              [toSql title]
+  case catIdSql of
     [[catId]] -> do
-      Logger.logInfo logh $ "Category with title: "
-        <> cat 
-        <> " exists in db!"
-      return $ Just $ fromSql catId
+      Logger.logInfo logh $ "Category with title: '"
+        <> title 
+        <> "' exists in db!"
+      return $ Right $ fromSql catId
     _ -> do
-      Logger.logError logh $ "Category with title: "
-        <> cat
-        <> " doesn't exist in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in checkCatExists!\n"
-            <> show e
+      let msg = "Category with title: '"
+            <> title
+            <> "' doesn't exist in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
 
-getCats :: Handle IO -> IO ([Category], Text)
-getCats handle = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id, title, subcategory_id \
-                        \FROM categories" []
-  case r of
+getCats :: Monad m => Handle m -> m (Either Text [Category])
+getCats handle = do
+  let logh = hLogger handle
+  catsSQL <- selectFrom handle tableCats
+              [colIdCat, colTitleCat, colSubCatCat]
+  case catsSQL of
     [] -> do
-      Logger.logWarning logh "No categories in db!"
-      return ([], "No categories!")
+      Logger.logWarning logh "No Categories in db!"
+      return $ Left "No Categories!"
     catcategories -> do
       Logger.logInfo logh "Getting Categories from db."
-      catsM <- mapM (getSub handle) catcategories
-      case sequenceA catsM of
-        Nothing -> do
-          Logger.logInfo logh "Invalid Category in db."
-          return ([], "Invalid Category in db.")
-        Just cats -> return (cats,"Getting Categories from db.")
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getCats!\n"
-            <> show e
+      catsE <- mapM (getSub handle) catcategories
+      return $ sequenceA catsE
 
-getCat :: Handle IO -> CategoryId -> IO (Maybe Category)
-getCat handle catId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id, title, subcategory_id \
-                        \FROM categories \
-                        \WHERE id = ?"
-       [toSql catId]
-  case r of
-    [cats] -> do
-      Logger.logInfo logh "Getting Categories from db."
-      getSub handle cats
-    _ -> do
-      Logger.logWarning logh $ "No category with id: "
-        <> convert catId
-        <> " in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getCats!\n"
-            <> show e
+checkIfChildCatIsValid :: Monad m => Handle m -> Title -> Title -> m (Either Text ())
+checkIfChildCatIsValid handle title subTitle = do
+  let logh = hLogger handle
+  if title /= subTitle
+    then return $ Right ()
+    else do
+      let msg = "Category and SubCategory can't have the same title!"
+      Logger.logError logh msg
+      return $ Left msg
 
-getCatwSub :: Handle IO -> CategoryId -> IO (Maybe Category)
-getCatwSub handle catId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id, title, subcategory_id \
-                        \FROM categories \
-                        \WHERE id = ?" 
-       [toSql catId]
-  case r of
+getCatRecordByCatId :: Monad m => Handle m -> CategoryId -> m (Either Text Category)
+getCatRecordByCatId handle catId = do
+  let logh = hLogger handle
+  catsSql <- selectFromWhere handle tableCats
+           [colIdCat, colTitleCat, colSubCatCat]
+           [colIdCat]
+           [toSql catId]
+  case catsSql of
     [cat@[_, _, subId]] -> do
       case (fromSql subId :: Maybe Integer) of
         Nothing -> do
-          Logger.logInfo logh "Category without sub_category."
+          Logger.logInfo logh $ "Category with id: "
+            <> convert catId
+            <> " hasn't sub_category."
           return $ newCatNull cat
         Just _ -> do
-          Logger.logInfo logh "Category with sub_category."
+          Logger.logInfo logh $ "Category with id: "
+            <> convert catId
+            <> " has sub_category."
           newCat handle cat
     _ -> do
-      Logger.logError logh $ "No category with id: "
-        <> convert catId
-        <> " in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getCatwSub!\n"
-            <> show e
+      let msg = "No Category with id: "
+            <> convert catId
+            <> " in db!"
+      Logger.logError logh msg
+      return $ Left msg
 
-removeCat :: Handle IO -> CategoryId -> IO (Maybe CategoryId)
-removeCat handle catId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r1 <- quickQuery' dbh "SELECT id \
-                        \FROM categories \
-                        \WHERE id = ?"
-         [toSql catId]
-  case r1 of
-    [] -> do
-      Logger.logWarning logh $ "Category with id: "
-        <> convert catId
-        <> " doesn't exist!"
-      return Nothing
-    _ -> do
-      r2 <- quickQuery' dbh "SELECT id \
-                            \FROM categories \
-                            \WHERE subcategory_id = ?"
-            [toSql catId]
-      case r2 of
-        [] -> do
-          _ <- run dbh "DELETE FROM categories \
-                        \WHERE id = ?"
-               [toSql catId]
-          commit dbh
-          Logger.logInfo logh $ "Removing Category with id: "
-            <> convert catId
-            <> " from db."
-          return $ Just catId
-        _ -> do
-          Logger.logWarning logh $ "Category with id: "
-            <> convert catId
-            <> " can't be removed from db while it is subcategory for other category."
-          return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removeCat!\n"
-            <> show e
+getCatChildren :: Monad m => Handle m -> CategoryId -> m (Either Text [CategoryId])
+getCatChildren handle catId = runEitherT $ do
+  _ <- EitherT $ getCatRecordByCatId handle catId
+  EitherT $ getChildCatIdRecordsByCatId handle catId
 
-editCat :: Handle IO -> CategoryId -> Title -> Maybe Title -> IO (Maybe CategoryId)
-editCat handle catId newTitle newSub = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT title \
-                       \FROM categories \
-                       \WHERE id = ?"
-       [toSql catId]
-  case r of
-    [] -> do
-      Logger.logWarning logh $ "Category with id: "
-        <> convert catId
-        <> " doesn't exist!"
-      return Nothing
-    _ -> do
-      case newSub of
-        Nothing -> do
-          _ <- run dbh "UPDATE categories \
-                       \SET title = ? \
-                       \WHERE id = ?"
-                [toSql newTitle, toSql catId]
-          commit dbh
-          Logger.logInfo logh $ "Updating Category with id: "
+removeCat :: Monad m => Handle m -> CategoryId -> m (Either Text CategoryId)
+removeCat handle catId = do
+  let logh = hLogger handle
+  childCatIdsE <- getCatChildren handle catId
+  case childCatIdsE of
+    Right _ -> do
+      let msg = "Category with id: "
             <> convert catId
-            <> "."
-          return $ Just catId
-        Just sub -> do
-          checkSubCat <- checkCatExists handle sub
-          case checkSubCat of
-            Nothing -> return Nothing
-            Just x -> do
-              _ <- run dbh "UPDATE categories \
-                           \SET title = ?, subcategory_id = ? \
-                           \WHERE id = ?"
-                   [toSql newTitle, toSql x, toSql catId]
-              commit dbh
-              Logger.logInfo logh $ "Updating Category with id: "
+            <> " can't be removed from db while it is \
+               \subcategory for other category."
+      Logger.logWarning logh msg
+      return $ Left msg
+    Left _ -> do
+      postIdsE <- getCatPostRecords handle catId
+      case postIdsE of
+        Left _ -> do
+          _ <- deleteCatRecord handle catId
+          return $ Right catId
+        Right _ -> do
+          let msg = "Category with id: "
                 <> convert catId
-                <> "."
-              return $ Just catId
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in editCat!\n"
-            <> show e
+                <> " can't be removed from db \
+                   \while exist Posts of this Category."
+          Logger.logWarning logh msg
+          return $ Left msg
 
-removeCatPostDeps :: Handle IO -> CategoryId -> IO ()
-removeCatPostDeps handle catId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT post_id \
-                       \FROM post_category \
-                       \WHERE category_id = ?"
-       [toSql catId]
-  case r of
-    [] -> Logger.logWarning logh "No Posts corresponding to this Category in db!"
+getCatPostRecords :: Monad m => Handle m -> CategoryId -> m (Either Text [PostId])
+getCatPostRecords handle catId = do
+  let logh = hLogger handle
+  postsIdSql <- selectFromWhere handle tablePostCat
+           [colIdPostPostCat]
+           [colIdCatPostCat]
+           [toSql catId]
+  case postsIdSql of
+    [postIds] -> do
+      Logger.logInfo logh "Getting dependency between \
+                          \Post and Category from db."
+      return $ Right $ map fromSql postIds
     _ -> do
-      Logger.logInfo logh "Removing dependency between Post and Category from db."
-      _ <- run dbh "DELETE FROM post_category \
-                   \WHERE category_id = ?"
-          [toSql catId]
-      commit dbh
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removeCatPostDeps!\n"
-            <> show e
+      let msg = "No Posts corresponding to Category with id: "
+            <> convert catId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
 
-newCat :: Handle IO -> [SqlValue] -> IO (Maybe Category)
+getChildCatIdRecordsByCatId :: Monad m => Handle m -> CategoryId -> m (Either Text [CategoryId])
+getChildCatIdRecordsByCatId handle catId = do
+  let logh = hLogger handle
+  childCatIdSql <- selectFromWhere handle tableCats
+               [colIdCat]
+               [colSubCatCat]
+               [toSql catId]
+  case childCatIdSql of
+    [childCatIds] -> do
+      Logger.logInfo logh $ "Category with id: "
+        <> convert catId
+        <> " has child Category."
+      return $ Right $ map fromSql childCatIds
+    _ -> do
+      let msg = "Category with id: "
+            <> convert catId
+            <> " hasn't child category."
+      Logger.logInfo logh msg
+      return $ Left msg
+
+insertCatWSubRecord :: Monad m => Handle m -> Title -> CategoryId -> m ()
+insertCatWSubRecord handle title subCatId = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tableCats 
+        [colTitleCat, colSubCatCat] 
+        [toSql title, toSql subCatId]
+  Logger.logInfo logh "Category was successfully inserted in db."
+
+insertCatWOSubRecord :: Monad m => Handle m -> Title -> m (Either Text Title)
+insertCatWOSubRecord handle title = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tableCats 
+           [colTitleCat] 
+           [toSql title]
+  Logger.logInfo logh "Category was successfully inserted in db."
+  return $ Right title
+
+updateCatWSubRecord :: Monad m => Handle m -> CategoryId -> CategoryId -> Title -> m ()
+updateCatWSubRecord handle catId subId newTitle = do
+  let logh = hLogger handle
+  _ <- updateSetWhere handle tableCats
+        [colTitleCat, colSubCatCat]
+        [colIdCat]
+        [toSql newTitle, toSql subId]
+        [toSql catId]
+  Logger.logInfo logh $ "Updating Category with id: "
+    <> convert catId
+    <> " in db."
+
+updateCatWOSubRecord :: Monad m => Handle m -> CategoryId -> Title -> m (Either Text CategoryId)
+updateCatWOSubRecord handle catId newTitle = do
+  let logh = hLogger handle
+  _ <- updateSetWhere handle tableCats
+           [colTitleCat]
+           [colIdCat]
+           [toSql newTitle]
+           [toSql catId]
+  Logger.logInfo logh $ "Updating Category with id: "
+    <> convert catId
+    <> " in db."
+  return $ Right catId
+
+deleteCatRecord :: Monad m => Handle m -> CategoryId -> m ()
+deleteCatRecord handle catId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tableCats
+        [colIdCat]
+        [toSql catId]
+  Logger.logInfo logh $ "Removing Category with id: "
+    <> convert catId
+    <> " from db."
+
+newCat :: Monad m => Handle m -> [SqlValue] -> m (Either Text Category)
 newCat handle [idCat, title, subId] = do
-  catSub <- getCatwSub handle $ fromSql subId
-  return $ Just $ Category {
+  catSubE <- getCatRecordByCatId handle $ fromSql subId
+  let catSubM = rightToMaybe catSubE
+  return $ Right $ Category {
     category_title = fromSql title,
     category_id = fromSql idCat,
-    category_subcategory = catSub
+    category_subcategory = catSubM
   }
-newCat _ _ = return Nothing
+newCat _ _ = return $ Left "Invalid Category!"
 
-newCatNull :: [SqlValue] -> Maybe Category
+newCatNull :: [SqlValue] -> Either Text Category
 newCatNull [idCat, title, _] = return Category {
   category_title = fromSql title,
   category_id = fromSql idCat,
   category_subcategory = Nothing
 }
-newCatNull _ = Nothing
+newCatNull _ = Left "Invalid Category!"
 
-getSub :: Handle IO -> [SqlValue] -> IO (Maybe Category)
-getSub handle cat@[_, _, subId] = do
+getSub :: Monad m => Handle m -> [SqlValue] -> m (Either Text Category)
+getSub handle cat@[idCat, _, idSub] = do
   let logh = hLogger handle
-  case (fromSql subId :: Maybe CategoryId) of
+  case (fromSql idSub :: Maybe CategoryId) of
     Nothing -> do
-      Logger.logInfo logh "Category without sub_category."
+      Logger.logInfo logh $ "Category with id: "
+        <> convert (fromSql idCat :: CategoryId)
+        <> " hasn't sub_category."
       return $ newCatNull cat
-    Just _ -> do
-      Logger.logInfo logh "Category with sub_category."
+    Just subId -> do
+      Logger.logInfo logh $ "Category with id: "
+        <> convert (fromSql idCat :: CategoryId)
+        <> " has sub_category with id: "
+        <> convert subId
       newCat handle cat
-getSub _ _ = return Nothing
+getSub _ _ = return $ Left "Invalid Category!"

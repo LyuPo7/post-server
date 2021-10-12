@@ -5,8 +5,7 @@ module Post.Server.Methods.Draft where
 import qualified Data.Text as T
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
-import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import Text.Read (readMaybe)
+import Control.Monad.Trans.Either
 import Control.Monad (guard)
 import Control.Monad.Trans (lift)
 
@@ -20,139 +19,131 @@ import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
-getDraftsResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+getDraftsResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 getDraftsResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Draft records"
-  case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
-    Right reqParams -> do
-      let [token] = reqParams
-      draftsM <- runMaybeT $ do
-        userId <- MaybeT $ DBAC.getUserId dbh token
-        user <- MaybeT $ DBU.getUser dbh userId
-        let authorName = T.unpack $ user_firstName user <> " " <> user_lastName user
-            dbQuery = Util.createDbRequest [("author", Just authorName)]
-        posts <- MaybeT $ DBP.getPosts dbh dbQuery
-        let postIds = map post_id posts
-        draftIds <- MaybeT $ fmap sequenceA $ traverse (DBP.getPostDraftId dbh) postIds
-        drafts <- MaybeT $ DBD.getDrafts dbh draftIds
-        return drafts
-      case draftsM of
-        Just drafts -> do
-          Logger.logInfo logh "Drafts were sent"
-          sendResponce $ respOk drafts
-        Nothing -> do
-          Logger.logError logh "Error while sending Drafts!"
-          sendResponce resp404
+  draftsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [token] = reqParams
+    userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
+    user <- EitherT $ DBU.getUserRecordbyId dbqh userId
+    let authorName = T.unpack $ user_firstName user <> " " <> user_lastName user
+    posts <- EitherT $ DBP.getPosts dbqh [("author", Just authorName)]
+    let postIds = map post_id posts
+    draftIds <- EitherT $ fmap sequenceA $ traverse (DBP.getPostDraftRecord dbqh) postIds
+    EitherT $ DBD.getDraftRecords dbqh draftIds
+  case draftsE of
+    Right drafts -> do
+      Logger.logInfo logh "Drafts were sent"
+      sendResponce $ respOk drafts
+    Left _ -> sendResponce resp404
   where params = ["token"]
 
-createDraftResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+createDraftResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 createDraftResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Draft record"
-  case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
-    Right reqParams -> do
-      let [idPost, text, token] = reqParams
-      perm <- DBAC.checkAuthorWritePerm dbh token
-      let action | perm == AuthorWritePerm = do
-                    msgM <- runMaybeT $ do
-                      let (Just postId) = readMaybe $ T.unpack idPost
-                      msg <- MaybeT $ DBD.createDraft dbh postId text
-                      return msg
-                    case msgM of
-                      Just _ -> do
-                        Logger.logInfo logh "Draft was created"
-                        sendResponce $ respSucc "Draft was created"
-                      Nothing -> do
-                        Logger.logError logh "Error while creating Draft!"
-                        sendResponce $ respError "Error while creating Draft!"
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [idPost, text, token] = reqParams
+    perm <- lift $ DBAC.checkAuthorWritePerm dbqh token
+    guard $ perm == AuthorWritePerm
+    return (idPost, text)
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right (idPost, text) -> do
+      msgE <- runEitherT $ do
+        postId <- EitherT $ Util.readEitherMa idPost "post_id"
+        EitherT $ DBD.createDraft dbqh postId text
+      case msgE of
+        Right _ -> do
+          let msg = "Draft was created"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["post_id", "text", "token"]
 
-removeDraftResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+removeDraftResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 removeDraftResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Draft record"
-  case Util.extractRequired query params of
-    Left msgE -> sendResponce $ respError msgE
-    Right reqParams -> do
-      let [idPost, token] = reqParams
-      perm <- DBAC.checkAuthorWritePerm dbh token
-      let action | perm == AuthorWritePerm = do
-                    msgM <- runMaybeT $ do
-                      let (Just postId) = readMaybe $ T.unpack idPost
-                      _ <- MaybeT $ DBP.getPost dbh postId
-                      msg <- MaybeT $ DBD.removeDraft dbh postId
-                      return msg
-                    case msgM of
-                      Just _ -> do
-                        Logger.logInfo logh "Draft was removed"
-                        sendResponce $ respSucc "Draft was removed"
-                      Nothing -> do
-                        Logger.logError logh "Error while removing Draft!"
-                        sendResponce $ respError "Error while removing Draft!"
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [idPost, token] = reqParams
+    perm <- lift $ DBAC.checkAuthorWritePerm dbqh token
+    guard $ perm == AuthorWritePerm
+    return idPost
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right idPost -> do
+      msgE <- runEitherT $ do
+        postId <- EitherT $ Util.readEitherMa idPost "post_id"
+        _ <- EitherT $ DBP.getPostRecord dbqh postId
+        EitherT $ DBD.removeDraft dbqh postId
+      case msgE of
+        Right _ -> do
+          let msg = "Draft was removed"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["post_id", "token"]
 
-editDraftResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+editDraftResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 editDraftResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Draft record"
-  case Util.extractRequired query params of
-    Left mesgE -> sendResponce $ respError mesgE
-    Right reqParams -> do
-      let [idPost, newText, token] = reqParams
-      perm <- DBAC.checkAuthorWritePerm dbh token
-      let action | perm == AuthorWritePerm = do
-                    msgM <- runMaybeT $ do
-                      let (Just postId) = readMaybe $ T.unpack idPost
-                      _ <- MaybeT $ DBP.getPost dbh postId
-                      msg <- MaybeT $ DBD.editDraft dbh postId newText
-                      return msg
-                    case msgM of
-                      Just _ -> do
-                        Logger.logInfo logh "Draft was edited"
-                        sendResponce $ respSucc "Draft was edited"
-                      Nothing -> do
-                        Logger.logError logh "Error while editing Draft!"
-                        sendResponce $ respError "Error while editing Draft!"
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [idPost, newText, token] = reqParams
+    perm <- lift $ DBAC.checkAuthorWritePerm dbqh token
+    guard $ perm == AuthorWritePerm
+    return (idPost, newText)
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right (idPost, newText) -> do
+      msgE <- runEitherT $ do
+        postId <- EitherT $ Util.readEitherMa idPost "post_id"
+        _ <- EitherT $ DBP.getPostRecord dbqh postId
+        EitherT $ DBD.editDraft dbqh postId newText
+      case msgE of
+        Right _ -> do
+          let msg = "Draft was edited"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["post_id", "text", "token"]
 
-publishDraftResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+publishDraftResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 publishDraftResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: publish Draft"
-  case Util.extractRequired query params of
-    Left mesgE -> sendResponce $ respError mesgE
-    Right reqParams -> do
-      let [idPost, token] = reqParams
-      msgM <- runMaybeT $ do
-        let (Just postId) = readMaybe $ T.unpack idPost
-        perm <- lift $ DBAC.checkAuthorReadPerm dbh token postId
-        guard $ perm == AuthorReadPerm
-        _ <- MaybeT $ DBP.getPost dbh postId
-        msg <- MaybeT $ DBD.publishDraft dbh postId
-        return msg
-      case msgM of
-        Just _ -> do
-          Logger.logInfo logh "Draft was published"
-          sendResponce $ respSucc "Draft was published"
-        Nothing -> do
-          Logger.logError logh "Error while publishing Draft!"
-          sendResponce resp404
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [idPost, token] = reqParams
+    postId <- EitherT $ Util.readEitherMa idPost "post_id"
+    perm <- lift $ DBAC.checkAuthorReadPerm dbqh token postId
+    guard $ perm == AuthorReadPerm
+    return postId
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right postId -> do
+      draftE <- runEitherT $ do
+        _ <- EitherT $ DBP.getPostRecord dbqh postId
+        EitherT $ DBD.publishDraft dbqh postId
+      case draftE of
+        Right _ -> do
+          let msg = "Draft was published"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["post_id", "token"]

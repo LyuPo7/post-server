@@ -2,703 +2,597 @@
 
 module Post.DB.Post where
 
-import Database.HDBC (SqlValue, handleSql, run, commit, quickQuery', fromSql, toSql)
+import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.List (intersect, union, intercalate)
-import Data.Time.Clock (getCurrentTime)
-import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
-import qualified Control.Exception as Exc
+import Data.List (intersect)
+import Control.Monad.Trans (lift)
+import Control.Monad.Trans.Either
+import Data.Either.Combinators (rightToMaybe)
 
-import Post.DB.DBSpec (Handle(..))
+import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
-import qualified Post.Exception as E
 import qualified Post.DB.Author as DBA
 import qualified Post.DB.Category as DBC
 import qualified Post.DB.Tag as DBT
 import qualified Post.DB.Photo as DBPh
 import qualified Post.DB.Comment as DBCo
-import qualified Post.DB.Data as DbData
 import Post.Server.Objects
+import Post.DB.Data
 import Post.Server.Util (convert)
 
 -- | DB methods for Post
-createPost :: Handle IO -> Title -> Text -> AuthorId -> CategoryId -> [TagId] -> IO (Maybe PostId)
-createPost handle title text authorId catId tagIds = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r1 <- quickQuery' dbh "SELECT id \
-                        \FROM posts \
-                        \WHERE title = ?"
-         [toSql title]
-  case r1 of
-    [] -> do
-      time <- getCurrentTime
-      --let createdAt = utctDay time
-      _ <- run dbh "INSERT INTO posts (title, text, created_at) \
-                   \VALUES (?,?,?)"
-            [toSql title, toSql text, toSql time]
-      commit dbh
-      Logger.logInfo logh $ "Post with title: "
-        <> title
-        <> " was successfully inserted in db."
-      r2 <- quickQuery' dbh "SELECT id \
-                            \FROM posts \
-                            \ORDER BY id DESC LIMIT 1" []
-      case r2 of
-        [[idPost]] -> do
-          let postId = fromSql idPost
-          createPostAuthorDep handle postId authorId
-          createPostCatDep handle postId catId
-          mapM_ (createPostTagDep handle postId) tagIds
-          return $ Just postId
-        _ -> do
-          Logger.logError logh "Error while inserting Post to db."
-          return Nothing
-    _ -> do
-      Logger.logWarning logh $ "Post with title: "
-        <> title
-        <> " already exists in db."
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in createPost!\n"
-            <> show e
+createPost :: Monad m => Handle m -> Title ->
+              Text -> AuthorId -> CategoryId -> [TagId] -> m (Either Text PostId)
+createPost handle title text authorId catId tagIds = do
+  let logh = hLogger handle
+  postIdE <- getPostIdRecordByTitle handle title
+  case postIdE of
+    Left _ -> runEitherT $ do
+      _ <- EitherT $ DBC.getCatRecordByCatId handle catId
+      _ <- EitherT $ DBT.getTagRecordsByIds handle tagIds
+      lift $ insertPostRecord handle title text
+      postId <- EitherT $ getLastPostRecord handle
+      _ <- EitherT $ createPostAuthorDep handle postId authorId
+      _ <- EitherT $ createPostCatDep handle postId catId
+      lift $ mapM_ (createPostTagDep handle postId) tagIds
+      return postId
+    Right _ -> do
+      let msg = "Post with title: '"
+            <> title
+            <> "' already exists in db."
+      Logger.logWarning logh msg
+      return $ Left msg
 
-getPosts :: Handle IO -> DbData.DbReq -> IO (Maybe [Post])
-getPosts handle dbReq = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
+getPosts :: Monad m => Handle m -> PostQuery -> m (Either Text [Post])
+getPosts handle postQuery = do
+  let logh = hLogger handle
   -- Request to DB table posts
-      dbPostQuery = "SELECT id \
-                    \FROM posts "
-        <> fst (DbData.dbPostReq dbReq)
-      dbPostArgs = snd $ DbData.dbPostReq dbReq
-  Logger.logDebug logh $ "Query to table 'posts': "
-    <> T.pack dbPostQuery
-  rPost <- quickQuery' dbh dbPostQuery dbPostArgs
-  -- Request to DB table post_category
-  let dbCatQuery = "SELECT post_id \
-                   \FROM post_category "
-        <> fst (DbData.dbCatReq dbReq)
-      dbCatArgs = snd $ DbData.dbCatReq dbReq
-  Logger.logDebug logh $ "Query to table 'post_category': "
-    <> T.pack dbCatQuery
-  rCat <- quickQuery' dbh dbCatQuery dbCatArgs
-  -- Request to DB table post_tag
-  let dbTagQuery = "SELECT post_id \
-                   \FROM post_tag "
-        <> fst (DbData.dbTagReq dbReq)
-      dbTagArgs = snd $ DbData.dbTagReq dbReq
-  Logger.logDebug logh $ "Query to table 'post_tag': "
-    <> T.pack dbTagQuery
-  rTag <- quickQuery' dbh dbTagQuery dbTagArgs
-  -- Request to DB table post_author
-  let dbAuthorQuery = "SELECT post_id \
-                      \FROM post_author "
-        <> fst (DbData.dbAuthorReq dbReq)
-      dbAuthorArgs = snd $ DbData.dbAuthorReq dbReq
-  Logger.logDebug logh $ "Query to table 'post_tag': "
-    <> T.pack dbAuthorQuery
-  rAuthor <- quickQuery' dbh dbAuthorQuery dbAuthorArgs
-  -- Serch request to DB table posts
-  let dbPostSearchQuery = "SELECT id \
-                          \FROM posts "
-        <> fst (DbData.dbPostSearch dbReq)
-      dbPostSearchArgs = snd $ DbData.dbPostSearch dbReq
-  Logger.logDebug logh $ "Search Query to table 'posts': "
-    <> T.pack dbPostSearchQuery
-  rPostSearch <- quickQuery' dbh dbPostSearchQuery dbPostSearchArgs
-  -- Serch request to DB table post_author
-  let dbAuthorSearchQuery = "SELECT post_id \
-                            \FROM post_author "
-        <> fst (DbData.dbAuthorSearch dbReq)
-      dbAuthorSearchArgs = snd $ DbData.dbAuthorSearch dbReq
-  Logger.logDebug logh $ "Query to table 'post_tag': "
-    <> T.pack dbAuthorSearchQuery
-  rAuthorSearch <- quickQuery' dbh dbAuthorSearchQuery dbAuthorSearchArgs
-  -- Serch request to DB table post_category
-  let dbCatSearchQuery = "SELECT post_id \
-                         \FROM post_category "
-        <> fst (DbData.dbCatSearch dbReq)
-      dbCatSearchArgs = snd $ DbData.dbCatSearch dbReq
-  Logger.logDebug logh $ "Query to table 'post_category': "
-    <> T.pack dbCatSearchQuery
-  rCatSearch <- quickQuery' dbh dbCatSearchQuery dbCatSearchArgs
-  -- Serch request to DB table post_tag
-  let dbTagSearchQuery = "SELECT post_id \
-                         \FROM post_tag "
-        <> fst (DbData.dbTagSearch dbReq)
-      dbTagSearchArgs = snd $ DbData.dbTagSearch dbReq
-  Logger.logDebug logh $ "Query to table 'post_tag': "
-    <> T.pack dbTagSearchQuery
-  rTagSearch <- quickQuery' dbh dbTagSearchQuery dbTagSearchArgs
+  idAllPosts <- searchPost handle postQuery
+  idCatPosts <- searchCat handle postQuery
+  idTagPosts <- searchTag handle postQuery
+  idAuthorPosts <- searchAuthor handle postQuery
+  -- Search request to DB table posts
+  idSearch <- findIn handle postQuery
   -- Requests
-  let rAllSimple = ((rPost `intersect` rCat) `intersect` rTag) `intersect` rAuthor
-      rAllSearch = ((rPostSearch `union` rCatSearch) `union` rTagSearch) `union` rAuthorSearch
-      rAll = rAllSimple `intersect` rAllSearch
+  let idAllSimple = ((idAllPosts 
+        `intersect` idCatPosts) 
+        `intersect` idTagPosts) 
+        `intersect` idAuthorPosts
+      idAll = idAllSimple `intersect` idSearch
   -- Request with sorting
-  case rAll of
+  case idAll of
     [] -> do
-      Logger.logWarning logh "No posts in db!"
-      return Nothing
-    _ -> do
-      let idAll = concat rAll
-          nAll = length idAll
-      Logger.logInfo logh "Sorting posts from db!"
-      rMain <- quickQuery' dbh (DbData.orderQuery dbReq
-        <> intercalate "," (replicate nAll "?")
-        <> DbData.orderBy dbReq) idAll
-      case rMain of
+      Logger.logWarning logh "No Posts in db!"
+      return $ Left "No Posts!"
+    correctIds -> do
+      Logger.logInfo logh "Sorting Posts from db!"
+      postsSql <- sortQuery handle postQuery $ map toSql correctIds
+      case postsSql of
         [] -> do
-          Logger.logWarning logh "No posts in db!"
-          return Nothing
+          Logger.logWarning logh "No Posts in db!"
+          return $ Left "No Posts!"
         ids -> do
-          posts <- mapM (getPost handle . fromSql) $ concat ids
+          posts <- mapM (getPostRecord handle) ids
           return $ sequence posts
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getPosts!\n"
-            <> show e
 
-getPost :: Handle IO -> PostId -> IO (Maybe Post)
-getPost handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id, title, created_at, text \
-                       \FROM posts \
-                       \WHERE id = ?"
-        [toSql postId]
-  case r of
-    [params] -> do
+removePost :: Monad m => Handle m -> PostId -> m (Either Text PostId)
+removePost handle postId = runEitherT $ do
+  _ <- EitherT $ getPostRecord handle postId
+  _ <- lift $ removePostAuthorDep handle postId
+  _ <- lift $ removePostCatDep handle postId
+  _ <- lift $ removePostTagDep handle postId
+  _ <- lift $ removePostMainPhotoDep handle postId
+  _ <- lift $ removePostAddPhotoDep handle postId
+  _ <- lift $ removePostCommentDep handle postId
+  _ <- lift $ removePostDraftDep handle postId
+  _ <- lift $ deletePostRecord handle postId
+  return postId
+
+-- | DB methods for Post
+setPostMainPhoto :: Monad m => Handle m -> PostId -> Text -> m (Either Text PhotoId)
+setPostMainPhoto handle postId path = do
+  let logh = hLogger handle
+  photoIdE <- DBPh.savePhoto handle path
+  case photoIdE of
+    Left _ -> do
+      let msg = "Couldn't set Main Photo for Post with id: "
+            <> convert postId
+      Logger.logError logh msg
+      return $ Left msg
+    Right photoId -> do
+      oldPhotoIdE <- getPostMainPhotoRecords handle postId
+      case oldPhotoIdE of
+        Left _ -> insertPostMainPhotoRecord handle postId photoId
+        Right _ -> updatePostMainPhotoRecord handle postId photoId
+
+setPostAddPhoto :: Monad m => Handle m -> PostId -> Text -> m (Either Text PhotoId)
+setPostAddPhoto handle postId path = do
+  let logh = hLogger handle
+  photoIdE <- DBPh.savePhoto handle path
+  case photoIdE of
+    Left _ -> do
+      let msg = "Couldn't set Additional Photo for Post with id: "
+            <> convert postId
+      Logger.logError logh msg
+      return $ Left msg
+    Right photoId -> insertPostAddPhotoRecord handle postId photoId
+
+createPostAuthorDep :: Monad m => Handle m ->
+                       PostId -> AuthorId -> m (Either Text AuthorId)
+createPostAuthorDep handle postId authorId = do
+  let logh = hLogger handle
+  postAuthorDepE <- getPostAuthorRecord handle postId
+  case postAuthorDepE of
+    Left _ -> do
+      _ <- insertPostAuthorRecord handle postId authorId
+      return $ Right authorId
+    Right _ -> do
+      let msg = "Dependency between Post and Author already exists."
+      Logger.logError logh msg 
+      return $ Left msg
+
+createPostCatDep :: Monad m => Handle m ->
+                    PostId -> CategoryId -> m (Either Text CategoryId)
+createPostCatDep handle postId catId = do
+  let logh = hLogger handle
+  postCatDepE <- getPostCategoryRecord handle postId
+  case postCatDepE of
+    Left _ -> do
+      _ <- insertPostCatRecord handle postId catId
+      return $ Right catId
+    Right _ -> do
+      let msg = "Dependency between \
+                \Post and Category already exists."
+      Logger.logError logh msg
+      return $ Left msg
+
+createPostTagDep :: Monad m => Handle m -> PostId -> TagId -> m (Either Text TagId)
+createPostTagDep handle postId tagId = do
+  let logh = hLogger handle
+  tagsIdE <- getPostTagRecords handle postId
+  case tagsIdE of
+    Left _ -> insertPostTagRecord handle postId tagId
+    Right tags -> do
+      if tagId `elem` tags
+        then do
+          let msg = "Dependency between \
+                    \Post and Tag already exists."
+          Logger.logWarning logh msg
+          return $ Left msg
+        else do
+          Logger.logInfo logh "Inserting dependency between Post and Tag in db."
+          insertPostTagRecord handle postId tagId
+
+createPostDraftDep :: Monad m => Handle m ->
+                      PostId -> DraftId -> m (Either Text DraftId)
+createPostDraftDep handle postId draftId = do
+  let logh = hLogger handle
+  draftIdDbE <- getPostDraftRecord handle postId
+  case draftIdDbE of
+    Left _ -> insertPostDraftRecord handle postId draftId
+    Right _ -> do
+      let msg = "Draft for Post with id: "
+            <> convert postId
+            <> " already exists in db!"
+      Logger.logError logh msg
+      return $ Left msg
+
+removePostAuthorDep :: Monad m => Handle m -> PostId -> m (Either Text AuthorId)
+removePostAuthorDep handle postId = runEitherT $ do
+  authorId <- EitherT $ getPostAuthorRecord handle postId
+  lift $ deletePostAuthorRecord handle postId
+  return authorId
+
+removePostCatDep :: Monad m => Handle m -> PostId -> m (Either Text CategoryId)
+removePostCatDep handle postId = runEitherT $ do
+  catId <- EitherT $ getPostCategoryRecord handle postId
+  lift $ deletePostCatRecord handle postId
+  return catId
+
+removePostTagDep :: Monad m => Handle m -> PostId -> m (Either Text [TagId])
+removePostTagDep handle postId = runEitherT $ do
+  tagsId <- EitherT $ getPostTagRecords handle postId
+  lift $ deletePostTagRecord handle postId
+  return tagsId
+
+removePostMainPhotoDep :: Monad m => Handle m -> PostId -> m (Either Text PhotoId)
+removePostMainPhotoDep handle postId = runEitherT $ do
+  photoId <- EitherT $ getPostMainPhotoRecords handle postId
+  lift $ deletePostMainPhotoRecord handle postId
+  return $ photo_id photoId
+
+removePostAddPhotoDep :: Monad m => Handle m -> PostId -> m (Either Text [PhotoId])
+removePostAddPhotoDep handle postId = runEitherT $ do
+  photosAdd <- EitherT $ getPostAddPhotoRecords handle postId
+  lift $ deletePostAddPhotoRecords handle postId
+  return $ map photo_id photosAdd
+
+removePostCommentDep :: Monad m => Handle m -> PostId -> m (Either Text [PhotoId])
+removePostCommentDep handle postId = runEitherT $ do
+  comments <- EitherT $ getPostCommentRecords handle postId
+  lift $ deletePostComRecords handle postId
+  return $ map comment_id comments    
+
+removePostDraftDep :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
+removePostDraftDep handle postId = runEitherT $ do
+  draftId <- EitherT $ getPostDraftRecord handle postId
+  lift $ deletePostDraftRecord handle postId
+  return draftId
+
+getPostRecord :: Monad m => Handle m -> PostId -> m (Either Text Post)
+getPostRecord handle postId = do
+  let logh = hLogger handle
+  postSQL <- selectFromWhere handle tablePosts
+             [colIdPost, colTitlePost, colCreatedAtPost, colTextPost]
+             [colIdPost]
+             [toSql postId]
+  case postSQL of
+    [post] -> do
       Logger.logInfo logh "Getting Post from db."
-      newPost handle params
+      newPost handle post
     _ -> do
-      Logger.logWarning logh $ "No post with id: "
-        <> convert postId
-        <> " in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getPost!\n"
-            <> show e
+      let msg = "No Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
 
-removePost :: Handle IO -> PostId -> IO (Maybe PostId)
-removePost handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT id \
-                       \FROM posts \
-                       \WHERE user_id = ?"
-       [toSql postId]
-  case r of
-    [] -> do
-      Logger.logWarning logh $ "No exists Post with id: "
+getLastPostRecord :: Monad m => Handle m -> m (Either Text PostId)
+getLastPostRecord handle = do
+  let logh = hLogger handle
+  idPostSql <- selectFromOrderLimit handle tablePosts
+                [colIdPost]
+                 colIdPost 1
+  case idPostSql of
+    [[idPost]] -> do
+      let postId = fromSql idPost
+      Logger.logInfo logh $ "Last Post inserted in db with id: "
         <> convert postId
-        <> "!"
-      return Nothing
+      return $ Right postId
     _ -> do
-      _ <- run dbh "DELETE FROM posts \
-                   \WHERE id = ?"
-           [toSql postId]
-      _ <- removePostAuthorDep handle postId
-      _ <- removePostCatDep handle postId
-      _ <- removePostTagDep handle postId
-      _ <- removePostMainPhotoDep handle postId
-      _ <- removePostAddPhotoDep handle postId
-      _ <- removePostCommentDep handle postId
-      _ <- removePostDraftDep handle postId
-      commit dbh
-      Logger.logInfo logh $ "Removing Post with id: "
+      let msg = "No exist Posts in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
+
+getPostIdRecordByTitle :: Monad m => Handle m -> Title -> m (Either Text PostId)
+getPostIdRecordByTitle handle title = do
+  let logh = hLogger handle
+  postIdSQL <- selectFromWhere handle tablePosts
+             [colIdPost]
+             [colTitlePost]
+             [toSql title]
+  case postIdSQL of
+    [[idPost]] -> do
+      Logger.logInfo logh $ "Getting PostId corresponding to title: '"
+        <> title
+        <> "' from db."
+      return $ Right $ fromSql idPost
+    _ -> do
+      let msg = "No exists Post with title: "
+            <> title
+            <> " in db!"
+      Logger.logError logh msg
+      return $ Left msg
+
+getPostAuthorRecord :: Monad m => Handle m -> PostId -> m (Either Text AuthorId)
+getPostAuthorRecord handle postId = do
+  let logh = hLogger handle
+  authorIdSql <- selectFromWhere handle tablePostAuthor
+               [colIdAuthorPostAuthor]
+               [colIdPostPostAuthor]
+               [toSql postId]
+  case authorIdSql of
+    [[authorId]] -> do
+      Logger.logInfo logh $ "Getting AuthorId \
+           \corresponding to Post with id: "
         <> convert postId
         <> " from db."
-      return $ Just postId
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removePost!\n"
-            <> show e
-
-setPostMainPhoto :: Handle IO -> PostId -> Text -> IO (Maybe PhotoId)
-setPostMainPhoto handle postId path = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  photoIdMaybe <- DBPh.savePhoto handle path
-  case photoIdMaybe of
-    Nothing -> do
-      Logger.logError logh $ "Couldn't set Main Photo for Post with id: "
-        <> convert postId
-      return Nothing
-    Just photoId -> do
-      r <- quickQuery' dbh "SELECT photo_id \
-                           \FROM post_main_photo \
-                           \WHERE post_id = ?" 
-            [toSql postId]
-      case r of
-        [] -> do
-          _ <- run dbh "INSERT INTO post_main_photo (photo_id, post_id) \
-                       \VALUES (?,?)" 
-                [toSql photoId, toSql postId]
-          commit dbh
-          Logger.logInfo logh "Post's Main Photo was successfully set."
-          return $ Just photoId
-        _ -> do
-          _ <- run dbh "UPDATE post_main_photo \
-                       \SET photo_id = ? \
-                       \WHERE post_id = ?" 
-                [toSql photoId, toSql postId]
-          commit dbh
-          Logger.logInfo logh "Post's Main Photo was successfully updated."
-          return $ Just photoId
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in setPostMainPhoto!\n"
-            <> show e
-
-setPostAddPhoto :: Handle IO -> PostId -> Text -> IO (Maybe PhotoId)
-setPostAddPhoto handle postId path = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  photoIdMaybe <- DBPh.savePhoto handle path
-  case photoIdMaybe of
-    Nothing -> do
-      Logger.logError logh $ "Couldn't set Additional Photo for Post with id: "
-        <> convert postId
-      return Nothing
-    Just photoId -> do
-      r <- quickQuery' dbh "SELECT photo_id \
-                           \FROM post_add_photo \
-                           \WHERE post_id = ? AND photo_id = ?" 
-           [toSql postId, toSql photoId]
-      case r of
-        [] -> do
-          _ <- run dbh "INSERT INTO post_add_photo (photo_id, post_id) \
-                        \VALUES (?,?)" 
-                [toSql photoId, toSql postId]
-          commit dbh
-          Logger.logInfo logh "Post's Add Photo was successfully set."
-          return $ Just photoId
-        _ -> do
-          Logger.logError logh $ "Add Photo with id: "
-            <> convert photoId
-            <> " for Post with id: "
+      return $ Right $ fromSql authorId
+    _ -> do
+      let msg = "No Author corresponding to Post with id: "
             <> convert postId
-            <> " already exists in db."
-          return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in setPostAddPhoto!\n"
-            <> show e
+            <> "in db!"
+      Logger.logInfo logh msg
+      return $ Left msg
 
-getPostMainPhoto :: Handle IO -> PostId -> IO (Maybe Photo)
-getPostMainPhoto handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT photo_id \
-                       \FROM post_main_photo \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
+getPostCategoryRecord :: Monad m => Handle m -> PostId -> m (Either Text CategoryId)
+getPostCategoryRecord handle postId = do
+  let logh = hLogger handle
+  catIdSql <- selectFromWhere handle tablePostCat
+               [colIdCatPostCat]
+               [colIdPostPostCat]
+               [toSql postId]
+  case catIdSql of
+    [[catId]] -> do
+      Logger.logInfo logh $ "Getting CategoryId \
+           \corresponding to Post with id: "
+        <> convert postId
+        <> " from db."
+      return $ Right $ fromSql catId
+    _ -> do
+      let msg = "No exists Category corresponding to Post with id: "
+            <> convert postId
+            <> "in db!"
+      Logger.logInfo logh msg
+      return $ Left msg
+
+getPostTagRecords :: Monad m => Handle m -> PostId -> m (Either Text [TagId])
+getPostTagRecords handle postId = do
+  let logh = hLogger handle
+  tagsIdSql <- selectFromWhere handle tablePostTag
+               [colIdTagPostTag]
+               [colIdPostPostTag]
+               [toSql postId]
+  case tagsIdSql of
+    [tagIds] -> do
+      Logger.logInfo logh $ "Getting TagId \
+           \corresponding to Post with id: "
+        <> convert postId
+        <> " from db."
+      return $ Right $ map fromSql tagIds
+    _ -> do
+      let msg = "No exist Tags corresponding to Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logInfo logh msg
+      return $ Left msg
+
+getPostMainPhotoRecords :: Monad m => Handle m -> PostId -> m (Either Text Photo)
+getPostMainPhotoRecords handle postId = do
+  let logh = hLogger handle
+  photoIdSql <- selectFromWhere handle tablePostMainPhoto
+               [colIdPhotoPostMainPhoto]
+               [colIdPostPostMainPhoto]
+               [toSql postId]
+  case photoIdSql of
     [[photoId]] -> do
       Logger.logInfo logh $ "Getting Main Photo for Post with id: "
         <> convert postId <> "."
-      DBPh.getPhoto handle $ fromSql photoId
+      DBPh.getPhotoRecordById handle $ fromSql photoId
     _ -> do
-      Logger.logWarning logh $ "No exists Main Photo for Post with id: "
-        <> convert postId
-        <> " in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getPostMainPhoto!\n"
-            <> show e
+      let msg = "No exists Main Photo for Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
 
-getPostAddPhotos :: Handle IO -> PostId -> IO (Maybe [Photo])
-getPostAddPhotos handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT photo_id \
-                       \FROM post_add_photo \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
+getPostAddPhotoRecords :: Monad m => Handle m -> PostId -> m (Either Text [Photo])
+getPostAddPhotoRecords handle postId = do
+  let logh = hLogger handle
+  photoIdSql <- selectFromWhere handle tablePostAddPhoto
+               [colIdPhotoPostAddPhoto]
+               [colIdPostPostAddPhoto]
+               [toSql postId]
+  case photoIdSql of
     [] -> do
-      Logger.logWarning logh $ "No exists Add Photos for Post with id: "
-        <> convert postId
-        <> " in db!"
-      return Nothing
+      let msg = "No exist Add Photos for Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     ids -> do
       Logger.logInfo logh $ "Getting Add Photos for Post with id: "
         <> convert postId
-        <> "."
+        <> " from db."
       let addPhotoIds = map fromSql $ concat ids
-      addPhotos <- mapM (DBPh.getPhoto handle) addPhotoIds
+      addPhotos <- mapM (DBPh.getPhotoRecordById handle) addPhotoIds
       return $ sequence addPhotos
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getPostAddPhotos!\n"
-            <> show e
 
-getPostComments :: Handle IO -> PostId -> IO (Maybe [Comment])
-getPostComments handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT comment_id \
-                       \FROM post_comment \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
+getPostDraftRecord :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
+getPostDraftRecord handle postId = do
+  let logh = hLogger handle
+  draftIdSql <- selectFromWhere handle tablePostDraft
+               [colIdDraftPostDraft]
+               [colIdPostPostDraft]
+               [toSql postId]
+  case draftIdSql of
+    [[draftId]] -> do 
+      Logger.logInfo logh "Dependency between Post and Draft already exists."
+      return $ Right $ fromSql draftId
+    _ -> do
+      let msg = "Dependency between Post and Draft doesn't exist."
+      Logger.logError logh msg
+      return $ Left msg
+
+getPostCommentRecords :: Monad m => Handle m -> PostId -> m (Either Text [Comment])
+getPostCommentRecords handle postId = do
+  let logh = hLogger handle
+  comsIdSql <- selectFromWhere handle tablePostCom
+               [colIdComPostCom]
+               [colIdPostPostCom]
+               [toSql postId]
+  case comsIdSql of
     [] -> do
-      Logger.logWarning logh $ "No exists Comments for Post with id: "
-        <> convert postId
-        <> " in db!"
-      return Nothing
+      let msg = "No exist Comments for Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     ids -> do
       Logger.logInfo logh $ "Getting Comments for Post with id: "
         <> convert postId
-        <> "."
+        <> " from db."
       let commentIds = map fromSql $ concat ids
-      comments <- mapM (DBCo.getComment handle) commentIds
+      comments <- mapM (DBCo.getCommentRecord handle) commentIds
       return $ sequence comments
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getPostComments!\n"
-            <> show e
 
-getPostAuthorId :: Handle IO -> PostId -> IO (Maybe AuthorId)
-getPostAuthorId handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT author_id \
-                       \FROM post_author \
-                       \WHERE post_id = ?"
-       [toSql postId]
-  case r of
-    [[authorId]] -> do
-      Logger.logInfo logh "Getting author_id corresponding to this Post from db."
-      return $ Just $ fromSql authorId
-    _ -> do
-      Logger.logError logh "No Author corresponding to this Post in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getPostAuthorId!\n"
-            <> show e
+insertPostRecord :: Monad m => Handle m -> Title -> Text -> m ()
+insertPostRecord handle title text = do
+  let logh = hLogger handle
+  time <- getCurrentTime handle
+  _ <- insertIntoValues handle tablePosts
+        [colTitlePost, colTextPost, colCreatedAtPost]
+        [toSql title, toSql text, toSql time]
+  Logger.logInfo logh $ "Post with title: '"
+    <> title
+    <> "' was successfully inserted in db."
 
-getPostCategoryId :: Handle IO -> PostId -> IO (Maybe CategoryId)
-getPostCategoryId handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT category_id \
-                       \FROM post_category \
-                       \WHERE post_id = ?"
-       [toSql postId]
-  case r of
-    [[catId]] -> do
-      Logger.logInfo logh "Getting category_id corresponding to this Post from db."
-      return $ Just $ fromSql catId
-    _ -> do
-      Logger.logError logh "No Category corresponding to this Post in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getPostCategoryId!\n"
-            <> show e
-
-getPostTagsIds :: Handle IO -> PostId -> IO (Maybe [TagId])
-getPostTagsIds handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT tag_id \
-                       \FROM post_tag \
-                       \WHERE post_id = ?"
-        [toSql postId]
-  case r of
-    [tagIds] -> do
-      Logger.logInfo logh "Getting tag_id corresponding to this Post from db."
-      return $ Just $ map fromSql tagIds
-    _ -> do
-      Logger.logWarning logh "No Tags corresponding to this Post in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in getPostTagsIds!\n"
-            <> show e
-
-getPostDraftId :: Handle IO -> PostId -> IO (Maybe DraftId)
-getPostDraftId handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT draft_id \
-                       \FROM post_draft \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [[draftId]] -> do 
-      Logger.logInfo logh "Dependency between Post and Draft already exists."
-      return $ Just $ fromSql draftId
-    _ -> do
-      Logger.logError logh "Dependency between Post and Draft doesn't exist."
-      return Nothing
-  where errorHandler e = do 
-          Exc.throwIO $ E.DbError $ "Error: Error in getPostDraftId!\n"
-            <> show e
-
-createPostAuthorDep :: Handle IO -> PostId -> AuthorId -> IO ()
-createPostAuthorDep handle postId authorId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT author_id \
-                       \FROM post_author \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [] -> do
-      _ <- run dbh "INSERT INTO post_author (post_id, author_id) \
-                   \VALUES (?,?)" 
-           [toSql postId, toSql authorId]
-      commit dbh
-      Logger.logInfo logh "Creating dependency between Post and Author."
-    _ -> do Logger.logError logh "Dependency between Post and Author already exists."
-  where errorHandler e = do 
-          Exc.throwIO $ E.DbError $ "Error: Error in createPostAuthorDep!\n"
-            <> show e
-
-createPostCatDep :: Handle IO -> PostId -> CategoryId -> IO ()
-createPostCatDep handle postId catId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT category_id \
-                       \FROM post_category \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [] -> do
-      _ <- run dbh "INSERT INTO post_category (post_id, category_id) \
-                   \VALUES (?,?)" 
-           [toSql postId, toSql catId]
-      commit dbh
-      Logger.logInfo logh "Creating dependency between Post and Category."
-    _ -> do Logger.logError logh "Dependency between Post and Category already exists."
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in createPostCatDep!\n"
-            <> show e
-
-createPostTagDep :: Handle IO -> PostId -> TagId -> IO ()
-createPostTagDep handle postId tagId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT tag_id \
-                       \FROM post_tag \
-                       \WHERE post_id = ? AND tag_id = ?" 
-        [toSql postId, toSql tagId]
-  case r of
-    [] -> do
-      _ <- run dbh "INSERT INTO post_tag (post_id, tag_id) \
-                   \VALUES (?,?)" 
-            [toSql postId, toSql tagId]
-      commit dbh
-      Logger.logInfo logh "Creating dependency between Post and Tag."
-    _ -> do Logger.logError logh "Dependency between Post and Tag already exists."
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in createPostTagDep!\n"
-            <> show e
-
-createPostDraftDep :: Handle IO -> PostId -> DraftId -> IO ()
-createPostDraftDep handle postId draftId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  draftIdDbMaybe <- getPostDraftId handle postId
-  case draftIdDbMaybe of
-    Nothing -> do
-      _ <- run dbh "INSERT INTO post_draft (post_id, draft_id) \
-                   \VALUES (?,?)" 
-            [toSql postId, toSql draftId]
-      commit dbh
-      Logger.logInfo logh "Creating dependency between Post and Draft."
-    Just _ -> do Logger.logError logh $ "Post with id: "
-                   <> convert postId 
-                   <> " already has Draft."
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in createPostDraftDep!\n"
-            <> show e
-
-removePostAuthorDep :: Handle IO -> PostId -> IO (Maybe AuthorId)
-removePostAuthorDep handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT author_id \
-                       \FROM post_author \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [[authorId]] -> do
-      _ <- run dbh "DELETE FROM post_author \
-                   \WHERE post_id = ?"
-            [toSql postId]
-      commit dbh
-      Logger.logInfo logh "Removing dependency between Post and Author."
-      return $ Just $ fromSql authorId
-    _ -> do
-      Logger.logError logh "Dependency between Post and Author doesn't exist."
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removePostAuthorDep!\n"
-            <> show e
-
-removePostCatDep :: Handle IO -> PostId -> IO (Maybe CategoryId)
-removePostCatDep handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT author_id \
-                       \FROM post_category \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [[catId]] -> do
-      _ <- run dbh "DELETE FROM post_category \
-                   \WHERE post_id = ?"
-            [toSql postId]
-      commit dbh
-      Logger.logInfo logh "Removing dependency between Post and Category."
-      return $ Just $ fromSql catId
-    _ -> do
-      Logger.logError logh "Dependency between Post and Category doesn't exist."
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removePostCatDep!\n"
-            <> show e
-
-removePostTagDep :: Handle IO -> PostId -> IO (Maybe [TagId])
-removePostTagDep handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT post_id \
-                       \FROM post_tag \
-                       \WHERE post_id = ?" 
-        [toSql postId]
-  case r of
-    [tags] -> do
-      _ <- run dbh "DELETE FROM post_tag \
-                   \WHERE post_id = ?"
-            [toSql postId]
-      commit dbh
-      Logger.logInfo logh "Removing dependency between Post and Tag."
-      return $ Just $ map fromSql tags
-    _ -> do 
-      Logger.logError logh "Dependency between Post and Tag doesn't exist."
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removePostTagDep!\n"
-            <> show e
-
-removePostMainPhotoDep :: Handle IO -> PostId -> IO (Maybe PhotoId)
-removePostMainPhotoDep handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT photo_id \
-                       \FROM post_main_photo \
-                       \WHERE post_id = ?"
-        [toSql postId]
-  case r of
-    [[photoId]] -> do
-      Logger.logInfo logh "Removing dependency between Post and Main Photo from db."
-      _ <- run dbh "DELETE FROM post_main_photo \
-                   \WHERE post_id = ?"
+updatePostMainPhotoRecord :: Monad m => Handle m ->
+                             PostId -> PhotoId -> m (Either Text PhotoId)
+updatePostMainPhotoRecord handle postId photoId = do
+  let logh = hLogger handle
+  _ <- updateSetWhere handle tablePostMainPhoto
+           [colIdPhotoPostMainPhoto]
+           [colIdPostPostMainPhoto]
+           [toSql photoId]
            [toSql postId]
-      commit dbh
-      return $ Just $ fromSql photoId
-    _ -> do
-      Logger.logWarning logh "No Main Photo corresponding to this Post in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removePostMainPhotoDep!\n"
-            <> show e
+  Logger.logInfo logh "Post's Main Photo was successfully set."
+  return $ Right photoId
 
-removePostAddPhotoDep :: Handle IO -> PostId -> IO (Maybe [PhotoId])
-removePostAddPhotoDep handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT photo_id \
-                       \FROM post_add_photo \
-                       \WHERE post_id = ?"
+insertPostMainPhotoRecord :: Monad m => Handle m ->
+                             PostId -> PhotoId -> m (Either Text PhotoId)
+insertPostMainPhotoRecord handle postId photoId = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tablePostMainPhoto
+        [colIdPhotoPostMainPhoto, colIdPostPostMainPhoto] 
+        [toSql photoId, toSql postId]
+  Logger.logInfo logh "Post's Main Photo was successfully updated."
+  return $ Right photoId
+
+insertPostAddPhotoRecord :: Monad m => Handle m ->
+                            PostId -> PhotoId -> m (Either Text PhotoId)
+insertPostAddPhotoRecord handle postId photoId = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tablePostAddPhoto
+        [colIdPhotoPostAddPhoto, colIdPostPostAddPhoto] 
+        [toSql photoId, toSql postId]
+  Logger.logInfo logh "Post's Add Photo was successfully inserted in db."
+  return $ Right photoId
+
+insertPostAuthorRecord :: Monad m => Handle m -> PostId -> AuthorId -> m ()
+insertPostAuthorRecord handle postId authorId = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tablePostAuthor 
+        [colIdPostPostAuthor, colIdAuthorPostAuthor] 
+        [toSql postId, toSql authorId]
+  Logger.logInfo logh "Creating dependency between Post and Author."
+
+insertPostCatRecord :: Monad m => Handle m -> PostId -> CategoryId -> m ()
+insertPostCatRecord handle postId catId = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tablePostCat 
+        [colIdPostPostCat, colIdCatPostCat] 
+        [toSql postId, toSql catId]
+  Logger.logInfo logh "Creating dependency between Post and Category."
+
+insertPostTagRecord :: Monad m => Handle m -> PostId -> TagId -> m (Either Text TagId)
+insertPostTagRecord handle postId tagId = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tablePostTag
+        [colIdTagPostTag, colIdPostPostTag] 
+        [toSql tagId, toSql postId]
+  Logger.logInfo logh "Creating dependency between Post and Tag."
+  return $ Right tagId
+
+insertPostDraftRecord :: Monad m => Handle m ->
+                         PostId -> DraftId -> m (Either Text DraftId)
+insertPostDraftRecord handle postId draftId = do
+  let logh = hLogger handle
+  _ <- insertIntoValues handle tablePostDraft
+        [colIdDraftPostDraft, colIdPostPostDraft] 
+        [toSql draftId, toSql postId]
+  Logger.logInfo logh "Creating dependency between Post and Draft."
+  return $ Right draftId
+
+deletePostRecord :: Monad m => Handle m -> PostId -> m ()
+deletePostRecord handle postId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tablePosts
+        [colIdPost]
         [toSql postId]
-  case r of
-    [photoIds] -> do
-      Logger.logInfo logh "Removing dependency between Post and Additional Photo from db."
-      _ <- run dbh "DELETE FROM post_add_photo \
-                   \WHERE post_id = ?" 
-            [toSql postId]
-      commit dbh
-      return $ Just $ map fromSql photoIds
-    _ -> do
-      Logger.logWarning logh "No Additional Photo corresponding to this Post in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removePostAddPhotoDep!\n"
-            <> show e
+  Logger.logInfo logh $ "Removing Post with id: "
+    <> convert postId
+    <> " from db."
 
-removePostCommentDep :: Handle IO -> PostId -> IO (Maybe [PhotoId])
-removePostCommentDep handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT comment_id \
-                       \FROM post_comment \
-                       \WHERE post_id = ?"
+deletePostAuthorRecord :: Monad m => Handle m -> PostId -> m ()
+deletePostAuthorRecord handle postId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tablePostAuthor
+        [colIdPostPostAuthor]
         [toSql postId]
-  case r of
-    [commentIds] -> do
-      Logger.logInfo logh "Removing dependency between Post and Comment from db."
-      _ <- run dbh "DELETE FROM post_comment \
-                   \WHERE post_id = ?"
-            [toSql postId]
-      commit dbh
-      return $ Just $ map fromSql commentIds
-    _ -> do
-      Logger.logWarning logh "No Comment corresponding to this Post in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removePostCommentDep!\n"
-            <> show e
+  Logger.logInfo logh "Removing dependency between Post and Author."
 
-removePostDraftDep :: Handle IO -> PostId -> IO (Maybe [DraftId])
-removePostDraftDep handle postId = handleSql errorHandler $ do
-  let dbh = conn handle
-      logh = hLogger handle
-  r <- quickQuery' dbh "SELECT comment_id \
-                       \FROM post_comment \
-                       \WHERE post_id = ?"
+deletePostCatRecord :: Monad m => Handle m -> PostId -> m ()
+deletePostCatRecord handle postId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tablePostCat
+        [colIdPostPostCat]
         [toSql postId]
-  case r of
-    [draftIds] -> do
-      Logger.logInfo logh "Removing dependency between Post and Draft from db."
-      _ <- run dbh "DELETE FROM post_comment \
-                   \WHERE post_id = ?"
-            [toSql postId]
-      commit dbh
-      return $ Just $ map fromSql draftIds
-    _ -> do
-      Logger.logWarning logh "No Draft corresponding to this Post in db!"
-      return Nothing
-  where errorHandler e = do
-          Exc.throwIO $ E.DbError $ "Error: Error in removePostDraftDep!\n"
-            <> show e
+  Logger.logInfo logh "Removing dependency between Post and Category."
 
-newPost :: Handle IO -> [SqlValue] -> IO (Maybe Post)
+deletePostTagRecord :: Monad m => Handle m -> PostId -> m ()
+deletePostTagRecord handle postId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tablePostTag
+        [colIdPostPostTag]
+        [toSql postId]
+  Logger.logInfo logh "Removing dependency between Post and Tag."
+
+deletePostMainPhotoRecord :: Monad m => Handle m -> PostId -> m ()
+deletePostMainPhotoRecord handle postId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tablePostMainPhoto
+        [colIdPostPostMainPhoto]
+        [toSql postId]
+  Logger.logInfo logh "Removing dependency between Post and Main Photo from db."
+
+deletePostAddPhotoRecords :: Monad m => Handle m -> PostId -> m ()
+deletePostAddPhotoRecords handle postId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tablePostAddPhoto
+        [colIdPostPostAddPhoto]
+        [toSql postId]
+  Logger.logInfo logh "Removing dependency between \
+                      \Post and Additional Photo from db."
+
+deletePostComRecords :: Monad m => Handle m -> PostId -> m ()
+deletePostComRecords handle postId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tablePostCom
+        [colIdPostPostCom]
+        [toSql postId]
+  Logger.logInfo logh "Removing dependency between Post and Comment from db."
+
+deletePostDraftRecord :: Monad m => Handle m -> PostId -> m ()
+deletePostDraftRecord handle postId = do
+  let logh = hLogger handle
+  _ <- deleteWhere handle tablePostDraft
+        [colIdPostPostDraft]
+        [toSql postId]
+  Logger.logInfo logh "Removing dependency between Post and Draft from db."
+
+newPost :: Monad m => Handle m -> [SqlValue] -> m (Either Text Post)
 newPost handle [idPost, title, created_at, text] = do
   let postId = fromSql idPost
       postTitle = fromSql title
       createdAt = fromSql created_at
       body = fromSql text
-  photoMainMaybe <- getPostMainPhoto handle postId
-  photosAddMaybe <- getPostAddPhotos handle postId
-  commentsMaybe <- getPostComments handle postId
-  tags <- runMaybeT $ do 
-    tagIds <- MaybeT $ getPostTagsIds handle postId
-    tags <- MaybeT $ DBT.getTags handle tagIds
+  photoMainE <- getPostMainPhotoRecords handle postId
+  photosAddE <- getPostAddPhotoRecords handle postId
+  commentsE <- getPostCommentRecords handle postId
+  tagsE <- runEitherT $ do 
+    tagIds <- EitherT $ getPostTagRecords handle postId
+    tags <- EitherT $ DBT.getTagRecordsByIds handle tagIds
     return tags
-  runMaybeT $ do
-    authorId <- MaybeT $ getPostAuthorId handle postId
-    author <- MaybeT $ DBA.getAuthor handle authorId
-    catId <- MaybeT $ getPostCategoryId handle postId
-    cat <- MaybeT $ DBC.getCat handle catId
+  let photoMainM = rightToMaybe photoMainE
+      photosAddM = rightToMaybe photosAddE
+      commentsM = rightToMaybe commentsE
+      tagsM = rightToMaybe tagsE
+  runEitherT $ do
+    authorId <- EitherT $ getPostAuthorRecord handle postId
+    author <- EitherT $ DBA.getAuthorRecord handle authorId
+    catId <- EitherT $ getPostCategoryRecord handle postId
+    cat <- EitherT $ DBC.getCatRecordByCatId handle catId
     return Post {
       post_id = postId,
       post_title = postTitle,
       post_createdAt = createdAt,
       post_text = body,
-      post_mainPhoto = photoMainMaybe,
-      post_addPhotos = photosAddMaybe,
-      post_comments = commentsMaybe,
-      post_tags = tags,
+      post_mainPhoto = photoMainM,
+      post_addPhotos = photosAddM,
+      post_comments = commentsM,
+      post_tags = tagsM,
       post_author = author,
       post_category = cat
     }
-newPost _ _ = return Nothing
+newPost _ _ = return $ Left "Invalid Post!"

@@ -11,6 +11,13 @@ packages:
       sha256: 9db472e5f433c07d097b6cdc6af354d0a40c0fd3c7205510973380ced739c764
   original:
     hackage: HDBC-postgresql-2.5.0.0
+- completed:
+    hackage: transformers-either-0.1.2@sha256:e2ba24af49df7fa09794dcff6cb203d086d5c18e35b3cf10a8ecf7eb465fdedf,1677
+    pantry-tree:
+      size: 270
+      sha256: 9c3388ec26e91b6f5115ddeafee991a3589b76b67ea15e333af5946706be374c
+  original:
+    hackage: transformers-either-0.1.2
 snapshots:
 - completed:
     size: 585817

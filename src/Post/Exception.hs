@@ -9,6 +9,7 @@ data PostError = ConfigLoggerRangeError
                | ConfigServerHostEmptyError
                | ParseConfigError String 
                | DbError String
+               | DbQueryError String
                deriving (Exception, Eq)
 
 instance Show PostError where
@@ -17,3 +18,4 @@ instance Show PostError where
   show ConfigServerHostEmptyError = "Host server can't be empty"
   show (ParseConfigError err) = "Error while parsing config file (config.json): " ++ err
   show (DbError err) = "Db error: " ++ err
+  show (DbQueryError err) = "Db query error: " ++ err

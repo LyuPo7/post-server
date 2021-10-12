@@ -8,26 +8,55 @@ import Database.HDBC.PostgreSQL (Connection, connectPostgreSQL)
 import Data.Text (Text)
 import Data.List (intercalate)
 import qualified Data.Text as T
+import qualified System.IO as SIO
+import qualified Network.HTTP.Client as HTTPClient
 
 import Post.DB.DBSpec (Handle(..), Config(..))
+import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
 import Post.DB.Data
 
-withHandleIO :: Logger.Handle IO -> Config -> (Handle IO -> IO a) -> IO a
-withHandleIO logger config f = do
+withHandleIO :: Logger.Handle IO -> Config -> ServerConfig.Config -> (Handle IO -> IO a) -> IO a
+withHandleIO logger config serverConfig f = do
   let db = "dbname=" <> dbname config
   case user config of
     Nothing -> do
       Logger.logDebug logger $ "Connecting to db: " <> db
       dbh <- connect db
-      let handle = Handle logger dbh config
+      let handle = Handle {
+        hLogger = logger,
+        conn = dbh,
+        cDB = config,
+        cServer = serverConfig,
+
+        openTempFile = SIO.openTempFile,
+        openBinaryFile = SIO.openBinaryFile,
+        hPutStr = SIO.hPutStr,
+        hClose = SIO.hClose,
+
+        newManager = HTTPClient.newManager,
+        httpLbs = HTTPClient.httpLbs
+      }
       prepDB handle
       f handle
     Just dbUser -> do
       let db' = db <> " user=" <> dbUser
       Logger.logDebug logger $ "Connecting to db: " <> db'
       dbh <- connect db'
-      let handle = Handle logger dbh config
+      let handle = Handle {
+        hLogger = logger,
+        conn = dbh,
+        cDB = config,
+        cServer = serverConfig,
+
+        openTempFile = SIO.openTempFile,
+        openBinaryFile = SIO.openBinaryFile,
+        hPutStr = SIO.hPutStr,
+        hClose = SIO.hClose,
+
+        newManager = HTTPClient.newManager,
+        httpLbs = HTTPClient.httpLbs
+      }
       prepDB handle
       f handle
 
@@ -103,108 +132,25 @@ Create two tables and ask the database engine to verify some info:
 -}
 prepDB :: Handle IO -> IO ()
 prepDB handle = do
-  let dbh = conn handle
-      logh = hLogger handle
-  tables <- getTables dbh
-  when ("users" `notElem` tables) $ do
-    _ <- run dbh "CREATE TABLE users (\
-                       \id SERIAL PRIMARY KEY,\
-                       \is_admin BOOLEAN NOT NULL,\
-                       \first_name TEXT,\
-                       \last_name TEXT,\
-                       \login TEXT NOT NULL,\
-                       \password TEXT NOT NULL,\
-                       \token TEXT NOT NULL)" []
-    Logger.logInfo logh "Table 'users' was successfully created!"
-  when ("authors" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE authors (\
-                       \id SERIAL PRIMARY KEY,\
-                       \description TEXT)" []
-    Logger.logInfo logh "Table 'authors' was successfully created!"
-  when ("categories" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE categories (\
-                       \id SERIAL PRIMARY KEY,\
-                       \title TEXT NOT NULL,\
-                       \subcategory_id TEXT)" []
-    Logger.logInfo logh "Info: Table 'categories' was successfully created!"
-  when ("tags" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE tags (\
-                       \id SERIAL PRIMARY KEY,\
-                       \title TEXT NOT NULL)" []
-    Logger.logInfo logh "Info: Table 'tags' was successfully created!"
-  when ("posts" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE posts (\
-                       \id SERIAL PRIMARY KEY,\
-                       \title TEXT NOT NULL,\
-                       \created_at TIMESTAMP,\
-                       \text TEXT)" []
-    Logger.logInfo logh "Info: Table 'posts' was successfully created!"
-  when ("comments" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE comments (\
-                       \id SERIAL PRIMARY KEY,\
-                       \text TEXT NOT NULL)" []
-    Logger.logInfo logh "Info: Table 'comments' was successfully created!"
-  when ("drafts" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE drafts (\
-                       \id SERIAL PRIMARY KEY,\
-                       \text TEXT NOT NULL)" []
-    Logger.logInfo logh "Info: Table 'drafts' was successfully created!"
-  when ("photos" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE photos (\
-                       \id SERIAL PRIMARY KEY,\
-                       \link TEXT NOT NULL UNIQUE)" []
-    Logger.logInfo logh "Info: Table 'photos' was successfully created!"
-  when ("user_photo" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE user_photo (\
-                       \user_id INTEGER NOT NULL UNIQUE,\
-                       \photo_id INTEGER)" []
-    Logger.logInfo logh "Info: Table 'user_photo' was successfully created!"
-  when ("author_user" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE author_user (\
-                       \author_id INTEGER NOT NULL UNIQUE,\
-                       \user_id INTEGER NOT NULL UNIQUE)" []
-    Logger.logInfo logh "Info: Table 'author_user' was successfully created!"
-  when ("comment_user" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE comment_user (\
-                       \comment_id INTEGER NOT NULL UNIQUE,\
-                       \user_id INTEGER NOT NULL)" []
-    Logger.logInfo logh "Info: Table 'comment_user' was successfully created!"
-  when ("post_author" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE post_author (\
-                       \post_id INTEGER NOT NULL UNIQUE,\
-                       \author_id INTEGER NOT NULL)" []
-    Logger.logInfo logh "Info: Table 'post_author' was successfully created!"
-  when ("post_category" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE post_category (\
-                       \post_id INTEGER NOT NULL UNIQUE,\
-                       \category_id INTEGER NOT NULL)" []
-    Logger.logInfo logh "Info: Table 'post_category' was successfully created!"
-  when ("post_comment" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE post_comment (\
-                       \post_id INTEGER NOT NULL,\
-                       \comment_id INTEGER UNIQUE)" []
-    Logger.logInfo logh "Info: Table 'post_comment' was successfully created!"
-  when ("post_draft" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE post_draft (\
-                       \post_id INTEGER NOT NULL UNIQUE,\
-                       \draft_id INTEGER UNIQUE)" []
-    Logger.logInfo logh "Info: Table 'post_draft' was successfully created!"
-  when ("post_tag" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE post_tag (\
-                       \post_id INTEGER NOT NULL,\
-                       \tag_id INTEGER)" []
-    Logger.logInfo logh "Info: Table 'post_tag' was successfully created!"
-  when ("post_main_photo" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE post_main_photo (\
-                       \post_id INTEGER NOT NULL UNIQUE,\
-                       \photo_id INTEGER)" []
-    Logger.logInfo logh "Info: Table 'post_main_photo' was successfully created!"
-  when ("post_add_photo" `notElem` tables) $ do 
-    _ <- run dbh "CREATE TABLE post_add_photo (\
-                       \post_id INTEGER NOT NULL,\
-                       \photo_id INTEGER)" []
-    Logger.logInfo logh "Info: Table 'post_add_photo' was successfully created!"
-  commit dbh
+  _ <- createTable handle tableUsers
+  _ <- createTable handle tableAuthors
+  _ <- createTable handle tableCats
+  _ <- createTable handle tableTags
+  _ <- createTable handle tablePosts
+  _ <- createTable handle tableComs
+  _ <- createTable handle tableDrafts
+  _ <- createTable handle tablePhotos
+  _ <- createTable handle tableUserPhoto
+  _ <- createTable handle tableAuthorUser
+  _ <- createTable handle tableUserCom
+  _ <- createTable handle tablePostAuthor
+  _ <- createTable handle tablePostCat
+  _ <- createTable handle tablePostCom
+  _ <- createTable handle tablePostDraft
+  _ <- createTable handle tablePostTag
+  _ <- createTable handle tablePostMainPhoto
+  _ <- createTable handle tablePostAddPhoto
+  return ()
 
 createTable :: Handle IO -> Table -> IO ()
 createTable handle table = do

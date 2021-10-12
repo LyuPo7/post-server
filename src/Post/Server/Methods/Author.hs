@@ -2,11 +2,11 @@
 
 module Post.Server.Methods.Author where
 
-import qualified Data.Text as T
 import Network.HTTP.Types (Query)
-import Text.Read (readMaybe)
-import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import Network.Wai (ResponseReceived, Response)
+import Control.Monad.Trans.Either
+import Control.Monad (guard)
+import Control.Monad.Trans (lift)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
@@ -17,118 +17,107 @@ import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
-getAuthorsResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+getAuthorsResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 getAuthorsResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Author records"
-  case Util.extractRequired query params of
-    Left msgE -> do
-      Logger.logError logh msgE
-      sendResponce $ respError msgE
-    Right reqParams -> do
-      let [token] = reqParams
-      perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == AdminPerm = do
-                    (authors, msg) <- DBA.getAuthors dbh
-                    case authors of 
-                      [] -> do
-                        Logger.logError logh msg
-                        sendResponce $ respError msg
-                      _ -> do
-                        Logger.logInfo logh "Authors were sent"
-                        sendResponce $ respOk authors
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [token] = reqParams
+    perm <- lift $ DBAC.checkAdminPerm dbqh token
+    guard $ perm == AdminPerm
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right _ -> do
+      authorsE <- DBA.getAuthorRecords dbqh
+      case authorsE of 
+        Left msg -> sendResponce $ respError msg
+        Right authors -> do
+          Logger.logInfo logh "Authors were sent"
+          sendResponce $ respOk authors
     where
       params = ["token"]
 
-createAuthorResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+createAuthorResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 createAuthorResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Author record"
-  case Util.extractRequired query params of
-    Left msgE -> do
-      Logger.logError logh msgE
-      sendResponce $ respError msgE
-    Right reqParams -> do
-      let [idUser, description, token] = reqParams
-      perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == AdminPerm = do
-                    msgM <- runMaybeT $ do
-                      let (Just userId) = readMaybe $ T.unpack idUser
-                      _ <- MaybeT $ DBU.getUser dbh userId
-                      msg <- MaybeT $ DBA.createAuthor dbh userId description
-                      return msg
-                    case msgM of
-                      Just _ -> do
-                        Logger.logInfo logh "Author was created"
-                        sendResponce $ respSucc "Author was created"
-                      Nothing -> do
-                        Logger.logError logh "Error while creating Author!"
-                        sendResponce $ respError "Error while creating Author!"
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [idUser, description, token] = reqParams
+    perm <- lift $ DBAC.checkAdminPerm dbqh token
+    guard $ perm == AdminPerm
+    return (idUser, description)
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right (idUser, description) -> do
+      authorIdE <- runEitherT $ do
+        userId <- EitherT $ Util.readEitherMa idUser "user_id"
+        _ <- EitherT $ DBU.getUserRecordbyId dbqh userId
+        EitherT $ DBA.createAuthor dbqh userId description
+      case authorIdE of
+        Right _ -> do
+          let msg = "Author was created"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["id", "description", "token"]
 
-removeAuthorResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+removeAuthorResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 removeAuthorResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Author record"
-  case Util.extractRequired query params of
-    Left msgE -> do
-      Logger.logError logh msgE
-      sendResponce $ respError msgE
-    Right reqParams -> do
-      let [idUser, token] = reqParams
-      perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == AdminPerm = do
-                    msgM <- runMaybeT $ do
-                      let (Just userId) = readMaybe $ T.unpack idUser
-                      _ <- MaybeT $ DBU.getUser dbh userId
-                      msg <- MaybeT $ DBA.removeAuthor dbh userId
-                      return msg
-                    case msgM of
-                      Just _ -> do
-                        Logger.logInfo logh "Author was removed"
-                        sendResponce $ respSucc "Author was removed"
-                      Nothing -> do
-                        Logger.logError logh "Error while removing Author!"
-                        sendResponce $ respError "Error while removing Author!"
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [idUser, token] = reqParams
+    perm <- lift $ DBAC.checkAdminPerm dbqh token
+    guard $ perm == AdminPerm
+    return idUser
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right idUser -> do
+      userIdE <- runEitherT $ do
+        userId <- EitherT $ Util.readEitherMa idUser "user_id"
+        _ <- EitherT $ DBU.getUserRecordbyId dbqh userId
+        _ <- EitherT $ DBA.removeAuthor dbqh userId
+        return userId
+      case userIdE of
+        Right userId -> do
+          _ <- DBA.removeAuthorUserDep dbqh userId
+          let msg = "Author was removed"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["id", "token"]
 
-editAuthorResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+editAuthorResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 editAuthorResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Author record"
-  case Util.extractRequired query params of
-    Left msgE -> do
-      Logger.logError logh msgE
-      sendResponce $ respError msgE
-    Right reqParams -> do
-      let [idUser, newDescription, token] = reqParams
-      perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == AdminPerm = do
-                    msgM <- runMaybeT $ do
-                      let (Just userId) = readMaybe $ T.unpack idUser
-                      _ <- MaybeT $ DBU.getUser dbh userId
-                      msg <- MaybeT $ DBA.editAuthor dbh userId newDescription
-                      return msg
-                    case msgM of
-                      Just _ -> do
-                        Logger.logInfo logh "Author was edited"
-                        sendResponce $ respSucc "Author was edited"
-                      Nothing -> do
-                        Logger.logError logh "Error while editing Author!"
-                        sendResponce $ respError "Error while editing Author!"
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [idUser, newDescription, token] = reqParams
+    perm <- lift $ DBAC.checkAdminPerm dbqh token
+    guard $ perm == AdminPerm
+    return (idUser, newDescription)
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right (idUser, newDescription) -> do
+      authorIdE <- runEitherT $ do
+        userId <- EitherT $ Util.readEitherMa idUser "user_id"
+        _ <- EitherT $ DBU.getUserRecordbyId dbqh userId
+        EitherT $ DBA.editAuthor dbqh userId newDescription
+      case authorIdE of
+        Right _ -> do
+          let msg = "Author was edited"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["id", "description", "token"]

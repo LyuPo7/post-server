@@ -24,6 +24,6 @@ do
    esac
 done
 
-opt="new_title=$newtag&old_title=$oldTag&token=$token"
+opt="new_title=$newTag&old_title=$oldTag&token=$token"
 url=http://localhost:3000/editTag?$opt
 curl ${url}

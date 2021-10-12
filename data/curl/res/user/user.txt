@@ -1,46 +1,0 @@
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   463    0   463    0     0  66142      0 --:--:-- --:--:-- --:--:-- 66142
-[{"photo":null,"first_name":"Ben","last_name":"Thomson","is_admin":false,"id":3},{"photo":null,"first_name":"Ann","last_name":"Dilly","is_admin":false,"id":4},{"photo":{"link":"http://localhost:3000/src/files/photos/dog4780-8.png","id":13},"first_name":"Lyu","last_name":"Po","is_admin":true,"id":2},{"photo":null,"first_name":"Max","last_name":"Collins","is_admin":false,"id":11},{"photo":null,"first_name":"Alan","last_name":"Estrada","is_admin":false,"id":12}]  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    14    0    14    0     0    233      0 --:--:-- --:--:-- --:--:--   233
-User registred  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    14    0    14    0     0    291      0 --:--:-- --:--:-- --:--:--   291
-User registred  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    44    0    44    0     0  22000      0 --:--:-- --:--:-- --:--:-- 22000
-User with login: lyupo already exists in db.  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    42    0    42    0     0  21000      0 --:--:-- --:--:-- --:--:-- 21000
-User with login: maX already exists in db.  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    43    0    43    0     0  14333      0 --:--:-- --:--:-- --:--:-- 21500
-User with login: alXM already exists in db.  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    17    0    17    0     0  17000      0 --:--:-- --:--:-- --:--:-- 17000
-Incorrect request  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   624    0   624    0     0  69333      0 --:--:-- --:--:-- --:--:-- 69333
-[{"photo":null,"first_name":"Ben","last_name":"Thomson","is_admin":false,"id":3},{"photo":null,"first_name":"Ann","last_name":"Dilly","is_admin":false,"id":4},{"photo":{"link":"http://localhost:3000/src/files/photos/dog4780-8.png","id":13},"first_name":"Lyu","last_name":"Po","is_admin":true,"id":2},{"photo":null,"first_name":"Max","last_name":"Collins","is_admin":false,"id":11},{"photo":null,"first_name":"Alan","last_name":"Estrada","is_admin":false,"id":12},{"photo":null,"first_name":"Tom","last_name":"Marston","is_admin":false,"id":13},{"photo":null,"first_name":"Ann","last_name":"Watson","is_admin":false,"id":14}]  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    19    0    19    0     0    231      0 --:--:-- --:--:-- --:--:--   231
-User photo uploaded  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    27    0    27    0     0  13500      0 --:--:-- --:--:-- --:--:-- 13500
-No exists user with id: 5 !  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    27    0    27    0     0   9000      0 --:--:-- --:--:-- --:--:--  9000
-No exists user with id: 6 !  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    27    0    27    0     0  13500      0 --:--:-- --:--:-- --:--:-- 13500
-No exists user with id: 7 !  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    27    0    27    0     0  13500      0 --:--:-- --:--:-- --:--:-- 13500
-No exists user with id: 8 !  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    27    0    27    0     0  13500      0 --:--:-- --:--:-- --:--:-- 13500
-No exists user with id: 9 !  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    28    0    28    0     0  14000      0 --:--:-- --:--:-- --:--:-- 14000
-No exists user with id: 10 !

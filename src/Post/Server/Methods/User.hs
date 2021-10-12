@@ -4,7 +4,9 @@ module Post.Server.Methods.User where
 
 import Network.HTTP.Types (Query)
 import Network.Wai (ResponseReceived, Response)
-import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import Control.Monad.Trans.Either
+import Control.Monad.Trans (lift)
+import Control.Monad (guard)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
@@ -14,109 +16,98 @@ import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
-getUsersResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+getUsersResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 getUsersResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get User records"
-  case Util.extractRequired query params of
-    Left msgE -> do
-      Logger.logError logh msgE
-      sendResponce $ respError msgE
-    Right reqParams -> do
-      let [token] = reqParams
-      perm <- DBAC.checkUserPerm dbh token
-      let action | perm == UserPerm = do
-                    (users, msg) <- DBU.getUsers dbh
-                    case users of
-                      [] -> do
-                        Logger.logError logh msg
-                        sendResponce $ respError msg
-                      _ -> do
-                        Logger.logInfo logh "Users sent"
-                        sendResponce $ respOk users
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [token] = reqParams
+    perm <- lift $ DBAC.checkUserPerm dbqh token
+    guard $ perm == UserPerm
+    return token
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right _ -> do
+      usersE <- DBU.getUserRecords dbqh
+      case usersE of
+        Left msg -> sendResponce $ respError msg
+        Right users -> do
+          Logger.logInfo logh "Users sent"
+          sendResponce $ respOk users
     where
       params = ["token"]
 
-createUserResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+createUserResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 createUserResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create User record"
-  case Util.extractRequired query params of
-    Left msgE -> do
-      Logger.logError logh msgE
-      sendResponce $ respError msgE
-    Right reqParams -> do
-      let [firstName, lastName, login, password] = reqParams
-      msg <- DBU.createUser dbh firstName lastName login password
-      case msg of
-        Just _ -> do
-          Logger.logInfo logh $ "User: " <> login <> " registred"
-          sendResponce $ respSucc $ "User: " <> login <> " registred"
-        Nothing -> do
-          Logger.logError logh "Error while User registration!"
-          sendResponce $ respError "Error while User registration!"
+  loginE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [firstName, lastName, login, password] = reqParams
+    _ <- EitherT $ DBU.createUser dbqh firstName lastName login password
+    return login
+  case loginE of
+    Right login -> do
+      let msg = "User: '" <> login <> "' registred"
+      Logger.logInfo logh msg
+      sendResponce $ respSucc msg
+    Left msg -> sendResponce $ respError msg
     where
       params = ["first_name", "last_name", "login", "password"]
 
-removeUserResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+removeUserResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 removeUserResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove User record"
-  case Util.extractRequired query params of
-    Left msgE -> do
-      Logger.logError logh msgE
-      sendResponce $ respError msgE
-    Right reqParams -> do
-      let [idUser, token] = reqParams
-      perm <- DBAC.checkAdminPerm dbh token
-      let action | perm == AdminPerm = do
-                    userMsg <- runMaybeT $ do
-                      userId <- MaybeT $ Util.readMaybeMa idUser
-                      msg <- MaybeT $ DBU.removeUser dbh userId
-                      return (userId, msg)
-                    case userMsg of
-                      Just (userId, _) -> do
-                        _ <- DBU.removeUserPhotoDeps dbh userId
-                        Logger.logInfo logh "User removed"
-                        sendResponce $ respSucc "User removed"
-                      Nothing -> do
-                        Logger.logError logh "Error while removing tag!"
-                        sendResponce $ respError "Error while removing tag!"
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [idUser, token] = reqParams
+    perm <- lift $ DBAC.checkAdminPerm dbqh token
+    guard $ perm == AdminPerm
+    return idUser
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right idUser -> do
+      userIdE <- runEitherT $ do
+        userId <- EitherT $ Util.readEitherMa idUser "user_id"
+        _ <- EitherT $ DBU.removeUser dbqh userId
+        return userId
+      case userIdE of
+        Right userId -> do
+          _ <- DBU.removeUserPhotoDeps dbqh userId
+          let msg = "User removed"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["id", "token"]
 
-setUserPhotoResp :: Handle IO -> (Response -> IO ResponseReceived) -> Query -> IO ResponseReceived
+setUserPhotoResp :: Monad m => Handle m -> (Response -> m ResponseReceived) -> Query -> m ResponseReceived
 setUserPhotoResp handle sendResponce query = do
   let logh = hLogger handle
-      dbh = hDB handle
+      dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add Photo to User record"
-  case Util.extractRequired query params of
-    Left msgE -> do
-      Logger.logError logh msgE
-      sendResponce $ respError msgE
-    Right reqParams -> do
-      let [path, token] = reqParams
-      perm <- DBAC.checkUserPerm dbh token
-      let action | perm == UserPerm = do
-                    msgM <- runMaybeT $ do
-                      userId <- MaybeT $ DBAC.getUserId dbh token
-                      msg <- MaybeT $ DBU.setUserPhoto dbh userId path
-                      return msg
-                    case msgM of
-                      Just _ -> do
-                        Logger.logInfo logh "User Photo was added"
-                        sendResponce $ respSucc "User Photo was added"
-                      Nothing -> do
-                        Logger.logError logh "Error while adding User Photo!"
-                        sendResponce $ respError "Error while adding User Photo!"
-                 | otherwise = sendResponce resp404
-      action
+  permParamsE <- runEitherT $ do
+    reqParams <- EitherT $ Util.extractRequired logh query params
+    let [path, token] = reqParams
+    perm <- lift $ DBAC.checkUserPerm dbqh token
+    guard $ perm == UserPerm
+    return (path, token)
+  case permParamsE of
+    Left _ -> sendResponce resp404
+    Right (path, token) -> do
+      photoIdE <- runEitherT $ do
+        userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
+        EitherT $ DBU.setUserPhoto dbqh userId path
+      case photoIdE of
+        Right _ -> do
+          let msg = "User Photo was loaded"
+          Logger.logInfo logh msg
+          sendResponce $ respSucc msg
+        Left msg -> sendResponce $ respError msg
     where
       params = ["path", "token"]

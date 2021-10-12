@@ -3,7 +3,7 @@
 helpFunction()
 {
    echo ""
-   echo "Usage: $0 -t token"
+   echo "Usage: $0 -h host -p port -t token"
    echo -e "\t-h Host name"
    echo -e "\t-p Port number"
    echo -e "\t-t User's token"

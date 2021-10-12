@@ -40,6 +40,9 @@ dependencies:
 - filepath
 - text-show
 - transformers
+- transformers-either
+- either
+- exceptions
 
 library:
   source-dirs: src
@@ -62,8 +65,9 @@ executables:
 
 tests:
   post-server-test:
-    main:                Spec.hs
+    main:                Test.hs
     source-dirs:         test
+    other-modules: [TestPost.DB.DBQSpec]
     ghc-options:
     - -Wall 
     - -Werror 
@@ -72,3 +76,9 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - post-server
+    - hspec
+    - tasty
+    - tasty-hspec
+    - tasty-hedgehog
+    - hedgehog >= 0.5 && < 1.1
+    - tasty-golden
