@@ -8,7 +8,8 @@ import Control.Monad (guard)
 import Database.HDBC (fromSql, toSql)
 import qualified Data.Text as T
 import Data.Text (Text)
-import Crypto.Scrypt (defaultParams, getEncryptedPass, Pass(..), EncryptedPass(..), verifyPass)
+import Crypto.Scrypt (Pass(..), EncryptedPass(..),
+                      verifyPass, defaultParams, getEncryptedPass)
 
 import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
@@ -34,7 +35,8 @@ getToken handle login password = do
       return $ Right $ newUserToken
     Left msg -> return $ Left msg
 
-checkPassword :: Monad m => Handle m -> Password -> Password -> m (Either Text ())
+checkPassword :: Monad m => Handle m ->
+                 Password -> Password -> m (Either Text ())
 checkPassword handle truePass intentPass = do
   let logh = hLogger handle
       encrypted = EncryptedPass {
@@ -101,16 +103,17 @@ getAuthorId handle authorToken = runEitherT $ do
   userId <- EitherT $ getUserIdRecordByToken  handle authorToken
   EitherT $ getAuthorIdRecordByUserId handle userId
 
-getAuthorIdRecordByUserId :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
+getAuthorIdRecordByUserId :: Monad m => Handle m ->
+                             UserId -> m (Either Text AuthorId)
 getAuthorIdRecordByUserId handle userId = do
   let logh = hLogger handle
   Logger.logInfo logh $ "Getting AuthorId corresponding to User with id: "
     <> convert userId
     <> " from db."
   authorIdSql <- selectFromWhere handle tableAuthorUser
-                 [colIdAuthorAuthorUser]
-                 [colIdUserAuthorUser]
-                 [toSql userId]
+                  [colIdAuthorAuthorUser]
+                  [colIdUserAuthorUser]
+                  [toSql userId]
   case authorIdSql of
     [[authorId]] -> do
       Logger.logInfo logh $ "Getting AuthorId corresponding to UserId: "
@@ -127,9 +130,9 @@ getUserIdRecordByToken :: Monad m => Handle m -> Text -> m (Either Text UserId)
 getUserIdRecordByToken handle userToken = do
   let logh = hLogger handle
   idUserSql <- selectFromWhere handle tableUsers
-               [colIdUser]
-               [colTokenUser]
-               [toSql userToken]
+                [colIdUser]
+                [colTokenUser]
+                [toSql userToken]
   case idUserSql of
     [[idUser]] -> do
       Logger.logInfo logh $ "Getting UserId corresponding to token: '"
@@ -147,9 +150,9 @@ getIsAdminRecordByToken :: Monad m => Handle m -> Text -> m (Either Text Bool)
 getIsAdminRecordByToken handle userToken = do
   let logh = hLogger handle
   isAdminSql <- selectFromWhere handle tableUsers
-           [colIsAdminUser]
-           [colTokenUser]
-           [toSql userToken]
+                [colIsAdminUser]
+                [colTokenUser]
+                [toSql userToken]
   case isAdminSql of
     [[isAdmin]] -> do
       Logger.logInfo logh $ "Getting 'is_admin' corresponding to token: "
@@ -161,13 +164,14 @@ getIsAdminRecordByToken handle userToken = do
       Logger.logWarning logh msg 
       return $ Left msg
 
-getPasswordRecordByLogin :: Monad m => Handle m -> Login -> m (Either Text Password)
+getPasswordRecordByLogin :: Monad m => Handle m ->
+                            Login -> m (Either Text Password)
 getPasswordRecordByLogin handle login = do
   let logh = hLogger handle
   passSql <- selectFromWhere handle tableUsers
-           [colPassUser]
-           [colLoginUser]
-           [toSql login]
+              [colPassUser]
+              [colLoginUser]
+              [toSql login]
   case passSql of
     [[passwordDB]] -> do
       Logger.logInfo logh $ "Getting 'password' corresponding to login: '"

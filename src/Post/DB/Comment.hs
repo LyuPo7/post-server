@@ -9,9 +9,9 @@ import Control.Monad.Trans (lift)
 
 import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
-import Post.Server.Util (convert)
 import Post.DB.Data
 import Post.Server.Objects
+import Post.Server.Util (convert)
 
 -- | DB methods for Comment
 createComment :: Monad m => Handle m ->
@@ -47,8 +47,8 @@ getLastCommentRecord :: Monad m => Handle m -> m (Either Text CommentId)
 getLastCommentRecord handle = do
   let logh = hLogger handle
   idComSql <- selectFromOrderLimit handle tableComs
-              [colIdCom]
-               colIdCom 1
+               [colIdCom]
+                colIdCom 1
   case idComSql of
     [[idCom]] -> do
       let comId = fromSql idCom
@@ -64,8 +64,8 @@ insertCommentRecord :: Monad m => Handle m -> Text -> m ()
 insertCommentRecord handle text = do
   let logh = hLogger handle
   _ <- insertIntoValues handle tableComs
-           [colTextCom] 
-           [toSql text]
+        [colTextCom] 
+        [toSql text]
   Logger.logInfo logh $ "Comment with text: '"
     <> text
     <> "' was successfully inserted in db."
@@ -74,8 +74,8 @@ createCommentUserRecord :: Monad m => Handle m -> CommentId -> UserId -> m ()
 createCommentUserRecord handle commentId userId = do
   let logh = hLogger handle
   _ <- insertIntoValues handle tableUserCom
-           [colIdComUserCom, colIdUserUserCom] 
-           [toSql commentId, toSql userId]
+        [colIdComUserCom, colIdUserUserCom] 
+        [toSql commentId, toSql userId]
   Logger.logInfo logh "Creating dependency between Comment and User."
 
 createPostCommentRecord :: Monad m => Handle m -> CommentId -> PostId -> m ()

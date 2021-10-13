@@ -12,7 +12,8 @@ import qualified Post.DB.DBQImpl as DBQImpl
 import qualified Post.Server.Methods.Photo as MPh
 import qualified Post.Server.Util as Util
 
-withHandleIO :: Logger.Handle IO -> DBSpec.Handle IO -> DBSpec.Config -> (Handle IO -> IO a) -> IO a
+withHandleIO :: Logger.Handle IO -> DBSpec.Handle IO ->
+                DBSpec.Config -> (Handle IO -> IO a) -> IO a
 withHandleIO logger dbh config f = do
   let handle = Handle {
     hLogger = logger,

@@ -36,7 +36,71 @@ instance Show Property where
   show NotNull = "NOT NULL"
   show Unique = "UNIQUE"
 
-
+{-
+** Table: users (table contains info every User):
+    - id - unique identifier for this User;
+    - is_admin - True, if this user is a Admin;
+    - first_name - first name of the User;
+    - last_name - last name of the User;
+    - login - User's login;
+    - password - User's passwors;
+    - token - User's current token;
+** Table: authors (table contains info every Author):
+    - id - unique identifier for User;
+    - description - Author's description;
+** Table: categories (table contains info every Category):
+    - id - unique identifier for this Category;
+    - title - title of the Category;
+    - subcategory_id - id of subcategory;
+** Table: tags (table contains info every Tag):
+    - id - unique identifier for this Tag;
+    - title - title of the Tag;
+** Table: posts (table contains info every Post):
+    - id - unique identifier for this Post;
+    - title - title of the Post;
+    - created_at - date of Post creation;
+    - text - text of the Post;
+** Table: comments (table contains info every Comment):
+    - id - unique identifier for this Comment;
+    - text - text of the Comment;
+** Table: drafts (table contains info every Draft):
+    - id - unique identifier for this Draft;
+    - text - text of the Draft;
+** Table: photos (table contains info every Photo):
+    - id - unique identifier for this Photo;
+    - link - link of the Photo;
+**** Relations
+** Table: user_photo (defines one-to-one relation between user and photo):
+    - user_id - User id;
+    - photo_id - Photo id;
+** Table: author_user (defines one-to-one relation between author and user):
+    - author_id - Author id;
+    - user_id - User id;
+** Table: comment_user (defines many-to-one relation between comment and user):
+    - comment_id - Comment id;
+    - user_id - User id;  
+** Table: post_author (defines many-to-one relation between post and author):
+    - post_id - Post id;
+    - author_id - Author id;
+** Table: post_category (defines one-to-one relation between post and category):
+    - post_id - Post id;
+    - category_id - Category id;
+** Table: post_tag (defines one-to-many relation between post and tag):
+    - post_id - Post id;
+    - tag_id - Tag id;
+** Table: post_comment (defines one-to-many relation between post and cpmment):
+    - post_id - Post id;
+    - comment_id - Comment id;
+** Table: post_draft (defines one-to-one relation between post and draft):
+    - post_id - Post id;
+    - draft_id - Draft id;
+** Table: post_main_photo (defines one-to-one relation between post and main photo):
+    - post_id - Post id;
+    - photo_id - Photo id;
+** Table: post_add_photo (defines one-to-many relation between post and additional photos):
+    - post_id - Post id;
+    - photo_id - Photo id;    
+-}
 -- | Tag table and columns
 tablePosts :: Table
 tablePosts = Table {
@@ -497,53 +561,24 @@ colIdComUserCom = Column {
 }
 
 -- types
-type Param = String
-type DbQueryString = String
-type DbQuery = (DbQueryString, [SqlValue])
-type PostQuery = [(String, Maybe String)]
+type DBField = Text
+type DbQuery = (Text, [SqlValue])
+type PostQuery = [(Text, Maybe Text)]
 
--- DbReq
-data DbReq = DbReq {
-  dbPostReq :: DbQuery,
-  dbAuthorReq :: DbQuery,
-  dbTagReq :: DbQuery,
-  dbCatReq :: DbQuery,
-  dbPostSearch :: DbQuery,
-  dbAuthorSearch :: DbQuery,
-  dbCatSearch :: DbQuery,
-  dbTagSearch :: DbQuery,
-  orderQuery :: DbQueryString,
-  orderBy :: DbQueryString
-} deriving (Show)
-
-initialDbReq :: DbReq
-initialDbReq = DbReq {
-  dbPostReq = ("", []),
-  dbAuthorReq = ("", []),
-  dbTagReq = ("", []),
-  dbCatReq = ("", []),
-  dbPostSearch = ("", []),
-  dbAuthorSearch = ("", []),
-  dbTagSearch = ("", []),
-  dbCatSearch = ("", []),
-  orderQuery = "SELECT id FROM posts WHERE id IN (",
-  orderBy = ") ORDER BY created_at"
-}
-
-dbPostReqParams :: [Param]
+dbPostReqParams :: [DBField]
 dbPostReqParams = ["created_at", "created_at__lt", "created_at__gt", "find_in_title", "find_in_text"]
 
-dbAuthorReqParams :: [Param]
+dbAuthorReqParams :: [DBField]
 dbAuthorReqParams = ["author"]
 
-dbTagReqParams :: [Param]
+dbTagReqParams :: [DBField]
 dbTagReqParams = ["tag", "tag__in", "tag__all"]
 
-dbCatReqParams :: [Param]
+dbCatReqParams :: [DBField]
 dbCatReqParams = ["category"]
 
-dbSearchParams :: [Param]
+dbSearchParams :: [DBField]
 dbSearchParams = ["find"]
 
-dbOrderParams :: [Param]
+dbOrderParams :: [DBField]
 dbOrderParams = ["order_by_date", "order_by_author", "order_by_category", "order_by_photos"]

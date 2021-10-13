@@ -2,7 +2,7 @@
 
 module Post.DB.DBQImpl where
 
-import Database.HDBC (run, commit, handleSql, quickQuery', SqlValue)
+import Database.HDBC (run, commit, handleSql, quickQuery', SqlValue, fromSql)
 import qualified Control.Exception as Exc
 import qualified Data.Text as T
 
@@ -18,11 +18,11 @@ makeDBRequest handle dbQuery = handleSql errorHandler $ do
       queryString = fst dbQuery
       queryArgs = snd dbQuery
   Logger.logDebug logh $ "DBQuery: '"
-    <> T.pack queryString
+    <> queryString
     <> "' with args: '"
-    <> T.pack (show queryArgs)
+    <> T.intercalate "," (map fromSql queryArgs)
     <> "'"
-  quickQuery' dbh queryString queryArgs
+  quickQuery' dbh (T.unpack queryString) queryArgs
   where errorHandler e = do
           Exc.throwIO $ E.DbError $ "Error: Error in makeDBRequest!\n"
             <> show e
@@ -34,11 +34,11 @@ runDBRequest handle dbQuery = handleSql errorHandler $ do
       queryString = fst dbQuery
       queryArgs = snd dbQuery
   Logger.logDebug logh $ "DBQuery: '"
-    <> T.pack queryString
+    <> queryString
     <> "' with args: '"
-    <> T.pack (show queryArgs)
+    <> T.intercalate "," (map fromSql queryArgs)
     <> "'"
-  _ <- run dbh queryString queryArgs
+  _ <- run dbh (T.unpack queryString) queryArgs
   commit dbh
   where errorHandler e = do
           Exc.throwIO $ E.DbError $ "Error: Error in runDBRequest!\n"

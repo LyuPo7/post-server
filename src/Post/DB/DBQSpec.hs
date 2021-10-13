@@ -19,6 +19,7 @@ import qualified Post.Logger as Logger
 import qualified Post.Exception as E
 import Post.DB.Data
 import Post.Server.Objects (Token, PostId)
+import Post.Server.Util (convert)
 
 -- | Tag Handle
 data Handle m = Handle {
@@ -34,15 +35,18 @@ data Handle m = Handle {
   getCurrentTime :: m UTCTime
 }
 -- | SELECT FROM WHERE query
-selectFromWhere :: Monad m => Handle m -> Table -> [Column] -> [Column] -> [SqlValue] -> m [[SqlValue]]
+selectFromWhere :: Monad m => Handle m ->
+                   Table -> [Column] -> [Column] -> [SqlValue] -> m [[SqlValue]]
 selectFromWhere handle table colSelect colWhere values = do
   dbQuery <- queryFromWhere table colSelect colWhere values
   case dbQuery of
     Right query -> makeDBRequest handle query
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in selectFromWhere!\n"
+    Left msg -> Exc.throw $ E.DbQueryError 
+      $ "Error: Error in selectFromWhere!\n"
       <> show msg
 
-queryFromWhere :: Monad m => Table -> [Column] -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
+queryFromWhere :: Monad m => Table ->
+                 [Column] -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
 queryFromWhere table colSelect colWhere values = do
   if null colSelect || null colWhere || null values
     then do
@@ -51,25 +55,27 @@ queryFromWhere table colSelect colWhere values = do
     else do
       let tableName = table_name table
           --nValues = length values
-          selectName = intercalate "," $ map (T.unpack . column_name) colSelect
-          whereName = intercalate " = ? AND " $ map (T.unpack . column_name) colWhere
-          qString = " = ?"
-          query = "SELECT " ++ selectName
-            ++ " FROM " ++ T.unpack tableName
-            ++ " WHERE " ++ whereName
-            ++ qString
+          selectName = T.intercalate "," $ map column_name colSelect
+          whereName = T.intercalate " = ? AND " $ map column_name colWhere 
+          query = "SELECT " <> selectName
+            <> " FROM " <> tableName
+            <> " WHERE " <> whereName
+            <> " = ?"
       return $ Right (query, values)
 
 -- | SELECT FROM WHERE IN query
-selectFromWhereIn :: Monad m => Handle m -> Table -> [Column] -> Column -> [SqlValue] -> m [[SqlValue]]
+selectFromWhereIn :: Monad m => Handle m ->
+                     Table -> [Column] -> Column -> [SqlValue] -> m [[SqlValue]]
 selectFromWhereIn handle table colSelect colWhere values = do
   dbQuery <- queryFromWhereIn table colSelect colWhere values
   case dbQuery of
     Right query -> makeDBRequest handle query
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in selectFromWhereIn!\n"
+    Left msg -> Exc.throw $ E.DbQueryError 
+      $ "Error: Error in selectFromWhereIn!\n"
       <> show msg
 
-queryFromWhereIn :: Monad m => Table -> [Column] -> Column -> [SqlValue] -> m (Either Text DbQuery)
+queryFromWhereIn :: Monad m => Table ->
+                   [Column] -> Column -> [SqlValue] -> m (Either Text DbQuery)
 queryFromWhereIn table colSelect colWhere values = do
   let action | null colSelect || null values = do
                let msg = "'colSelect'/values' can't be empty"
@@ -77,13 +83,13 @@ queryFromWhereIn table colSelect colWhere values = do
              | otherwise = do
                let tableName = table_name table
                    nValues = length values
-                   selectName = intercalate "," $ map (T.unpack . column_name) colSelect
-                   whereName = T.unpack $ column_name colWhere
-                   qString = intercalate "," $ replicate nValues "?"
-                   query = "SELECT " ++ selectName
-                     ++ " FROM " ++ T.unpack tableName
-                     ++ " WHERE " ++ whereName
-                     ++ " IN (" ++ qString ++ ")"
+                   selectName = T.intercalate "," $ map column_name colSelect
+                   whereName = column_name colWhere
+                   qString = T.intersperse ',' $ T.replicate nValues "?"
+                   query = "SELECT " <> selectName
+                       <> " FROM " <> tableName
+                       <> " WHERE " <> whereName
+                       <> " IN (" <> qString <> ")"
                return $ Right (query, values)
   action
 
@@ -103,34 +109,37 @@ queryFrom table colSelect = do
                return $ Left msg
              | otherwise = do
                let tableName = table_name table
-                   selectName = intercalate "," $ map (T.unpack . column_name) colSelect
-                   query = "SELECT " ++ selectName
-                     ++ " FROM " ++ T.unpack tableName
+                   selectName = T.intercalate "," $ map column_name colSelect
+                   query = "SELECT " <> selectName
+                       <> " FROM " <> tableName
                return $ Right (query, [])
   action
 
 -- | SELECT FROM ORDER LIMIT query
-selectFromOrderLimit :: Monad m => Handle m -> Table -> [Column] -> Column -> Integer -> m [[SqlValue]]
+selectFromOrderLimit :: Monad m => Handle m ->
+                        Table -> [Column] -> Column -> Integer -> m [[SqlValue]]
 selectFromOrderLimit handle table colSelect colOrder limit = do
   dbQuery <- queryFromOrderLimit table colSelect colOrder limit
   case dbQuery of
     Right query -> makeDBRequest handle query
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in selectFromOrderLimit!\n"
+    Left msg -> Exc.throw $ E.DbQueryError 
+      $ "Error: Error in selectFromOrderLimit!\n"
       <> show msg
 
-queryFromOrderLimit :: Monad m => Table -> [Column] -> Column -> Integer -> m (Either Text DbQuery)
+queryFromOrderLimit :: Monad m => Table ->
+                      [Column] -> Column -> Integer -> m (Either Text DbQuery)
 queryFromOrderLimit table colSelect colOrder limit = do
   let action | null colSelect = do
                let msg = "'colSelect' can't be empty"
                return $ Left msg
              | otherwise = do
                let tableName = table_name table
-                   selectName = intercalate "," $ map (T.unpack . column_name) colSelect
-                   orderName = T.unpack $ column_name colOrder
-                   query = "SELECT " ++ selectName
-                     ++ " FROM " ++ T.unpack tableName
-                     ++ " ORDER BY " ++ orderName
-                     ++ " DESC LIMIT " ++ show limit
+                   selectName = T.intercalate "," $ map column_name colSelect
+                   orderName = column_name colOrder
+                   query = "SELECT " <> selectName
+                       <> " FROM " <> tableName
+                       <> " ORDER BY " <> orderName
+                       <> " DESC LIMIT " <> convert limit
                return $ Right (query, [])
   action
 
@@ -143,7 +152,8 @@ deleteWhere handle table colWhere values = do
     Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in deleteWhere!\n"
       <> show msg
 
-queryDeleteWhere :: Monad m => Table -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
+queryDeleteWhere :: Monad m =>
+                    Table -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
 queryDeleteWhere table colWhere values = do
   let action | null colWhere || null values = do
                let msg = "'colWhere'/'values' can't be empty"
@@ -153,24 +163,26 @@ queryDeleteWhere table colWhere values = do
                return $ Left msg
              | otherwise = do
                let tableName = table_name table
-                   whereName = intercalate " = ? AND " $ map (T.unpack . column_name) colWhere
-                   qString = " = ?"
-                   query = "DELETE FROM " ++ T.unpack tableName
-                     ++ " WHERE " ++ whereName
-                     ++ qString
+                   whereName = T.intercalate " = ? AND " $ map column_name colWhere
+                   query = "DELETE FROM " <> tableName
+                       <> " WHERE " <> whereName
+                       <> " = ?"
                return $ Right (query, values)
   action
 
 -- | INSERT INTO VALUES query
-insertIntoValues :: Monad m => Handle m -> Table -> [Column] -> [SqlValue] -> m ()
+insertIntoValues :: Monad m => Handle m ->
+                    Table -> [Column] -> [SqlValue] -> m ()
 insertIntoValues handle table colInsert values = do
   dbQuery <- queryInsertIntoValues table colInsert values
   case dbQuery of
     Right query -> runDBRequest handle query
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in insertIntoValues!\n"
+    Left msg -> Exc.throw $ E.DbQueryError
+      $ "Error: Error in insertIntoValues!\n"
       <> show msg
 
-queryInsertIntoValues :: Monad m => Table -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
+queryInsertIntoValues :: Monad m =>
+                         Table -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
 queryInsertIntoValues table colInsert values = do
   let action | null colInsert || null values = do
                let msg = "'colInsert'/'values' can't be empty"
@@ -181,26 +193,31 @@ queryInsertIntoValues table colInsert values = do
              | otherwise = do
                let tableName = table_name table
                    nValues = length values
-                   insertName = intercalate "," $ map (T.unpack . column_name) colInsert
-                   qString = intercalate "," $ replicate nValues "?"
-                   query = "INSERT INTO " ++ T.unpack tableName
-                     ++ " (" ++ insertName ++ ") VALUES (" ++ qString ++ ")"
+                   insertName = T.intercalate "," $ map column_name colInsert
+                   qString = T.intersperse ',' $ T.replicate nValues "?"
+                   query = "INSERT INTO " <> tableName
+                       <> " (" <> insertName <> ") \
+                           \VALUES (" <> qString <> ")"
                return $ Right (query, values)
   action
 
 -- | UPDATE INTO VALUES query
-updateSetWhere :: Monad m => Handle m -> Table -> [Column] -> [Column] -> [SqlValue] -> [SqlValue] -> m ()
+updateSetWhere :: Monad m => Handle m -> Table ->
+                 [Column] -> [Column] -> [SqlValue] -> [SqlValue] -> m ()
 updateSetWhere handle table colSet colWhere valSet valWhere = do
   dbQuery <- queryUpdateSetWhere table colSet colWhere valSet valWhere
   case dbQuery of
     Right query -> runDBRequest handle query
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in updateSetWhere!\n"
+    Left msg -> Exc.throw $ E.DbQueryError
+      $ "Error: Error in updateSetWhere!\n"
       <> show msg
 
-queryUpdateSetWhere :: Monad m => Table -> [Column] -> [Column] -> [SqlValue] -> [SqlValue] -> m (Either Text DbQuery)
+queryUpdateSetWhere :: Monad m => Table ->[Column] -> [Column] ->
+                      [SqlValue] -> [SqlValue] -> m (Either Text DbQuery)
 queryUpdateSetWhere table colSet colWhere valSet valWhere = do
   let action | null colSet || null colWhere || null valSet || null valWhere = do
-               let msg = "'colSet'/'colWhere'/'valSet'/'valWhere' can't be empty"
+               let msg = "'colSet'/'colWhere'/'valSet'/'valWhere' \
+                          \can't be empty"
                return $ Left msg
              | length colSet /= length valSet = do
                let msg = "'colSet' and 'valSet' must have the same size"
@@ -210,36 +227,37 @@ queryUpdateSetWhere table colSet colWhere valSet valWhere = do
                return $ Left msg
              | otherwise = do
                let tableName = table_name table
-                   values = valSet ++ valWhere
-                   setName = intercalate "," $ map ((++ " = ? ") . T.unpack . column_name) colSet
-                   whereName = intercalate " = ? AND " $ map (T.unpack . column_name) colWhere
-                   qString = " = ?"
-                   query = "UPDATE " ++ T.unpack tableName
-                     ++ " SET " ++ setName
-                     ++ " WHERE " ++ whereName
-                     ++ qString
+                   values = valSet <> valWhere
+                   setName = T.intercalate "," $ map ((<> " = ? ") . column_name) colSet
+                   whereName = T.intercalate " = ? AND " $ map column_name colWhere
+                   query = "UPDATE " <> tableName
+                       <> " SET " <> setName
+                       <> " WHERE " <> whereName
+                       <> " = ?"
                return $ Right (query, values)
   action
 
 -- | Special query for Posts
-specialQuery :: Monad m => Handle m -> Table -> Column -> DbQuery -> m ([PostId])
+specialQuery :: Monad m => Handle m ->
+                Table -> Column -> DbQuery -> m ([PostId])
 specialQuery handle table column dbParams = do
   dbQuery <- querySpecialPosts table column dbParams
   case dbQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in specialQuery!\n"
+    Left msg -> Exc.throw $ E.DbQueryError
+      $ "Error: Error in specialQuery!\n"
       <> show msg
 
 querySpecialPosts :: Monad m => Table -> Column -> DbQuery -> m (Either Text DbQuery)
 querySpecialPosts table column dbParams = do
   let query = "SELECT "
-        ++ T.unpack (column_name column)
-        ++ " FROM "
-        ++ T.unpack (table_name table)
-        ++ " "
-        ++ fst dbParams
+          <> column_name column
+          <> " FROM "
+          <> table_name table
+          <> " "
+          <> fst dbParams
   return $ Right (query, snd dbParams)
 
 -- | Query Search Post
@@ -253,7 +271,8 @@ searchPost handle params = do
     Right query -> do
       idPosts <- makeDBRequest handle query
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in searchPost!\n"
+    Left msg -> Exc.throw $ E.DbQueryError
+      $ "Error: Error in searchPost!\n"
       <> show msg
 
 querySearchPost :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
@@ -267,10 +286,11 @@ querySearchPost handle args = do
       Logger.logInfo logh msg
       return $ Left msg
     Right keys -> do
-      let query = "WHERE " ++ (intercalate " AND " keys)
+      let query = "WHERE " 
+            <> T.intercalate " AND " keys
       if not $ null args
         then do
-          let msg = "Search Post query: " <> T.pack query
+          let msg = "Search Post query: " <> query
           Logger.logInfo logh msg
           return $ Right (query, paramArgs)
         else do
@@ -278,13 +298,14 @@ querySearchPost handle args = do
           Logger.logInfo logh msg
           return $ Right ("", [])
 
-keyPostToDb :: Monad m => String -> m (Either Text String)
+keyPostToDb :: Monad m => Text -> m (Either Text Text)
 keyPostToDb "created_at" = return $ Right "created_at = ?"
 keyPostToDb "created_at__lt" = return $ Right "created_at < ?"
 keyPostToDb "created_at__gt" = return $ Right "created_at > ?"
 keyPostToDb "find_in_title" = return $ Right "title LIKE ?"
 keyPostToDb "find_in_text" = return $ Right "text LIKE ?"
-keyPostToDb str = return $ Left $ "keyPostToDb function: Incorrect argument: " <> T.pack str
+keyPostToDb str = return $ Left 
+  $ "keyPostToDb function: Incorrect argument: " <> str
 
 -- | Query Search Category
 searchCat :: Monad m => Handle m -> PostQuery -> m ([PostId])
@@ -297,7 +318,8 @@ searchCat handle params = do
     Right query -> do
       idPosts <- makeDBRequest handle query
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in searchCat!\n"
+    Left msg -> Exc.throw $ E.DbQueryError
+      $ "Error: Error in searchCat!\n"
       <> show msg
 
 querySearchCat :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
@@ -311,10 +333,11 @@ querySearchCat handle args = do
       Logger.logInfo logh msg
       return $ Left msg
     Right keys -> do
-      let query = "WHERE " ++ (intercalate " AND " keys)
+      let query = "WHERE " 
+            <> T.intercalate " AND " keys
       if not $ null args
         then do
-          let msg = "Search Category query: " <> T.pack query
+          let msg = "Search Category query: " <> query
           Logger.logInfo logh msg
           return $ Right (query, paramArgs)
         else do
@@ -322,9 +345,10 @@ querySearchCat handle args = do
           Logger.logInfo logh msg
           return $ Right ("", [])                   
 
-keyCatToDb :: Monad m => String -> m (Either Text String)
+keyCatToDb :: Monad m => Text -> m (Either Text Text)
 keyCatToDb "category" = return $ Right "category_id = ?"
-keyCatToDb str = return $ Left $ "keyCatToDb function: Incorrect argument: " <> T.pack str
+keyCatToDb str = return $ Left 
+  $ "keyCatToDb function: Incorrect argument: " <> str
 
 -- | Query Search Tag
 searchTag :: Monad m => Handle m -> PostQuery -> m ([PostId])
@@ -339,7 +363,8 @@ searchTag handle params = do
     Right query -> do
       idPosts <- makeDBRequest handle query
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in searchTag!\n"
+    Left msg -> Exc.throw $ E.DbQueryError
+      $ "Error: Error in searchTag!\n"
       <> show msg
 
 querySearchTag :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
@@ -350,7 +375,7 @@ querySearchTag handle [] = do
   return $ Right ("", [])
 querySearchTag handle [(key, Just value)] = do
   let logh = hLogger handle
-  case readEither value :: Either String [Integer] of
+  case readEither (T.unpack value) :: Either String [Integer] of
     Left msg -> do
       Logger.logInfo logh $ T.pack msg
       return $ Left $ T.pack msg
@@ -359,7 +384,7 @@ querySearchTag handle [(key, Just value)] = do
       keyDbE <- keyTagToDb key (length paramArgs)
       case keyDbE of
         Right keyDb -> do
-          let query = "WHERE " ++ keyDb
+          let query = "WHERE " <> keyDb
           return $ Right (query, paramArgs)
         Left msg -> return $ Left $ "querySearchTag function: incorrect tag argument: " <> msg
 querySearchTag handle _ = do
@@ -368,11 +393,16 @@ querySearchTag handle _ = do
   Logger.logError logh msg
   return $ Left msg
 
-keyTagToDb :: Monad m => String -> Int -> m (Either Text String)
+keyTagToDb :: Monad m => Text -> Int -> m (Either Text Text)
 keyTagToDb "tag" _ = return $ Right "tag_id = ?"
-keyTagToDb "tag__in" n = return $ Right $ "tag_id IN (" ++ intercalate "," (replicate n "?") ++ ")"
-keyTagToDb "tag__all" n = return $ Right $ intercalate " AND " $ replicate n "tag_id = ?"
-keyTagToDb str _ = return $ Left $ "keyTagToDb function: Incorrect argument: " <> T.pack str
+keyTagToDb "tag__in" n = return $ Right 
+  $ "tag_id IN (" 
+  <> T.intersperse ',' (T.replicate n "?")
+  <> ")"
+keyTagToDb "tag__all" n = return $ Right $ T.pack
+  $ intercalate " AND " $ replicate n "tag_id = ?"
+keyTagToDb str _ = return $ Left
+  $ "keyTagToDb function: Incorrect argument: " <> str
 
 -- | Query Search Author
 searchAuthor :: Monad m => Handle m -> PostQuery -> m ([PostId])
@@ -385,7 +415,8 @@ searchAuthor handle params = do
     Right query -> do
       idPosts <- makeDBRequest handle query
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in searchAuthor!\n"
+    Left msg -> Exc.throw $ E.DbQueryError
+      $ "Error: Error in searchAuthor!\n"
       <> show msg
 
 querySearchAuthor :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
@@ -402,7 +433,7 @@ querySearchAuthor handle [(_, value)] = do
       Logger.logInfo logh msg
       return $ Right ("", [])
     Just param -> do
-      if (length $ words param) == 2
+      if (length $ T.words param) == 2
         then do
           let query = "WHERE author_id = (\
                       \SELECT author_id \
@@ -412,9 +443,9 @@ querySearchAuthor handle [(_, value)] = do
                         \FROM users \
                         \WHERE first_name = ? \
                         \AND last_name = ?));"
-              msg = "Search Author query: " <> T.pack query
+              msg = "Search Author query: " <> query
           Logger.logDebug logh msg
-          return $ Right (query, map toSql $ words param)
+          return $ Right (query, map toSql $ T.words param)
       else do
         let msg = "querySearchAuthor function: 'author' \
                    \must contain 'first_name' and 'last_name' \
@@ -474,7 +505,7 @@ findInPosts handle [(_, value)] = do
       let query = "WHERE text \
                   \LIKE ? \
                   \OR title LIKE ? "
-          msg = "Search Post query: " <> T.pack query
+          msg = "Search Post query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, map toSql [value, value])
 findInPosts handle _ = do
@@ -505,7 +536,7 @@ findInAuthors handle [(_, value)] = do
                   \FROM users \
                   \WHERE first_name = ? \
                   \OR last_name = ?));"
-          msg = "Search Author query: " <> T.pack query
+          msg = "Search Author query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, map toSql [value, value])
 findInAuthors handle _ = do
@@ -534,7 +565,7 @@ findInCats handle [(_, value)] = do
                     \FROM categories \
                     \WHERE title \
                     \LIKE ? )"
-          msg = "Search Category query: " <> T.pack query
+          msg = "Search Category query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, map toSql [value])
 findInCats handle _ = do
@@ -563,7 +594,7 @@ findInTags handle [(_, value)] = do
                     \FROM tags \
                     \WHERE title \
                     \LIKE ? )"
-          msg = "Search tag query: " <> T.pack query
+          msg = "Search tag query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, map toSql [value])
 findInTags handle _ = do
@@ -586,31 +617,32 @@ sortQuery handle params ids = do
     Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in searchAuthor!\n"
       <> show msg
 
-querySort :: Monad m => Handle m -> PostQuery -> [SqlValue] -> m (Either Text DbQuery)
+querySort :: Monad m => Handle m ->
+             PostQuery -> [SqlValue] -> m (Either Text DbQuery)
 querySort handle [] ids = do
   let logh = hLogger handle
       nIds = length ids
-      qString = intercalate "," $ replicate nIds "?"
+      qString = T.intersperse ',' $ T.replicate nIds "?"
       query = "SELECT id \
               \FROM posts \
               \WHERE id \
-              \IN (" ++ qString ++ ") \
+              \IN (" <> qString <> ") \
               \ORDER BY created_at"
-      msg = "Using default Order query: " <> T.pack query
+      msg = "Using default Order query: " <> query
   Logger.logDebug logh msg
   return $ Right (query, ids)
 querySort handle [(key, _)] ids = do
   let logh = hLogger handle
       nIds = length ids
-      qString = intercalate "," $ replicate nIds "?"
+      qString = T.intersperse ',' $ T.replicate nIds "?"
   case key of
     "order_by_date" -> do
       let query = "SELECT id \
                   \FROM posts \
-                  \WHERE id IN (" ++ qString ++ ") \
+                  \WHERE id IN (" <> qString <> ") \
                   \ORDER BY created_at"
           msg = "Order query: " <> query
-      Logger.logDebug logh $ T.pack msg
+      Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_category" -> do
       let query = "SELECT id \
@@ -618,10 +650,10 @@ querySort handle [(key, _)] ids = do
                   \JOIN categories \
                   \ON post_category.category_id=categories.id \
                   \WHERE post_id \
-                  \IN (" ++ qString ++ ") \
+                  \IN (" <> qString <> ") \
                   \ORDER by title;"
           msg = "Order query: " <> query
-      Logger.logDebug logh $ T.pack msg
+      Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_photos" -> do
       let query = "SELECT posts.id, COUNT(*) as photo_count \
@@ -629,11 +661,11 @@ querySort handle [(key, _)] ids = do
                   \LEFT JOIN post_add_photo \
                   \ON posts.id=post_add_photo.post_id \
                   \WHERE posts.id \
-                  \IN (" ++ qString ++ ") \
+                  \IN (" <> qString <> ") \
                   \GROUP BY posts.id \
                   \ORDER BY photo_count DESC;"
           msg = "Order query: " <> query
-      Logger.logDebug logh $ T.pack msg
+      Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_author" -> do
       let query = "SELECT id \
@@ -644,10 +676,10 @@ querySort handle [(key, _)] ids = do
                   \WHERE id IN (" <> qString <> ") \
                   \ORDER BY last_name, first_name;"
           msg = "Order query: " <> query
-      Logger.logDebug logh $ T.pack msg
+      Logger.logDebug logh msg
       return $ Right (query, ids)
     _ -> do
-      let msg = "querySort function: Incorrect key: " <> T.pack key
+      let msg = "querySort function: Incorrect key: " <> key
       Logger.logWarning logh msg
       return $ Left msg
 querySort handle _ _ = do

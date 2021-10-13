@@ -11,8 +11,8 @@ import Control.Monad.Trans.Either
 import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
 import Post.Server.Objects
-import Post.Server.Util (convert)
 import Post.DB.Data
+import Post.Server.Util (convert)
 
 -- | DB methods for Tag
 createTag :: Monad m => Handle m -> Title -> m (Either Text Title)

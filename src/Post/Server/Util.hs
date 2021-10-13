@@ -55,9 +55,8 @@ createOptionalDict :: Monad m => Handle m ->
                       Query -> [BC.ByteString] -> m PostQuery
 createOptionalDict logh params paramNames = do
   paramsM <- extractOptional logh params paramNames
-  let dictAll = zip (map BC.unpack paramNames) 
-                    (fmap (fmap T.unpack) paramsM)
-  return $ filter (not . null . snd) dictAll
+  let dictAll = zip (map (T.pack . BC.unpack) paramNames) paramsM
+  return $ filter ((/= Nothing) . snd) dictAll
 
 lookupOptionalParam :: (Monad m, Show a, Eq a) => Handle m ->
                        [(a, Maybe a)] -> a -> m (Maybe a)

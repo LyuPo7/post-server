@@ -2,18 +2,18 @@
 
 module Post.DB.Photo where
 
-import System.FilePath ((</>))
-import Database.HDBC (fromSql, toSql, SqlValue)
-import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text (Text)
+import Database.HDBC (fromSql, toSql, SqlValue)
+import System.FilePath ((</>))
 
 import Post.DB.DBQSpec
 import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
 import Post.Server.Objects
-import Post.Server.Util (convert)
 import Post.DB.Data
+import Post.Server.Util (convert)
 
 savePhoto :: Monad m => Handle m -> Text -> m (Either Text PhotoId)
 savePhoto handle path = do
@@ -33,9 +33,9 @@ getPhotoRecordByName :: Monad m => Handle m -> Text -> m (Either Text PhotoId)
 getPhotoRecordByName handle pathToPhoto = do
   let logh = hLogger handle
   idPhotoSql <- selectFromWhere handle tablePhotos
-                [colIdPhoto]
-                [colLinkPhoto]
-                [toSql pathToPhoto]
+                 [colIdPhoto]
+                 [colLinkPhoto]
+                 [toSql pathToPhoto]
   case idPhotoSql of
     [[idPhoto]] -> do
       let msg = "Photo: '"
@@ -54,9 +54,9 @@ getPhotoRecordById :: Monad m => Handle m -> PhotoId -> m (Either Text Photo)
 getPhotoRecordById handle photoId = do
   let logh = hLogger handle
   photoSql <- selectFromWhere handle tablePhotos
-              [colIdPhoto, colLinkPhoto]
-              [colIdPhoto]
-              [toSql photoId]
+               [colIdPhoto, colLinkPhoto]
+               [colIdPhoto]
+               [toSql photoId]
   case photoSql of
     [idLinks] -> do
       Logger.logInfo logh $ "Photo with id: "
@@ -74,8 +74,8 @@ getLastPhotoRecord :: Monad m => Handle m -> m (Either Text PhotoId)
 getLastPhotoRecord handle = do
   let logh = hLogger handle
   idPhotoSql <- selectFromOrderLimit handle tablePhotos
-            [colIdPhoto]
-             colIdPhoto 1
+                 [colIdPhoto]
+                  colIdPhoto 1
   case idPhotoSql of
     [[idPhoto]] -> do
       let photoId = fromSql idPhoto

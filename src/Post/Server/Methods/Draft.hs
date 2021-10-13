@@ -2,7 +2,6 @@
 
 module Post.Server.Methods.Draft where
 
-import qualified Data.Text as T
 import Network.HTTP.Types (Query)
 import Network.Wai (Response)
 import Control.Monad.Trans.Either
@@ -29,7 +28,7 @@ getDraftsResp handle query = do
     let [token] = reqParams
     userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
     user <- EitherT $ DBU.getUserRecordbyId dbqh userId
-    let authorName = T.unpack $ user_firstName user <> " " <> user_lastName user
+    let authorName = user_firstName user <> " " <> user_lastName user
     posts <- EitherT $ DBP.getPosts dbqh [("author", Just authorName)]
     let postIds = map post_id posts
     draftIds <- EitherT $ 

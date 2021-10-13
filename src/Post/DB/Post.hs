@@ -223,9 +223,9 @@ getPostRecord :: Monad m => Handle m -> PostId -> m (Either Text Post)
 getPostRecord handle postId = do
   let logh = hLogger handle
   postSQL <- selectFromWhere handle tablePosts
-             [colIdPost, colTitlePost, colCreatedAtPost, colTextPost]
-             [colIdPost]
-             [toSql postId]
+              [colIdPost, colTitlePost, colCreatedAtPost, colTextPost]
+              [colIdPost]
+              [toSql postId]
   case postSQL of
     [post] -> do
       Logger.logInfo logh "Getting Post from db."
@@ -258,9 +258,9 @@ getPostIdRecordByTitle :: Monad m => Handle m -> Title -> m (Either Text PostId)
 getPostIdRecordByTitle handle title = do
   let logh = hLogger handle
   postIdSQL <- selectFromWhere handle tablePosts
-             [colIdPost]
-             [colTitlePost]
-             [toSql title]
+                [colIdPost]
+                [colTitlePost]
+                [toSql title]
   case postIdSQL of
     [[idPost]] -> do
       Logger.logInfo logh $ "Getting PostId corresponding to title: '"
@@ -278,9 +278,9 @@ getPostAuthorRecord :: Monad m => Handle m -> PostId -> m (Either Text AuthorId)
 getPostAuthorRecord handle postId = do
   let logh = hLogger handle
   authorIdSql <- selectFromWhere handle tablePostAuthor
-               [colIdAuthorPostAuthor]
-               [colIdPostPostAuthor]
-               [toSql postId]
+                  [colIdAuthorPostAuthor]
+                  [colIdPostPostAuthor]
+                  [toSql postId]
   case authorIdSql of
     [[authorId]] -> do
       Logger.logInfo logh $ "Getting AuthorId \
@@ -320,9 +320,9 @@ getPostTagRecords :: Monad m => Handle m -> PostId -> m (Either Text [TagId])
 getPostTagRecords handle postId = do
   let logh = hLogger handle
   tagsIdSql <- selectFromWhere handle tablePostTag
-               [colIdTagPostTag]
-               [colIdPostPostTag]
-               [toSql postId]
+                [colIdTagPostTag]
+                [colIdPostPostTag]
+                [toSql postId]
   case tagsIdSql of
     [tagIds] -> do
       Logger.logInfo logh $ "Getting TagId \
@@ -341,9 +341,9 @@ getPostMainPhotoRecords :: Monad m => Handle m -> PostId -> m (Either Text Photo
 getPostMainPhotoRecords handle postId = do
   let logh = hLogger handle
   photoIdSql <- selectFromWhere handle tablePostMainPhoto
-               [colIdPhotoPostMainPhoto]
-               [colIdPostPostMainPhoto]
-               [toSql postId]
+                 [colIdPhotoPostMainPhoto]
+                 [colIdPostPostMainPhoto]
+                 [toSql postId]
   case photoIdSql of
     [[photoId]] -> do
       Logger.logInfo logh $ "Getting Main Photo for Post with id: "
@@ -360,9 +360,9 @@ getPostAddPhotoRecords :: Monad m => Handle m -> PostId -> m (Either Text [Photo
 getPostAddPhotoRecords handle postId = do
   let logh = hLogger handle
   photoIdSql <- selectFromWhere handle tablePostAddPhoto
-               [colIdPhotoPostAddPhoto]
-               [colIdPostPostAddPhoto]
-               [toSql postId]
+                 [colIdPhotoPostAddPhoto]
+                 [colIdPostPostAddPhoto]
+                 [toSql postId]
   case photoIdSql of
     [] -> do
       let msg = "No exist Add Photos for Post with id: "
@@ -382,9 +382,9 @@ getPostDraftRecord :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
 getPostDraftRecord handle postId = do
   let logh = hLogger handle
   draftIdSql <- selectFromWhere handle tablePostDraft
-               [colIdDraftPostDraft]
-               [colIdPostPostDraft]
-               [toSql postId]
+                 [colIdDraftPostDraft]
+                 [colIdPostPostDraft]
+                 [toSql postId]
   case draftIdSql of
     [[draftId]] -> do 
       Logger.logInfo logh "Dependency between Post and Draft already exists."
@@ -432,10 +432,10 @@ updatePostMainPhotoRecord :: Monad m => Handle m ->
 updatePostMainPhotoRecord handle postId photoId = do
   let logh = hLogger handle
   _ <- updateSetWhere handle tablePostMainPhoto
-           [colIdPhotoPostMainPhoto]
-           [colIdPostPostMainPhoto]
-           [toSql photoId]
-           [toSql postId]
+        [colIdPhotoPostMainPhoto]
+        [colIdPostPostMainPhoto]
+        [toSql photoId]
+        [toSql postId]
   Logger.logInfo logh "Post's Main Photo was successfully set."
   return $ Right photoId
 

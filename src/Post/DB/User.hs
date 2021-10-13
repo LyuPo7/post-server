@@ -6,18 +6,18 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
 import Data.Text (Text)
 import Database.HDBC (SqlValue, fromSql, toSql)
-import Crypto.Scrypt (defaultParams, getEncryptedPass, Pass(..))
 import Control.Monad.Trans.Either
 import Control.Monad.Trans (lift)
 import Data.Either.Combinators (rightToMaybe)
+import Crypto.Scrypt (defaultParams, getEncryptedPass, Pass(..))
 
 import Post.DB.DBQSpec
 import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Logger as Logger
 import qualified Post.DB.Photo as DBPh
-import Post.Server.Util (convert)
 import Post.Server.Objects
 import Post.DB.Data
+import Post.Server.Util (convert)
 
 -- | DB methods for User
 createUser :: Monad m => Handle m -> 

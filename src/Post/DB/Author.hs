@@ -52,7 +52,8 @@ removeAuthor handle userId = do
           return $ Left msg
     Left msg -> return $ Left msg
 
-editAuthor :: Monad m => Handle m -> UserId -> Description -> m (Either Text AuthorId)
+editAuthor :: Monad m => Handle m ->
+              UserId -> Description -> m (Either Text AuthorId)
 editAuthor handle userId newDescription = runEitherT $ do
   authorId <- EitherT $ getAuthorUserRecord  handle userId
   lift $ updateAuthorRecord handle authorId newDescription
@@ -79,9 +80,9 @@ getAuthorRecord :: Monad m => Handle m -> AuthorId -> m (Either Text Author)
 getAuthorRecord handle authorId = do
   let logh = hLogger handle
   authorSql <- selectFromWhere handle tableAuthors
-               [colIdAuthor, colDescAuthor]
-               [colIdAuthor]
-               [toSql authorId]
+                [colIdAuthor, colDescAuthor]
+                [colIdAuthor]
+                [toSql authorId]
   case authorSql of
     [author] -> do
       Logger.logInfo logh "Getting Author from db."
@@ -93,13 +94,14 @@ getAuthorRecord handle authorId = do
       Logger.logWarning logh msg
       return $ Left msg
 
-getUserIdRecordByAuthorId :: Monad m => Handle m -> AuthorId -> m (Either Text UserId)
+getUserIdRecordByAuthorId :: Monad m => Handle m ->
+                             AuthorId -> m (Either Text UserId)
 getUserIdRecordByAuthorId handle authorId = do
   let logh = hLogger handle
   idUserSql <- selectFromWhere handle tableAuthorUser
-           [colIdUserAuthorUser]
-           [colIdAuthorAuthorUser]
-           [toSql authorId]
+                [colIdUserAuthorUser]
+                [colIdAuthorAuthorUser]
+                [toSql authorId]
   case idUserSql of
     [[idUser]] -> do
       Logger.logInfo logh $ "Getting UserId corresponding to Author with id: "
@@ -116,7 +118,7 @@ getAuthorRecords :: Monad m => Handle m -> m (Either Text [Author])
 getAuthorRecords handle = do
   let logh = hLogger handle
   authorsSQL <- selectFrom handle tableAuthors
-              [colIdAuthor, colDescAuthor]
+                 [colIdAuthor, colDescAuthor]
   case authorsSQL of
     [] -> do
       Logger.logWarning logh "No Authors in db!"
@@ -147,9 +149,9 @@ getAuthorPostRecord :: Monad m => Handle m -> AuthorId -> m (Either Text [PostId
 getAuthorPostRecord handle authorId = do
   let logh = hLogger handle
   postsIdSql <- selectFromWhere handle tablePostAuthor
-           [colIdPostPostAuthor]
-           [colIdAuthorPostAuthor]
-           [toSql authorId]
+                 [colIdPostPostAuthor]
+                 [colIdAuthorPostAuthor]
+                 [toSql authorId]
   case postsIdSql of
     [] -> do
       let msg = "No Posts corresponding to Author with id: "
@@ -165,9 +167,9 @@ getAuthorUserRecord :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
 getAuthorUserRecord handle userId = do
   let logh = hLogger handle
   authorIdSql <- selectFromWhere handle tableAuthorUser
-           [colIdAuthorAuthorUser]
-           [colIdUserAuthorUser]
-           [toSql userId]
+                 [colIdAuthorAuthorUser]
+                 [colIdUserAuthorUser]
+                 [toSql userId]
   case authorIdSql of
     [[authorId]] -> do
       Logger.logInfo logh "Getting dependency between Author and User from db."

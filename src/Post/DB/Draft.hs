@@ -2,10 +2,10 @@
 
 module Post.DB.Draft where
 
-import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.Text (Text)
-import Control.Monad.Trans (lift)
+import Database.HDBC (SqlValue, fromSql, toSql)
 import Control.Monad.Trans.Either
+import Control.Monad.Trans (lift)
 
 import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
@@ -64,9 +64,9 @@ getDraftRecords :: Monad m => Handle m -> [DraftId] -> m (Either Text [Draft])
 getDraftRecords handle draftIds = do
   let logh = hLogger handle
   draftsSql <- selectFromWhereIn handle tableDrafts
-               [colIdDraft, colTextDraft]
-                colIdDraft
-                $ map toSql draftIds
+                [colIdDraft, colTextDraft]
+                 colIdDraft
+                 $ map toSql draftIds
   case draftsSql of
     [] -> do
       Logger.logWarning logh "No Drafts in db!"
@@ -96,10 +96,10 @@ updateDraftRecord :: Monad m => Handle m -> DraftId -> Text -> m (Either Text Dr
 updateDraftRecord handle draftId text = do
   let logh = hLogger handle
   _ <- updateSetWhere handle tablePosts
-           [colTextDraft]
-           [colIdDraft]
-           [toSql text]
-           [toSql draftId]
+        [colTextDraft]
+        [colIdDraft]
+        [toSql text]
+        [toSql draftId]
   Logger.logInfo logh $ "Updating Draft with id: "
     <> convert draftId
     <> "."
@@ -109,10 +109,10 @@ updatePostRecord :: Monad m => Handle m -> PostId -> Text -> m (Either Text Post
 updatePostRecord handle postId text = do
   let logh = hLogger handle
   _ <- updateSetWhere handle tablePosts
-           [colTextPost]
-           [colIdPost]
-           [toSql text]
-           [toSql postId]
+        [colTextPost]
+        [colIdPost]
+        [toSql text]
+        [toSql postId]
   Logger.logInfo logh $ "Updating Post with id: "
     <> convert postId
     <> "in db."
@@ -122,9 +122,9 @@ getDraftText :: Monad m => Handle m -> DraftId -> m (Either Text Text)
 getDraftText handle draftId = do
   let logh = hLogger handle
   textSql <- selectFromWhere handle tableDrafts
-               [colTextDraft]
-               [colIdDraft]
-               [toSql draftId]
+              [colTextDraft]
+              [colIdDraft]
+              [toSql draftId]
   case textSql of
     [[text]] -> do
       Logger.logWarning logh $ "Extracting text from Draft with id: "

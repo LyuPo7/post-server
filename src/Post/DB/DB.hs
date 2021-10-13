@@ -9,14 +9,15 @@ import Data.Text (Text)
 import Data.List (intercalate)
 import qualified Data.Text as T
 import qualified System.IO as SIO
-import qualified Network.HTTP.Client as HTTPClient
+import qualified Network.HTTP.Client as HC
 
 import Post.DB.DBSpec (Handle(..), Config(..))
-import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
+import qualified Post.Server.ServerConfig as ServerConfig
 import Post.DB.Data
 
-withHandleIO :: Logger.Handle IO -> Config -> ServerConfig.Config -> (Handle IO -> IO a) -> IO a
+withHandleIO :: Logger.Handle IO ->
+                Config -> ServerConfig.Config -> (Handle IO -> IO a) -> IO a
 withHandleIO logger config serverConfig f = do
   let db = "dbname=" <> dbname config
   case user config of
@@ -34,8 +35,8 @@ withHandleIO logger config serverConfig f = do
         hPutStr = SIO.hPutStr,
         hClose = SIO.hClose,
 
-        newManager = HTTPClient.newManager,
-        httpLbs = HTTPClient.httpLbs
+        newManager = HC.newManager,
+        httpLbs = HC.httpLbs
       }
       prepDB handle
       f handle
@@ -54,8 +55,8 @@ withHandleIO logger config serverConfig f = do
         hPutStr = SIO.hPutStr,
         hClose = SIO.hClose,
 
-        newManager = HTTPClient.newManager,
-        httpLbs = HTTPClient.httpLbs
+        newManager = HC.newManager,
+        httpLbs = HC.httpLbs
       }
       prepDB handle
       f handle
@@ -65,70 +66,7 @@ connect :: Text -> IO Connection
 connect db = connectPostgreSQL (T.unpack db)
 
 {- | Prepare the database for data.
-Create two tables and ask the database engine to verify some info:
-** Table: users (table contains info every User):
-    - id - unique identifier for this User;
-    - is_admin - True, if this user is a Admin;
-    - first_name - first name of the User;
-    - last_name - last name of the User;
-    - login - User's login;
-    - password - User's passwors;
-    - token - User's current token;
-** Table: authors (table contains info every Author):
-    - id - unique identifier for User;
-    - description - Author's description;
-** Table: categories (table contains info every Category):
-    - id - unique identifier for this Category;
-    - title - title of the Category;
-    - subcategory_id - id of subcategory;
-** Table: tags (table contains info every Tag):
-    - id - unique identifier for this Tag;
-    - title - title of the Tag;
-** Table: posts (table contains info every Post):
-    - id - unique identifier for this Post;
-    - title - title of the Post;
-    - created_at - date of Post creation;
-    - text - text of the Post;
-** Table: comments (table contains info every Comment):
-    - id - unique identifier for this Comment;
-    - text - text of the Comment;
-** Table: drafts (table contains info every Draft):
-    - id - unique identifier for this Draft;
-    - text - text of the Draft;
-** Table: photos (table contains info every Photo):
-    - id - unique identifier for this Photo;
-    - link - link of the Photo;
-**** Relations
-** Table: user_photo (defines one-to-one relation between user and photo):
-    - user_id - User id;
-    - photo_id - Photo id;
-** Table: author_user (defines one-to-one relation between author and user):
-    - author_id - Author id;
-    - user_id - User id;
-** Table: comment_user (defines many-to-one relation between comment and user):
-    - comment_id - Comment id;
-    - user_id - User id;  
-** Table: post_author (defines many-to-one relation between post and author):
-    - post_id - Post id;
-    - author_id - Author id;
-** Table: post_category (defines one-to-one relation between post and category):
-    - post_id - Post id;
-    - category_id - Category id;
-** Table: post_tag (defines one-to-many relation between post and tag):
-    - post_id - Post id;
-    - tag_id - Tag id;
-** Table: post_comment (defines one-to-many relation between post and cpmment):
-    - post_id - Post id;
-    - comment_id - Comment id;
-** Table: post_draft (defines one-to-one relation between post and draft):
-    - post_id - Post id;
-    - draft_id - Draft id;
-** Table: post_main_photo (defines one-to-one relation between post and main photo):
-    - post_id - Post id;
-    - photo_id - Photo id;
-** Table: post_add_photo (defines one-to-many relation between post and additional photos):
-    - post_id - Post id;
-    - photo_id - Photo id;    
+Create tables and ask the database engine to verify some info:
 -}
 prepDB :: Handle IO -> IO ()
 prepDB handle = do
