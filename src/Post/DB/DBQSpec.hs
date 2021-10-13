@@ -58,9 +58,9 @@ queryFromWhere table colSelect colWhere values = do
           selectName = T.intercalate "," $ map column_name colSelect
           whereName = T.intercalate " = ? AND " $ map column_name colWhere 
           query = "SELECT " <> selectName
-            <> " FROM " <> tableName
-            <> " WHERE " <> whereName
-            <> " = ?"
+              <> " FROM " <> tableName
+              <> " WHERE " <> whereName
+              <> " = ?"
       return $ Right (query, values)
 
 -- | SELECT FROM WHERE IN query
@@ -299,13 +299,17 @@ querySearchPost handle args = do
           return $ Right ("", [])
 
 keyPostToDb :: Monad m => Text -> m (Either Text Text)
-keyPostToDb "created_at" = return $ Right "created_at = ?"
-keyPostToDb "created_at__lt" = return $ Right "created_at < ?"
-keyPostToDb "created_at__gt" = return $ Right "created_at > ?"
-keyPostToDb "find_in_title" = return $ Right "title LIKE ?"
-keyPostToDb "find_in_text" = return $ Right "text LIKE ?"
-keyPostToDb str = return $ Left 
-  $ "keyPostToDb function: Incorrect argument: " <> str
+keyPostToDb key = do
+  let createdAt = column_name colCreatedAtPost
+      title = column_name colTitlePost
+      text = column_name colTextPost
+  case key of
+    "created_at" -> return $ Right $ createdAt <> " = ?"
+    "created_at__lt" -> return $ Right $ createdAt <> " < ?"
+    "created_at__gt" -> return $ Right $ createdAt <> " > ?"
+    "find_in_title" -> return $ Right $ title <> " LIKE ?"
+    "find_in_text" -> return $ Right $ text <> " LIKE ?"
+    _ -> return $ Left $ "keyPostToDb function: Incorrect argument: " <> key
 
 -- | Query Search Category
 searchCat :: Monad m => Handle m -> PostQuery -> m ([PostId])
@@ -346,9 +350,12 @@ querySearchCat handle args = do
           return $ Right ("", [])                   
 
 keyCatToDb :: Monad m => Text -> m (Either Text Text)
-keyCatToDb "category" = return $ Right "category_id = ?"
-keyCatToDb str = return $ Left 
-  $ "keyCatToDb function: Incorrect argument: " <> str
+keyCatToDb key = do
+  let idCPC = column_name colIdCatPostCat
+  case key of
+    "category" -> return $ Right $ idCPC <> " = ?"
+    _ -> return $ Left 
+      $ "keyCatToDb function: Incorrect argument: " <> key
 
 -- | Query Search Tag
 searchTag :: Monad m => Handle m -> PostQuery -> m ([PostId])
@@ -394,15 +401,18 @@ querySearchTag handle _ = do
   return $ Left msg
 
 keyTagToDb :: Monad m => Text -> Int -> m (Either Text Text)
-keyTagToDb "tag" _ = return $ Right "tag_id = ?"
-keyTagToDb "tag__in" n = return $ Right 
-  $ "tag_id IN (" 
-  <> T.intersperse ',' (T.replicate n "?")
-  <> ")"
-keyTagToDb "tag__all" n = return $ Right $ T.pack
-  $ intercalate " AND " $ replicate n "tag_id = ?"
-keyTagToDb str _ = return $ Left
-  $ "keyTagToDb function: Incorrect argument: " <> str
+keyTagToDb key n = do
+  let cIdTPT = column_name colIdTagPostTag
+  case key of
+    "tag" -> return $ Right $ cIdTPT <> " = ?"
+    "tag__in" -> return $ Right 
+      $ cIdTPT <> " IN (" 
+      <> T.intersperse ',' (T.replicate n "?")
+      <> ")"
+    "tag__all" -> return $ Right $ T.pack
+      $ intercalate " AND " $ replicate n $ T.unpack $ cIdTPT <> " = ?"
+    _ -> return $ Left
+      $ "keyTagToDb function: Incorrect argument: " <> key
 
 -- | Query Search Author
 searchAuthor :: Monad m => Handle m -> PostQuery -> m ([PostId])
@@ -435,14 +445,21 @@ querySearchAuthor handle [(_, value)] = do
     Just param -> do
       if (length $ T.words param) == 2
         then do
-          let query = "WHERE author_id = (\
-                      \SELECT author_id \
-                      \FROM author_user \
-                      \WHERE user_id = (\
-                        \SELECT id \
-                        \FROM users \
-                        \WHERE first_name = ? \
-                        \AND last_name = ?));"
+          let tAuthorUserAU = table_name tableAuthorUser
+              tUsersU = table_name tableUsers
+              cAuthorIdAU = column_name colIdAuthorAuthorUser
+              cUserIdAU = column_name colIdUserAuthorUser
+              cIdU = column_name colIdUser
+              cFNU = column_name colFNUser
+              cLNU = column_name colLNUser
+              query = "WHERE " <> cAuthorIdAU <> " = (\
+                      \SELECT " <> cAuthorIdAU <> " \
+                      \FROM " <> tAuthorUserAU <> " \
+                      \WHERE " <> cUserIdAU <> " = (\
+                        \SELECT " <> cIdU <> " \
+                        \FROM " <> tUsersU <> " \
+                        \WHERE " <> cFNU <> " = ? \
+                        \AND " <> cLNU <> " = ?));"
               msg = "Search Author query: " <> query
           Logger.logDebug logh msg
           return $ Right (query, map toSql $ T.words param)
@@ -502,9 +519,12 @@ findInPosts handle [(_, value)] = do
       Logger.logInfo logh msg
       return $ Right ("", [])
     Just _ -> do
-      let query = "WHERE text \
+      let cTextP = column_name colTextPost
+          cTitleP = column_name colTitlePost
+          query = "WHERE " <> cTextP <> " \
                   \LIKE ? \
-                  \OR title LIKE ? "
+                  \OR " <> cTitleP <> " \
+                  \LIKE ? "
           msg = "Search Post query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, map toSql [value, value])
@@ -528,14 +548,21 @@ findInAuthors handle [(_, value)] = do
       Logger.logInfo logh msg
       return $ Right ("", [])
     Just _ -> do
-      let query = "WHERE author_id = (\
-                \SELECT author_id \
-                \FROM author_user \
-                \WHERE user_id = (\
-                  \SELECT id \
-                  \FROM users \
-                  \WHERE first_name = ? \
-                  \OR last_name = ?));"
+      let tAuthorUserAU = table_name tableAuthorUser
+          tUsersU = table_name tableUsers
+          cAuthorIdAU = column_name colIdAuthorAuthorUser
+          cUserIdAU = column_name colIdUserAuthorUser
+          cIdU = column_name colIdUser
+          cFNU = column_name colFNUser
+          cLNU = column_name colLNUser
+          query = "WHERE " <> cAuthorIdAU <> " = (\
+                  \SELECT " <> cAuthorIdAU <> " \
+                  \FROM " <> tAuthorUserAU <> " \
+                  \WHERE " <> cUserIdAU <> " = (\
+                    \SELECT " <> cIdU <> " \
+                    \FROM " <> tUsersU <> " \
+                    \WHERE " <> cFNU <> " = ? \
+                    \OR " <> cLNU <> " = ?));"
           msg = "Search Author query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, map toSql [value, value])
@@ -559,11 +586,15 @@ findInCats handle [(_, value)] = do
       Logger.logInfo logh msg
       return $ Right ("", [])
     Just _ -> do
-      let query = "WHERE category_id \
+      let tCatsC = table_name tableCats
+          cIdCatPC = column_name colIdCatPostCat
+          cIdC = column_name colIdCat
+          cTitleC = column_name colTitleCat
+          query = "WHERE " <> cIdCatPC <> " \
                   \IN (\
-                    \SELECT id \
-                    \FROM categories \
-                    \WHERE title \
+                    \SELECT " <> cIdC <> " \
+                    \FROM " <> tCatsC <> " \
+                    \WHERE " <> cTitleC <> " \
                     \LIKE ? )"
           msg = "Search Category query: " <> query
       Logger.logDebug logh msg
@@ -588,11 +619,15 @@ findInTags handle [(_, value)] = do
       Logger.logInfo logh msg
       return $ Right ("", [])
     Just _ -> do
-      let query = "WHERE tag_id \
+      let tTagsC = table_name tableTags
+          cIdTagPC = column_name colIdTagPostTag
+          cIdT = column_name colIdTag
+          cTitleT = column_name colTitleTag
+          query = "WHERE " <> cIdTagPC <> " \
                   \IN (\
-                    \SELECT id \
-                    \FROM tags \
-                    \WHERE title \
+                    \SELECT " <> cIdT <> " \
+                    \FROM " <> tTagsC <> " \
+                    \WHERE " <> cTitleT <> " \
                     \LIKE ? )"
           msg = "Search tag query: " <> query
       Logger.logDebug logh msg
@@ -623,11 +658,14 @@ querySort handle [] ids = do
   let logh = hLogger handle
       nIds = length ids
       qString = T.intersperse ',' $ T.replicate nIds "?"
-      query = "SELECT id \
-              \FROM posts \
-              \WHERE id \
+      tPosts = table_name tablePosts
+      cIdP = column_name colIdPost
+      createdAt = column_name colCreatedAtPost
+      query = "SELECT " <> cIdP <> " \
+              \FROM " <> tPosts <> " \
+              \WHERE " <> cIdP <> " \
               \IN (" <> qString <> ") \
-              \ORDER BY created_at"
+              \ORDER BY " <> createdAt
       msg = "Using default Order query: " <> query
   Logger.logDebug logh msg
   return $ Right (query, ids)
@@ -637,44 +675,73 @@ querySort handle [(key, _)] ids = do
       qString = T.intersperse ',' $ T.replicate nIds "?"
   case key of
     "order_by_date" -> do
-      let query = "SELECT id \
-                  \FROM posts \
-                  \WHERE id IN (" <> qString <> ") \
-                  \ORDER BY created_at"
+      let tPosts = table_name tablePosts
+          cIdP = column_name colIdPost
+          createdAt = column_name colCreatedAtPost
+          query = "SELECT " <> cIdP <> " \
+                  \FROM " <> tPosts <> " \
+                  \WHERE " <> cIdP <> " \
+                  \IN (" <> qString <> ") \
+                  \ORDER BY " <> createdAt
           msg = "Order query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_category" -> do
-      let query = "SELECT id \
-                  \FROM post_category \
-                  \JOIN categories \
-                  \ON post_category.category_id=categories.id \
-                  \WHERE post_id \
+      let tPC = table_name tablePostCat
+          tC = table_name tableCats
+          cIdP = column_name colIdPost
+          cIdCPC = column_name colIdCatPostCat
+          cIdPPC = column_name colIdPostPostCat
+          cIdC = column_name colIdCat
+          cTitleP = column_name colTitlePost
+          query = "SELECT " <> cIdP <> " \
+                  \FROM " <> tPC <> " \
+                  \JOIN " <> tC <> " \
+                  \ON " <> tPC <> "." <> cIdCPC <> "\
+                  \=" <> tC <> "." <> cIdC <> " \
+                  \WHERE " <> cIdPPC <> " \
                   \IN (" <> qString <> ") \
-                  \ORDER by title;"
+                  \ORDER by " <> cTitleP <> ";"
           msg = "Order query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_photos" -> do
-      let query = "SELECT posts.id, COUNT(*) as photo_count \
-                  \FROM posts \
-                  \LEFT JOIN post_add_photo \
-                  \ON posts.id=post_add_photo.post_id \
-                  \WHERE posts.id \
+      let tP = table_name tablePosts
+          tPAPh = table_name tablePostAddPhoto
+          cIdP = column_name colIdPost
+          cIdPPAPh = column_name colIdPostPostAddPhoto
+          query = "SELECT " <> tP <> "." <> cIdP <> ", COUNT(*) as photo_count \
+                  \FROM " <> tP <> " \
+                  \LEFT JOIN " <> tPAPh <> " \
+                  \ON " <> tP <> "." <> cIdP <> "\
+                  \=" <> tPAPh <> "." <> cIdPPAPh <> " \
+                  \WHERE " <> tP <> "." <> cIdP <> " \
                   \IN (" <> qString <> ") \
-                  \GROUP BY posts.id \
+                  \GROUP BY " <> tP <> "." <> cIdP <> " \
                   \ORDER BY photo_count DESC;"
           msg = "Order query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_author" -> do
-      let query = "SELECT id \
-                  \FROM post_author \
-                  \INNER JOIN author_user \
-                  \ON post_author.author_id=author_user.author_id \
-                  \INNER JOIN users ON author_user.user_id=users.id \
+      let tAU = table_name tableAuthorUser
+          tPA = table_name tablePostAuthor
+          tU = table_name tableUsers
+          cIdP = column_name colIdPost
+          cIdAPA = column_name colIdAuthorPostAuthor
+          cIdAAU = column_name colIdAuthorAuthorUser
+          cIdUAU = column_name colIdUserAuthorUser
+          cIdU = column_name colIdUser
+          cFNU = column_name colFNUser
+          cLNU = column_name colLNUser
+          query = "SELECT " <> cIdP <> " \
+                  \FROM " <> tPA <> " \
+                  \INNER JOIN " <> tAU <> " \
+                  \ON " <> tPA <> "." <> cIdAPA <> "\
+                  \=" <> tAU <> "." <> cIdAAU <> " \
+                  \INNER JOIN " <> tU <> " ON " <> tAU <> "." <> cIdUAU <> "\
+                  \=" <> tU <> "." <> cIdU <> " \
                   \WHERE id IN (" <> qString <> ") \
-                  \ORDER BY last_name, first_name;"
+                  \ORDER BY " <> cLNU <> ", " <> cFNU <> ";"
           msg = "Order query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, ids)
