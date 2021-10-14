@@ -369,18 +369,24 @@ spec_querySearchCat = describe "Testing querySearchCat" $ do
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Cat Search DBQuery" $ do
-      let category = ("sport" :: Text)
+      let category = ("2" :: Text)
           args = [("category", Just category)]
           query = DBQSpec.querySearchCat dbqh args
           check = ("WHERE category_id = ?", [toSql category])
       query `shouldBe` (Identity $ Right check)
+    it "Should fail with nonInteger argument" $ do
+      let category = ("sport" :: Text)
+          args = [("category", Just category)]
+          query = DBQSpec.querySearchCat dbqh args
+          check = "Value of key: category must be Integer"
+      query `shouldBe` (Identity $ Left check)
     it "Should fail with incorrect argument" $ do
       let createdAt = "10.10.10" :: Text
           category = "sport" :: Text
           args = [("created_at", Just createdAt),
                   ("category", Just category)]
           query = DBQSpec.querySearchCat dbqh args
-          check = "keyCatToDb function: Incorrect argument: created_at"
+          check = "Incorrect argument: created_at"
       query `shouldBe` (Identity $ Left check)
 
 spec_querySearchTag :: Spec
@@ -416,7 +422,7 @@ spec_querySearchTag = describe "Testing querySearchTag" $ do
           args = [("tag__all", Just tags),
                   ("tag__in", Just tags)]
           query = DBQSpec.querySearchTag dbqh args
-          check = "querySearchTag function: You can use only one of ['tag', 'tag__in', 'tag__all']"
+          check = "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
       query `shouldBe` (Identity $ Left check)
     it "Should fail with incorrect key" $ do
       let tags = "[2,10,4,17]" :: Text
@@ -424,7 +430,7 @@ spec_querySearchTag = describe "Testing querySearchTag" $ do
           args = [("tag__all", Just tags),
                   ("category", Just category)]
           query = DBQSpec.querySearchTag dbqh args
-          check = "querySearchTag function: You can use only one of ['tag', 'tag__in', 'tag__all']"
+          check = "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
       query `shouldBe` (Identity $ Left check)
 
 spec_querySearchAuthor :: Spec
@@ -452,9 +458,9 @@ spec_querySearchAuthor = describe "Testing querySearchAuthor" $ do
       let author = "lyupo" :: Text
           args = [("author", Just author)]
           query = DBQSpec.querySearchAuthor dbqh args
-          check = "querySearchAuthor function: 'author' \
-                   \must contain 'first_name' and 'last_name' \
-                   \separated by whitespace."
+          check = "Key 'author' \
+                  \must contain 'first_name' and 'last_name' \
+                  \separated by whitespace."
       query `shouldBe` (Identity $ Left check)
 
 spec_findInPosts :: Spec
