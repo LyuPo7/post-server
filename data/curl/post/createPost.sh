@@ -28,6 +28,31 @@ do
    esac
 done
 
-opt="token=$token&title=$title&text=$text&category_id=$categoryId&tag_ids=$tagIds"
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+if [ -z "${title+x}" ]
+then opt="$opt"
+else opt="$opt&title=$title"
+fi
+
+if [ -z "${text+x}" ]
+then opt="$opt"
+else opt="$opt&text=$text"
+fi
+
+if [ -z "${categoryId+x}" ]
+then opt="$opt"
+else opt="$opt&category_id=$categoryId"
+fi
+
+if [ -z "${tagIds+x}" ]
+then opt="$opt"
+else opt="$opt&tag_ids=$tagIds"
+fi
+
+echo $opt
 url=http://$host:$port/createPost?$opt
 curl ${url}
