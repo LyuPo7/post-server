@@ -22,8 +22,8 @@ getPostsResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Post records"
   permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query paramsReq
-    let [token] = reqParams
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
   case permParamsE of
@@ -38,7 +38,7 @@ getPostsResp handle query = do
           Logger.logInfo logh "Posts were sent"
           return $ respOk posts
     where
-      paramsReq = ["token"]
+      authParams = ["token"]
       paramsOpt = ["created_at", "created_at__lt", "created_at__gt", "category", "tag", "tag__in", "tag__all", "author", "find_in_title", "find_in_text", "find", "order_by_date", "order_by_author", "order_by_category", "order_by_photos"]
 
 createPostResp :: Monad m => Handle m -> Query -> m Response
@@ -47,15 +47,17 @@ createPostResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Post record"
   permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [title, text, idCat, idsTag, token] = reqParams
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAuthorWritePerm dbqh token
     guard $ perm == AuthorWritePerm
-    return (title, text, idCat, idsTag, token)
+    return token
   case permParamsE of
     Left _ -> return resp404
-    Right (title, text, idCat, idsTag, token) -> do
+    Right token -> do
       postE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        let [title, text, idCat, idsTag] = reqParams
         catId <- EitherT $ Util.readEitherMa idCat "category_id"
         tagIds <- EitherT $ Util.readEitherMa idsTag "tag_id"
         authorId <- EitherT $ DBAC.getAuthorId dbqh token
@@ -67,7 +69,8 @@ createPostResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["title", "text", "category_id", "tag_ids", "token"]
+      authParams = ["token"]
+      paramsReq = ["title", "text", "category_id", "tag_ids"]
 
 removePostResp :: Monad m => Handle m -> Query -> m Response
 removePostResp handle query = do
@@ -75,16 +78,18 @@ removePostResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Post record"
   permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idPost, token] = reqParams
-    postId <- EitherT $ Util.readEitherMa idPost "post_id"
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-    return postId
   case permParamsE of
     Left _ -> return resp404
-    Right postId -> do
-      msgE <- DBP.removePost dbqh postId
+    Right _ -> do
+      msgE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        let [idPost] = reqParams
+        postId <- EitherT $ Util.readEitherMa idPost "post_id"
+        EitherT $ DBP.removePost dbqh postId
       case msgE of
         Right _ -> do
           let msg = "Post was removed"
@@ -92,54 +97,75 @@ removePostResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["post_id", "token"]
+      authParams = ["token"]
+      paramsReq = ["post_id"]
 
 setPostMainPhotoResp :: Monad m => Handle m -> Query -> m Response
 setPostMainPhotoResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add main Photo to Post"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idPost, path, token] = reqParams
-    postId <- EitherT $ Util.readEitherMa idPost "post_id"
-    perm <- lift $ DBAC.checkAuthorReadPerm dbqh token postId
-    guard $ perm == AuthorReadPerm
-    return (postId, path)
-  case permParamsE of
+  writeAuthorPermE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
+    writeAuthorPerm <- lift $ DBAC.checkAuthorWritePerm dbqh token
+    guard $ writeAuthorPerm == AuthorWritePerm
+    return token
+  case writeAuthorPermE of
     Left _ -> return resp404
-    Right (postId, path) -> do
-      photoE <- DBP.setPostMainPhoto dbqh postId path
-      case photoE of
-        Right _ -> do
+    Right token -> do
+      readAuthorPermE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        let [idPost, path] = reqParams
+        postId <- EitherT $ Util.readEitherMa idPost "post_id"
+        _ <- EitherT $ DBP.getPostRecord dbqh postId
+        readAuthorPerm <-lift $ DBAC.checkAuthorReadPerm dbqh token postId
+        return (readAuthorPerm, postId, path)
+      case readAuthorPermE of
+        Right (AuthorReadPerm, postId, path) -> do
+          _ <- DBP.setPostMainPhoto dbqh postId path
           let msg = "Post Main Photo was uploaded"
           Logger.logInfo logh msg
           return $ respSucc msg
-        Left _ -> return resp404
+        Right _ -> do
+          Logger.logError logh "This Author isn't Author of this Post!"
+          return $ respError "You aren't Author of this Post!"
+        Left msg -> return $ respError msg
     where
-      params = ["post_id", "path", "token"]
+      authParams = ["token"]
+      paramsReq = ["post_id", "path"]
 
 setPostAddPhotoResp :: Monad m => Handle m -> Query -> m Response
 setPostAddPhotoResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add additional Photo to Post"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idPost, path, token] = reqParams
-    postId <- EitherT $ Util.readEitherMa idPost "post_id"
-    perm <- lift $ DBAC.checkAuthorReadPerm dbqh token postId
-    guard $ perm == AuthorReadPerm
-    return (postId, path)
-  case permParamsE of
+  writeAuthorPermE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
+    writeAuthorPerm <- lift $ DBAC.checkAuthorWritePerm dbqh token
+    guard $ writeAuthorPerm == AuthorWritePerm
+    return token
+  case writeAuthorPermE of
     Left _ -> return resp404
-    Right (postId, path) -> do
-      msgE <- DBP.setPostAddPhoto dbqh postId path
-      case msgE of
-        Left msg -> return $ respError msg
-        Right _ -> do
+    Right token -> do
+      readAuthorPermE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        let [idPost, path] = reqParams
+        postId <- EitherT $ Util.readEitherMa idPost "post_id"
+        _ <- EitherT $ DBP.getPostRecord dbqh postId
+        readAuthorPerm <-lift $ DBAC.checkAuthorReadPerm dbqh token postId
+        return (readAuthorPerm, postId, path)
+      case readAuthorPermE of
+        Right (AuthorReadPerm, postId, path) -> do
+          _ <- DBP.setPostAddPhoto dbqh postId path
           let msg = "Post Additional Photo was uploaded"
           Logger.logInfo logh msg
           return $ respSucc msg
+        Right _ -> do
+          Logger.logError logh "This Author isn't Author of this Post!"
+          return $ respError "You aren't Author of this Post!"
+        Left msg -> return $ respError msg
     where
-      params = ["post_id", "path", "token"]
+      authParams = ["token"]
+      paramsReq = ["post_id", "path"]

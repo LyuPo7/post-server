@@ -21,12 +21,12 @@ getTagsResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Tag records"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
     Right _ -> do
       tagsE <- DBT.getAllTagRecords dbqh
@@ -37,23 +37,25 @@ getTagsResp handle query = do
           Logger.logInfo logh msg
           return $ respOk tags
     where
-      params = ["token"]
+      authParams = ["token"]
 
 createTagResp :: Monad m => Handle m -> Query -> m Response
 createTagResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Tag record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [title, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-    return title
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right title -> do
-      tagIdE <- DBT.createTag dbqh title
+    Right _ -> do
+      tagIdE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [title] = reqParams
+        EitherT $ DBT.createTag dbqh title
       case tagIdE of
         Right _ -> do
           let msg = "Tag created"
@@ -61,23 +63,26 @@ createTagResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["title", "token"]
+      authParams = ["token"]
+      params = ["token"]
 
 removeTagResp :: Monad m => Handle m -> Query -> m Response
 removeTagResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Tag record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [tagTitle, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-    return tagTitle
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right tagTitle -> do
-      tagIdE <- DBT.removeTag dbqh tagTitle
+    Right _ -> do
+      tagIdE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [tagTitle] = reqParams
+        EitherT $ DBT.removeTag dbqh tagTitle
       case tagIdE of
         Right tagId -> do
           _ <- DBT.removeTagPostsDeps dbqh tagId
@@ -86,6 +91,7 @@ removeTagResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
+      authParams = ["token"]
       params = ["title", "token"]
 
 editTagResp :: Monad m => Handle m -> Query -> m Response
@@ -93,16 +99,18 @@ editTagResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Tag record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [oldTitle, newTitle, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-    return (oldTitle, newTitle)
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right (oldTitle, newTitle) -> do
-      tagE <- DBT.editTag dbqh oldTitle newTitle
+    Right _ -> do
+      tagE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [oldTitle, newTitle] = reqParams
+        EitherT $ DBT.editTag dbqh oldTitle newTitle
       case tagE of
         Right _ -> do
           let msg = "Tag edited"
@@ -110,4 +118,5 @@ editTagResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["old_title", "new_title", "token"]
+      authParams = ["token"]
+      params = ["old_title", "new_title"]

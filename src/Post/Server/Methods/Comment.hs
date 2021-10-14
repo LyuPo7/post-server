@@ -21,16 +21,18 @@ createCommentResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Comment record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idPost, text, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
-    return (idPost, text, token)
-  case permParamsE of
+    return token
+  case permE of
     Left _ -> return resp404
-    Right (idPost, text, token) -> do
+    Right token -> do
       msgE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [idPost, text] = reqParams
         userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
         EitherT $ DBCo.createComment dbqh postId userId text
@@ -41,4 +43,5 @@ createCommentResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["post_id", "text", "token"]
+      authParams = ["token"]
+      params = ["post_id", "text"]

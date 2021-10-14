@@ -24,8 +24,8 @@ getDraftsResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Draft records"
   draftsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [token] = reqParams
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
     user <- EitherT $ DBU.getUserRecordbyId dbqh userId
     let authorName = user_firstName user <> " " <> user_lastName user
@@ -40,23 +40,24 @@ getDraftsResp handle query = do
       Logger.logInfo logh "Drafts were sent"
       return $ respOk drafts
     Left _ -> return resp404
-  where params = ["token"]
+  where authParams = ["token"]
 
 createDraftResp :: Monad m => Handle m -> Query -> m Response
 createDraftResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Draft record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idPost, text, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAuthorWritePerm dbqh token
     guard $ perm == AuthorWritePerm
-    return (idPost, text)
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right (idPost, text) -> do
+    Right _ -> do
       msgE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [idPost, text] = reqParams
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
         EitherT $ DBD.createDraft dbqh postId text
       case msgE of
@@ -66,23 +67,25 @@ createDraftResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["post_id", "text", "token"]
+      authParams = ["token"]
+      params = ["post_id", "text"]
 
 removeDraftResp :: Monad m => Handle m -> Query -> m Response
 removeDraftResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Draft record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idPost, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAuthorWritePerm dbqh token
     guard $ perm == AuthorWritePerm
-    return idPost
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right idPost -> do
+    Right _ -> do
       msgE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [idPost] = reqParams
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
         _ <- EitherT $ DBP.getPostRecord dbqh postId
         EitherT $ DBD.removeDraft dbqh postId
@@ -93,23 +96,25 @@ removeDraftResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["post_id", "token"]
+      authParams = ["token"]
+      params = ["post_id"]
 
 editDraftResp :: Monad m => Handle m -> Query -> m Response
 editDraftResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Draft record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idPost, newText, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAuthorWritePerm dbqh token
     guard $ perm == AuthorWritePerm
-    return (idPost, newText)
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right (idPost, newText) -> do
+    Right _ -> do
       msgE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [idPost, newText] = reqParams
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
         _ <- EitherT $ DBP.getPostRecord dbqh postId
         EitherT $ DBD.editDraft dbqh postId newText
@@ -120,7 +125,8 @@ editDraftResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["post_id", "text", "token"]
+      authParams = ["token"]
+      params = ["post_id", "text"]
 
 publishDraftResp :: Monad m => Handle m -> Query -> m Response
 publishDraftResp handle query = do
@@ -128,8 +134,10 @@ publishDraftResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: publish Draft"
   permParamsE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idPost, token] = reqParams
+    let [idPost] = reqParams
     postId <- EitherT $ Util.readEitherMa idPost "post_id"
     perm <- lift $ DBAC.checkAuthorReadPerm dbqh token postId
     guard $ perm == AuthorReadPerm
@@ -147,4 +155,5 @@ publishDraftResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["post_id", "token"]
+      authParams = ["token"]
+      params = ["post_id"]

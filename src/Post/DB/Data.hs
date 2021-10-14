@@ -488,7 +488,7 @@ colIdPostPostAddPhoto :: Column
 colIdPostPostAddPhoto = Column {
   column_name = "post_id",
   column_type = INTEGER,
-  column_properties = [NotNull, Unique]
+  column_properties = [NotNull]
 }
 
 colIdPhotoPostAddPhoto :: Column

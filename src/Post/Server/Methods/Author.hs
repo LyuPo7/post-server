@@ -22,12 +22,12 @@ getAuthorsResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Author records"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
     Right _ -> do
       authorsE <- DBA.getAuthorRecords dbqh
@@ -37,23 +37,24 @@ getAuthorsResp handle query = do
           Logger.logInfo logh "Authors were sent"
           return $ respOk authors
     where
-      params = ["token"]
+      authParams = ["token"]
 
 createAuthorResp :: Monad m => Handle m -> Query -> m Response
 createAuthorResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Author record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idUser, description, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-    return (idUser, description)
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right (idUser, description) -> do
+    Right _ -> do
       authorIdE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [idUser, description] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         _ <- EitherT $ DBU.getUserRecordbyId dbqh userId
         EitherT $ DBA.createAuthor dbqh userId description
@@ -64,23 +65,25 @@ createAuthorResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["id", "description", "token"]
+      authParams = ["token"]
+      params = ["id", "description"]
 
 removeAuthorResp :: Monad m => Handle m -> Query -> m Response
 removeAuthorResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Author record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idUser, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-    return idUser
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right idUser -> do
+    Right _ -> do
       userIdE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [idUser] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         _ <- EitherT $ DBU.getUserRecordbyId dbqh userId
         _ <- EitherT $ DBA.removeAuthor dbqh userId
@@ -93,23 +96,25 @@ removeAuthorResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["id", "token"]
+      authParams = ["token"]
+      params = ["id"]
 
 editAuthorResp :: Monad m => Handle m -> Query -> m Response
 editAuthorResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Author record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idUser, newDescription, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-    return (idUser, newDescription)
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right (idUser, newDescription) -> do
+    Right _ -> do
       authorIdE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [idUser, newDescription] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         _ <- EitherT $ DBU.getUserRecordbyId dbqh userId
         EitherT $ DBA.editAuthor dbqh userId newDescription
@@ -120,4 +125,5 @@ editAuthorResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["id", "description", "token"]
+      authParams = ["token"]
+      params = ["id", "description"]

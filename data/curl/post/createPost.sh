@@ -53,6 +53,5 @@ then opt="$opt"
 else opt="$opt&tag_ids=$tagIds"
 fi
 
-echo $opt
 url=http://$host:$port/createPost?$opt
 curl ${url}

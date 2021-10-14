@@ -21,13 +21,12 @@ getUsersResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get User records"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
-    return token
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
     Right _ -> do
       usersE <- DBU.getUserRecords dbqh
@@ -37,7 +36,7 @@ getUsersResp handle query = do
           Logger.logInfo logh "Users sent"
           return $ respOk users
     where
-      params = ["token"]
+      authParams = ["token"]
 
 createUserResp :: Monad m => Handle m -> Query -> m Response
 createUserResp handle query = do
@@ -63,16 +62,17 @@ removeUserResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove User record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [idUser, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
-    return idUser
-  case permParamsE of
+  case permE of
     Left _ -> return resp404
-    Right idUser -> do
+    Right _ -> do
       userIdE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [idUser] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         _ <- EitherT $ DBU.removeUser dbqh userId
         return userId
@@ -84,23 +84,26 @@ removeUserResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["id", "token"]
+      authParams = ["token"]
+      params = ["id"]
 
 setUserPhotoResp :: Monad m => Handle m -> Query -> m Response
 setUserPhotoResp handle query = do
   let logh = hLogger handle
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add Photo to User record"
-  permParamsE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
-    let [path, token] = reqParams
+  permE <- runEitherT $ do
+    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
-    return (path, token)
-  case permParamsE of
+    return token
+  case permE of
     Left _ -> return resp404
-    Right (path, token) -> do
+    Right token -> do
       photoIdE <- runEitherT $ do
+        reqParams <- EitherT $ Util.extractRequired logh query params
+        let [path] = reqParams
         userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
         EitherT $ DBU.setUserPhoto dbqh userId path
       case photoIdE of
@@ -110,4 +113,5 @@ setUserPhotoResp handle query = do
           return $ respSucc msg
         Left msg -> return $ respError msg
     where
-      params = ["path", "token"]
+      authParams = ["token"]
+      params = ["path"]
