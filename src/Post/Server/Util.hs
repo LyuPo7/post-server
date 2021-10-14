@@ -6,6 +6,7 @@ import Prelude hiding (log)
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.UUID.V4 as V4
 import qualified Data.Text as T
+import Database.HDBC (SqlValue, fromSql)
 import Data.Text (Text)
 import Network.HTTP.Types (Query)
 import Text.Read (readEither)
@@ -52,7 +53,7 @@ extractOptional logh params paramNames = do
   return $ (fmap $ fmap (T.pack . BC.unpack)) paramsM
 
 createOptionalDict :: Monad m => Handle m ->
-                      Query -> [BC.ByteString] -> m PostQuery
+                      Query -> [BC.ByteString] -> m [PostQuery]
 createOptionalDict logh params paramNames = do
   paramsM <- extractOptional logh params paramNames
   let dictAll = zip (map (T.pack . BC.unpack) paramNames) paramsM
@@ -85,3 +86,9 @@ readEitherMa arg argName = case readEither $ T.unpack arg of
 
 convert :: Show a => a -> Text
 convert = T.pack . show
+
+sqlAtoText :: [SqlValue] -> Text
+sqlAtoText = T.intercalate "," . map T.pack . map fromSql 
+
+sqlDAtoText :: [[SqlValue]] -> Text
+sqlDAtoText = T.intercalate "," . map T.pack . map fromSql . concat

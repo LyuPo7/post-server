@@ -35,7 +35,7 @@ getPostsResp handle query = do
       case postsE of
         Left msg -> return $ respError msg
         Right posts -> do
-          Logger.logInfo logh "Authors were sent"
+          Logger.logInfo logh "Posts were sent"
           return $ respOk posts
     where
       paramsReq = ["token"]

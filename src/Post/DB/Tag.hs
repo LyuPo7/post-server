@@ -2,7 +2,6 @@
 
 module Post.DB.Tag where
 
-import qualified Data.Text as T
 import Data.Text (Text)
 import Database.HDBC (fromSql, toSql, SqlValue)
 import Control.Monad.Trans (lift)
@@ -29,6 +28,16 @@ createTag handle tagTitle = do
             <> "' already exists in db."
       Logger.logWarning logh msg 
       return $ Left msg
+
+getTagByIds :: Monad m => Handle m -> [TagId] -> m (Either Text [Tag])
+getTagByIds handle tagIds = do
+  let logh = hLogger handle
+  tagsE <- mapM (getTagRecordsById handle) tagIds
+  case sequenceA tagsE of
+    Right tags -> do
+      Logger.logInfo logh "Getting Tags from db."
+      return $ Right tags
+    Left msg -> return $ Left msg
 
 removeTag :: Monad m => Handle m -> Title -> m (Either Text TagId)
 removeTag handle tagTitle = runEitherT $ do
@@ -91,20 +100,20 @@ getAllTagRecords handle = do
       Logger.logInfo logh "Getting Tags from db."
       return $ traverse newTag titleIds
 
-getTagRecordsByIds :: Monad m => Handle m -> [TagId] -> m (Either Text [Tag])
-getTagRecordsByIds handle tagIds = do
+getTagRecordsById :: Monad m => Handle m -> TagId -> m (Either Text Tag)
+getTagRecordsById handle tagId = do
   let logh = hLogger handle
-  tagsSql <- selectFromWhereIn handle tableTags
+  tagsSql <- selectFromWhere handle tableTags
               [colIdTag, colTitleTag]
-               colIdTag
-              $ map toSql tagIds
+              [colIdTag]
+              [toSql tagId]
   case tagsSql of
-    tags@[_] -> do
-      Logger.logInfo logh "Getting Tags from db."
-      return $ traverse newTag tags
+    [tag] -> do
+      Logger.logInfo logh "Getting Tag from db."
+      return $ newTag tag
     _ -> do
-      let msg = "No Tags with id in: "
-            <> T.pack (show tagIds)
+      let msg = "No Tag with id in: "
+            <> convert tagId
             <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg

@@ -563,7 +563,7 @@ colIdComUserCom = Column {
 -- types
 type DBField = Text
 type DbQuery = (Text, [SqlValue])
-type PostQuery = [(Text, Maybe Text)]
+type PostQuery = (Text, Maybe Text)
 
 dbPostReqParams :: [DBField]
 dbPostReqParams = ["created_at", "created_at__lt", "created_at__gt", "find_in_title", "find_in_text"]

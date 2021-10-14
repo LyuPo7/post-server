@@ -3,6 +3,7 @@
 module Post.DB.Post where
 
 import Database.HDBC (SqlValue, fromSql, toSql)
+import Data.Time.Clock (UTCTime(..))
 import Data.Text (Text)
 import Data.List (intersect)
 import Control.Monad.Trans (lift)
@@ -29,7 +30,7 @@ createPost handle title text authorId catId tagIds = do
   case postIdE of
     Left _ -> runEitherT $ do
       _ <- EitherT $ DBC.getCatRecordByCatId handle catId
-      _ <- EitherT $ DBT.getTagRecordsByIds handle tagIds
+      _ <- EitherT $ DBT.getTagByIds handle tagIds
       lift $ insertPostRecord handle title text
       postId <- EitherT $ getLastPostRecord handle
       _ <- EitherT $ createPostAuthorDep handle postId authorId
@@ -43,7 +44,7 @@ createPost handle title text authorId catId tagIds = do
       Logger.logWarning logh msg
       return $ Left msg
 
-getPosts :: Monad m => Handle m -> PostQuery -> m (Either Text [Post])
+getPosts :: Monad m => Handle m -> [PostQuery] -> m (Either Text [Post])
 getPosts handle postQuery = do
   let logh = hLogger handle
   -- Request to DB table posts
@@ -420,9 +421,10 @@ insertPostRecord :: Monad m => Handle m -> Title -> Text -> m ()
 insertPostRecord handle title text = do
   let logh = hLogger handle
   time <- getCurrentTime handle
+  let day = utctDay time
   _ <- insertIntoValues handle tablePosts
         [colTitlePost, colTextPost, colCreatedAtPost]
-        [toSql title, toSql text, toSql time]
+        [toSql title, toSql text, toSql day]
   Logger.logInfo logh $ "Post with title: '"
     <> title
     <> "' was successfully inserted in db."
@@ -572,7 +574,7 @@ newPost handle [idPost, title, created_at, text] = do
   commentsE <- getPostCommentRecords handle postId
   tagsE <- runEitherT $ do 
     tagIds <- EitherT $ getPostTagRecords handle postId
-    tags <- EitherT $ DBT.getTagRecordsByIds handle tagIds
+    tags <- EitherT $ DBT.getTagByIds handle tagIds
     return tags
   let photoMainM = rightToMaybe photoMainE
       photosAddM = rightToMaybe photosAddE

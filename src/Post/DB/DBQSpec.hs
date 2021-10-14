@@ -19,7 +19,7 @@ import qualified Post.Logger as Logger
 import qualified Post.Exception as E
 import Post.DB.Data
 import Post.Server.Objects (Token, PostId)
-import Post.Server.Util (convert)
+import Post.Server.Util (convert, sqlAtoText, sqlDAtoText)
 
 -- | Tag Handle
 data Handle m = Handle {
@@ -261,30 +261,28 @@ querySpecialPosts table column dbParams = do
   return $ Right (query, snd dbParams)
 
 -- | Query Search Post
-searchPost :: Monad m => Handle m -> PostQuery -> m ([PostId])
+searchPost :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
 searchPost handle params = do
-  let postParams = filter (\x -> fst x `elem` dbPostReqParams) params
+  let logh = hLogger handle
+      postParams = filter (\x -> fst x `elem` dbPostReqParams) params
   searchQuery <- runEitherT $ do
     search <- EitherT $ querySearchPost handle postParams
     EitherT $ querySpecialPosts tablePosts colIdPost search
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
+      Logger.logDebug logh $ "PostIds found in searchPost: "
+        <> sqlDAtoText idPosts
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError
-      $ "Error: Error in searchPost!\n"
-      <> show msg
+    Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
-querySearchPost :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
+querySearchPost :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 querySearchPost handle args = do
   let logh = hLogger handle
       paramArgs = map (toSql . snd) args
-      queryArgs = map fst args
-  keysE <- mapM keyPostToDb queryArgs
+  keysE <- mapM (keyPostToDb handle) args
   case sequenceA keysE of
-    Left msg -> do
-      Logger.logInfo logh msg
-      return $ Left msg
+    Left msg -> return $ Left msg
     Right keys -> do
       let query = "WHERE " 
             <> T.intercalate " AND " keys
@@ -294,44 +292,51 @@ querySearchPost handle args = do
           Logger.logInfo logh msg
           return $ Right (query, paramArgs)
         else do
-          let msg = "No search Post query!"
+          let msg = "Default search Post query!"
           Logger.logInfo logh msg
           return $ Right ("", [])
 
-keyPostToDb :: Monad m => Text -> m (Either Text Text)
-keyPostToDb key = do
-  let createdAt = column_name colCreatedAtPost
+keyPostToDb :: Monad m => Handle m -> PostQuery -> m (Either Text Text)
+keyPostToDb handle postQuery = do
+  let logh = hLogger handle
+      (key, value) = postQuery
+      createdAt = column_name colCreatedAtPost
       title = column_name colTitlePost
       text = column_name colTextPost
-  case key of
-    "created_at" -> return $ Right $ createdAt <> " = ?"
-    "created_at__lt" -> return $ Right $ createdAt <> " < ?"
-    "created_at__gt" -> return $ Right $ createdAt <> " > ?"
-    "find_in_title" -> return $ Right $ title <> " LIKE ?"
-    "find_in_text" -> return $ Right $ text <> " LIKE ?"
-    _ -> return $ Left $ "keyPostToDb function: Incorrect argument: " <> key
+  case value of
+    Just "" -> do
+      Logger.logError logh $ "keyPostToDb function: empty argument: " <> key
+      return $ Left $ "Empty key: " <> key
+    _ -> do
+      case key of
+        "created_at" -> return $ Right $ createdAt <> " = ?"
+        "created_at__lt" -> return $ Right $ createdAt <> " < ?"
+        "created_at__gt" -> return $ Right $ createdAt <> " > ?"
+        "find_in_title" -> return $ Right $ title <> " LIKE ?"
+        "find_in_text" -> return $ Right $ text <> " LIKE ?"
+        _ -> return $ Left $ "keyPostToDb function: Incorrect argument: " <> key
 
 -- | Query Search Category
-searchCat :: Monad m => Handle m -> PostQuery -> m ([PostId])
+searchCat :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
 searchCat handle params = do
-  let catParams = filter (\x -> fst x `elem` dbCatReqParams) params
+  let logh = hLogger handle
+      catParams = filter (\x -> fst x `elem` dbCatReqParams) params
   searchQuery <- runEitherT $ do
     search <- EitherT $ querySearchCat handle catParams
     EitherT $ querySpecialPosts tablePostCat colIdPostPostCat search
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
+      Logger.logDebug logh $ "PostIds found in searchCat: "
+        <> sqlDAtoText idPosts
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError
-      $ "Error: Error in searchCat!\n"
-      <> show msg
+    Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
-querySearchCat :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
+querySearchCat :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 querySearchCat handle args = do
   let logh = hLogger handle
       paramArgs = map (toSql . snd) args
-      queryArgs = map fst args
-  keysE <- mapM keyCatToDb queryArgs
+  keysE <- mapM (keyCatToDb handle) args
   case sequenceA keysE of
     Left msg -> do
       Logger.logInfo logh msg
@@ -345,22 +350,37 @@ querySearchCat handle args = do
           Logger.logInfo logh msg
           return $ Right (query, paramArgs)
         else do
-          let msg = "No search Category query!"
+          let msg = "Default search Category query!"
           Logger.logInfo logh msg
           return $ Right ("", [])                   
 
-keyCatToDb :: Monad m => Text -> m (Either Text Text)
-keyCatToDb key = do
-  let idCPC = column_name colIdCatPostCat
-  case key of
-    "category" -> return $ Right $ idCPC <> " = ?"
-    _ -> return $ Left 
-      $ "keyCatToDb function: Incorrect argument: " <> key
+keyCatToDb :: Monad m => Handle m -> PostQuery -> m (Either Text Text)
+keyCatToDb handle ("category", valueM) = do
+  let logh = hLogger handle
+      idCPC = column_name colIdCatPostCat
+  case valueM of
+    Nothing ->  do
+      Logger.logError logh "keyCatToDb function: empty argument: category"
+      return $ Left "Empty key: category"
+    Just "" -> do
+      Logger.logError logh "keyCatToDb function: empty argument: category"
+      return $ Left "Empty key: category"
+    Just value -> do
+      case readEither (T.unpack value) :: Either String Integer of
+        Right _ -> return $ Right $ idCPC <> " = ?"
+        Left _ -> do
+          Logger.logError logh "keyCatToDb function: incorrect argument: category"
+          return $ Left "Value of key: category must be Integer"
+keyCatToDb handle (key, _) = do
+  let logh = hLogger handle
+  Logger.logError logh $ "keyCatToDb function: incorrect argument: " <> key
+  return $ Left $ "Incorrect argument: " <> key
 
 -- | Query Search Tag
-searchTag :: Monad m => Handle m -> PostQuery -> m ([PostId])
+searchTag :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
 searchTag handle params = do
-  let tagParams = filter (\x -> fst x `elem` dbTagReqParams) params
+  let logh = hLogger handle
+      tagParams = filter (\x -> fst x `elem` dbTagReqParams) params
   searchQuery <- runEitherT $ do
     search <- EitherT $ querySearchTag handle tagParams
     case null $ snd search of
@@ -369,15 +389,15 @@ searchTag handle params = do
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
+      Logger.logDebug logh $ "PostIds found in searchTag: "
+        <> sqlDAtoText idPosts
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError
-      $ "Error: Error in searchTag!\n"
-      <> show msg
+    Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
-querySearchTag :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
+querySearchTag :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 querySearchTag handle [] = do
   let logh = hLogger handle
-      msg = "No search Tag query!"
+      msg = "Default search Tag query!"
   Logger.logInfo logh msg
   return $ Right ("", [])
 querySearchTag handle [(key, Just value)] = do
@@ -388,23 +408,30 @@ querySearchTag handle [(key, Just value)] = do
       return $ Left $ T.pack msg
     Right args -> do
       let paramArgs = map toSql args
-      keyDbE <- keyTagToDb key (length paramArgs)
+      keyDbE <- keyTagToDb handle key (length paramArgs)
       case keyDbE of
         Right keyDb -> do
           let query = "WHERE " <> keyDb
           return $ Right (query, paramArgs)
-        Left msg -> return $ Left $ "querySearchTag function: incorrect tag argument: " <> msg
+        Left msg -> do
+          Logger.logError logh $ "querySearchTag function: incorrect tag argument: " <> msg
+          return $ Left $ "Incorrect tag argument: " <> msg
 querySearchTag handle _ = do
   let logh = hLogger handle
-      msg = "querySearchTag function: You can use only one of ['tag', 'tag__in', 'tag__all']"
-  Logger.logError logh msg
-  return $ Left msg
+  Logger.logError logh $ "querySearchTag function: Used more than one keys: ['tag', 'tag__in', 'tag__all']"
+  return $ Left $ "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
 
-keyTagToDb :: Monad m => Text -> Int -> m (Either Text Text)
-keyTagToDb key n = do
-  let cIdTPT = column_name colIdTagPostTag
+keyTagToDb :: Monad m => Handle m -> Text -> Int -> m (Either Text Text)
+keyTagToDb handle key n = do
+  let logh = hLogger handle
+      cIdTPT = column_name colIdTagPostTag
   case key of
-    "tag" -> return $ Right $ cIdTPT <> " = ?"
+    "tag" -> do
+      case n == 1 of
+        True -> return $ Right $ cIdTPT <> " = ?"
+        False -> do
+          Logger.logError logh "keyTagToDb function: too many values in argument: tag"
+          return $ Left "Array of key tag must contain only one tag_id"
     "tag__in" -> return $ Right 
       $ cIdTPT <> " IN (" 
       <> T.intersperse ',' (T.replicate n "?")
@@ -415,31 +442,32 @@ keyTagToDb key n = do
       $ "keyTagToDb function: Incorrect argument: " <> key
 
 -- | Query Search Author
-searchAuthor :: Monad m => Handle m -> PostQuery -> m ([PostId])
+searchAuthor :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
 searchAuthor handle params = do
-  let tagParams = filter (\x -> fst x `elem` dbAuthorReqParams) params
+  let logh = hLogger handle
+      tagParams = filter (\x -> fst x `elem` dbAuthorReqParams) params
   searchQuery <- runEitherT $ do
     search <- EitherT $ querySearchAuthor handle tagParams
     EitherT $ querySpecialPosts tablePostAuthor colIdPostPostAuthor search
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
+      Logger.logDebug logh $ "PostIds found in searchAuthor: "
+        <> sqlDAtoText idPosts
       return $ map fromSql $ concat idPosts
-    Left msg -> Exc.throw $ E.DbQueryError
-      $ "Error: Error in searchAuthor!\n"
-      <> show msg
+    Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
-querySearchAuthor :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
+querySearchAuthor :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 querySearchAuthor handle [] = do
   let logh = hLogger handle
-      msg = "No search Author query!"
+      msg = "Default search Author query!"
   Logger.logInfo logh msg
   return $ Right ("", [])
 querySearchAuthor handle [(_, value)] = do
   let logh = hLogger handle
   case value of
     Nothing -> do
-      let msg = "No search Author query!"
+      let msg = "Default search Author query!"
       Logger.logInfo logh msg
       return $ Right ("", [])
     Just param -> do
@@ -463,12 +491,12 @@ querySearchAuthor handle [(_, value)] = do
               msg = "Search Author query: " <> query
           Logger.logDebug logh msg
           return $ Right (query, map toSql $ T.words param)
-      else do
-        let msg = "querySearchAuthor function: 'author' \
-                   \must contain 'first_name' and 'last_name' \
-                   \separated by whitespace."
-        Logger.logWarning logh msg
-        return $ Left msg
+      else do 
+        Logger.logWarning logh "querySearchAuthor function: 'author' \
+                               \must contain 'first_name' and 'last_name' \
+                               \separated by whitespace."
+        return $ Left "Key 'author' must contain 'first_name' and 'last_name' \
+                      \separated by whitespace."
 querySearchAuthor handle _ = do
   let logh = hLogger handle
       msg = "querySearchAuthor function: Too many elements in dictionary!"
@@ -476,9 +504,10 @@ querySearchAuthor handle _ = do
   return $ Left msg
 
 -- | Query Find Post
-findIn :: Monad m => Handle m -> PostQuery -> m ([PostId])
+findIn :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
 findIn handle params = do
-  let findParams = filter (\x -> fst x `elem` dbSearchParams) params
+  let logh = hLogger handle
+      findParams = filter (\x -> fst x `elem` dbSearchParams) params
   idPostsE <- runEitherT $ do
     -- posts
     postFindInPosts <- EitherT $ findInPosts handle findParams
@@ -486,37 +515,44 @@ findIn handle params = do
     idSPosts <- lift $ fmap concat $ makeDBRequest handle queryIdPost
     -- authors
     postFindInAuthors <- EitherT $ findInAuthors handle findParams
-    queryIdAuthor <- EitherT $ querySpecialPosts tablePosts colIdPost postFindInAuthors
+    queryIdAuthor <- EitherT $ querySpecialPosts tablePostAuthor colIdPostPostAuthor postFindInAuthors
     idAuthorSPosts <- lift $ fmap concat $ makeDBRequest handle queryIdAuthor
     -- categories
     postFindInCats <- EitherT $ findInCats handle findParams
-    queryIdCat <- EitherT $ querySpecialPosts tablePosts colIdPost postFindInCats
+    queryIdCat <- EitherT $ querySpecialPosts tablePostCat colIdPostPostCat postFindInCats
     idCatSPosts <- lift $ fmap concat $ makeDBRequest handle queryIdCat
     -- tags
     postFindInTags <- EitherT $ findInTags handle findParams
-    queryIdTag <- EitherT $ querySpecialPosts tablePosts colIdPost postFindInTags
+    queryIdTag <- EitherT $ querySpecialPosts tablePostTag colIdPostPostTag postFindInTags
     idTagSPosts <- lift $ fmap concat $ makeDBRequest handle queryIdTag
     return $ ((idSPosts 
         `union` idCatSPosts) 
         `union` idTagSPosts) 
         `union` idAuthorSPosts
   case idPostsE of
-    Right idPosts -> return $ map fromSql idPosts
+    Right idPosts -> do
+      Logger.logDebug logh $ "Result of search in Posts&Cats&Tags&Authors: "
+        <> sqlAtoText idPosts
+      return $ map fromSql idPosts
     Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in searchAuthor!\n"
       <> show msg
 
-findInPosts :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
+findInPosts :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 findInPosts handle [] = do
   let logh = hLogger handle
-      msg = "No search Post query!"
+      msg = "Default search Post query!"
   Logger.logInfo logh msg
   return $ Right ("", [])
-findInPosts handle [(_, value)] = do
+findInPosts handle [(key, value)] = do
   let logh = hLogger handle
   case value of
     Nothing -> do
-      let msg = "No search Post query!"
+      let msg = "Default search Post query!"
       Logger.logInfo logh msg
+      return $ Right ("", [])
+    Just "" -> do
+      let msg = "findInPosts function: key with empty value: " <> key
+      Logger.logWarning logh msg
       return $ Right ("", [])
     Just _ -> do
       let cTextP = column_name colTextPost
@@ -534,18 +570,22 @@ findInPosts handle _ = do
   Logger.logError logh msg
   return $ Left msg
 
-findInAuthors :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
+findInAuthors :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 findInAuthors handle [] = do
   let logh = hLogger handle
-      msg = "No search Author query!"
+      msg = "Default search Author query!"
   Logger.logInfo logh msg
   return $ Right ("", [])
-findInAuthors handle [(_, value)] = do
+findInAuthors handle [(key, value)] = do
   let logh = hLogger handle 
   case value of
     Nothing -> do
-      let msg = "No search Author query!"
+      let msg = "Default search Author query!"
       Logger.logInfo logh msg
+      return $ Right ("", [])
+    Just "" -> do
+      let msg = "findInAuthors function: key with empty value: " <> key
+      Logger.logWarning logh msg
       return $ Right ("", [])
     Just _ -> do
       let tAuthorUserAU = table_name tableAuthorUser
@@ -572,18 +612,22 @@ findInAuthors handle _ = do
   Logger.logError logh msg
   return $ Left msg
 
-findInCats :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
+findInCats :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 findInCats handle [] = do
   let logh = hLogger handle
-      msg = "No search Category query!"
+      msg = "Default search Category query!"
   Logger.logInfo logh msg
   return $ Right ("", [])
-findInCats handle [(_, value)] = do
+findInCats handle [(key, value)] = do
   let logh = hLogger handle
   case value of
     Nothing -> do
-      let msg = "No search Category query!"
+      let msg = "Default search Category query!"
       Logger.logInfo logh msg
+      return $ Right ("", [])
+    Just "" -> do
+      let msg = "findInCats function: key with empty value: " <> key
+      Logger.logWarning logh msg
       return $ Right ("", [])
     Just _ -> do
       let tCatsC = table_name tableCats
@@ -605,18 +649,22 @@ findInCats handle _ = do
   Logger.logError logh msg
   return $ Left msg
 
-findInTags :: Monad m => Handle m -> PostQuery -> m (Either Text DbQuery)
+findInTags :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 findInTags handle [] = do
   let logh = hLogger handle
       msg = "No search tag query!"
   Logger.logInfo logh msg
   return $ Right ("", [])
-findInTags handle [(_, value)] = do
+findInTags handle [(key, value)] = do
   let logh = hLogger handle
   case value of
     Nothing -> do
       let msg = "No search tag query!"
       Logger.logInfo logh msg
+      return $ Right ("", [])
+    Just "" -> do
+      let msg = "findInTags function: key with empty value: " <> key
+      Logger.logWarning logh msg
       return $ Right ("", [])
     Just _ -> do
       let tTagsC = table_name tableTags
@@ -639,13 +687,11 @@ findInTags handle _ = do
   return $ Left msg
 
 -- | Sort query
-sortQuery :: Monad m => Handle m -> PostQuery -> [SqlValue] -> m ([PostId])
+sortQuery :: Monad m => Handle m -> [PostQuery] -> [SqlValue] -> m ([PostId])
 sortQuery handle params ids = do
   let orderParams = filter (\x -> fst x `elem` dbOrderParams) params
-  searchQuery <- runEitherT $ do
-    search <- EitherT $ querySort handle orderParams ids
-    EitherT $ querySpecialPosts tablePosts colIdPost search
-  case searchQuery of
+  dbQuery <- querySort handle orderParams ids
+  case dbQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
       return $ map fromSql $ concat idPosts
@@ -653,7 +699,7 @@ sortQuery handle params ids = do
       <> show msg
 
 querySort :: Monad m => Handle m ->
-             PostQuery -> [SqlValue] -> m (Either Text DbQuery)
+             [PostQuery] -> [SqlValue] -> m (Either Text DbQuery)
 querySort handle [] ids = do
   let logh = hLogger handle
       nIds = length ids
