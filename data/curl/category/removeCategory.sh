@@ -22,6 +22,15 @@ do
    esac
 done
 
-opt="token=$token&id=$id"
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+if [ -z "${id+x}" ]
+then opt="$opt"
+else opt="$opt&id=$tag"
+fi
+
 url=http://$host:$port/removeCategory?$opt
 curl ${url}

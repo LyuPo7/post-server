@@ -22,6 +22,15 @@ do
    esac
 done
 
-opt="id=$id&&token=$token"
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+if [ -z "${id+x}" ]
+then opt="$opt"
+else opt="$opt&id=$id"
+fi
+
 url=http://$host:$port/removeUser?$opt
 curl ${url}

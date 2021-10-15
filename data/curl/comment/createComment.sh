@@ -24,6 +24,20 @@ do
    esac
 done
 
-opt="token=$token&post_id=$postId&text=$text"
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+if [ -z "${postId+x}" ]
+then opt="$opt"
+else opt="$opt&post_id=$postId"
+fi
+
+if [ -z "${text+x}" ]
+then opt="$opt"
+else opt="$opt&text=$text"
+fi
+
 url=http://$host:$port/createComment?$opt
 curl ${url}

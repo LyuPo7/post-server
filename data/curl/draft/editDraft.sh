@@ -3,21 +3,23 @@
 helpFunction()
 {
    echo ""
-   echo "Usage: $0 -t token -p port -h host -n tag"
+   echo "Usage: $0 -h host -p port -t token -b text -i post_id"
    echo -e "\t-h Host name"
    echo -e "\t-p Port number"
    echo -e "\t-t User's token"
-   echo -e "\n-n Tag's title"
+   echo -e "\t-b Post's text"
+   echo -e "\t-i post_id"
    exit 1 # Exit script after printing help
 }
 
-while getopts "h:p:t:n:" opt
+while getopts "h:p:t:b:i:" opt
 do
    case "$opt" in
       h ) host="$OPTARG" ;;
       p ) port="$OPTARG" ;;
       t ) token="$OPTARG" ;;
-      n ) tag="$OPTARG" ;;
+      b ) text="$OPTARG" ;;
+      i ) postId="$OPTARG" ;;
       ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
    esac
 done
@@ -27,10 +29,15 @@ then opt=""
 else opt="token=$token"
 fi
 
-if [ -z "${tag+x}" ]
+if [ -z "${text+x}" ]
 then opt="$opt"
-else opt="$opt&title=$tag"
+else opt="$opt&text=$text"
 fi
 
-url=http://localhost:3000/removeTag?$opt
+if [ -z "${postId+x}" ]
+then opt="$opt"
+else opt="$opt&post_id=$postId"
+fi
+
+url=http://$host:$port/editDraft?$opt
 curl ${url}

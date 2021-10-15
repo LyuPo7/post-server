@@ -22,6 +22,15 @@ do
    esac
 done
 
-opt="token=$token&title=$tag"
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+if [ -z "${tag+x}" ]
+then opt="$opt"
+else opt="$opt&title=$tag"
+fi
+
 url=http://$host:$port/createTag?$opt
 curl ${url}

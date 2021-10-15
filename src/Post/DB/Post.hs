@@ -2,6 +2,7 @@
 
 module Post.DB.Post where
 
+import qualified Data.Text as T
 import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.Time.Clock (UTCTime(..))
 import Data.Text (Text)
@@ -394,6 +395,22 @@ getPostDraftRecord handle postId = do
       let msg = "Dependency between Post and Draft doesn't exist."
       Logger.logError logh msg
       return $ Left msg
+
+getPostDraftRecords :: Monad m => Handle m -> [PostId] -> m (Either Text [DraftId])
+getPostDraftRecords handle postIds = do
+  let logh = hLogger handle
+  draftIdsSql <- selectFromWhereIn handle tablePostDraft
+                 [colIdDraftPostDraft]
+                  colIdPostPostDraft
+                  $ map toSql postIds
+  case draftIdsSql of
+    [] -> do
+      let msg = "No Drafts for Posts with Id: " <> (T.intercalate "," (map convert postIds))
+      Logger.logError logh msg
+      return $ Left msg
+    draftIds -> do 
+      Logger.logInfo logh $ "Getting Drafts of Posts with Id: " <> (T.intercalate "," (map convert postIds))
+      return $ Right $ map fromSql $ concat draftIds
 
 getPostCommentRecords :: Monad m => Handle m -> PostId -> m (Either Text [Comment])
 getPostCommentRecords handle postId = do

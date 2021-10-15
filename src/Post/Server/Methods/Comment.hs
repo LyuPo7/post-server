@@ -10,6 +10,7 @@ import Control.Monad.Trans (lift)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
+import qualified Post.DB.Post as DBP
 import qualified Post.DB.Comment as DBCo
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
@@ -35,6 +36,7 @@ createCommentResp handle query = do
         let [idPost, text] = reqParams
         userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
+        _ <- EitherT $ DBP.getPostRecord dbqh postId
         EitherT $ DBCo.createComment dbqh postId userId text
       case msgE of
         Right _ -> do

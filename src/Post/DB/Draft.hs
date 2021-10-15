@@ -23,7 +23,7 @@ createDraft handle postId text = do
     EitherT $ DBP.getPostDraftRecord handle postId
   case draftIdE of
     Left _ -> runEitherT $ do
-      _ <- lift $ insertDraftRecord handle text
+      _ <- lift $ insertDraftRecord handle text postId
       draftId <- EitherT $ getLastDraftRecord handle
       _ <- EitherT $ DBP.createPostDraftDep handle postId draftId
       return draftId
@@ -64,7 +64,7 @@ getDraftRecords :: Monad m => Handle m -> [DraftId] -> m (Either Text [Draft])
 getDraftRecords handle draftIds = do
   let logh = hLogger handle
   draftsSql <- selectFromWhereIn handle tableDrafts
-                [colIdDraft, colTextDraft]
+                [colIdDraft, colTextDraft, colIdPostDraft]
                  colIdDraft
                  $ map toSql draftIds
   case draftsSql of
@@ -95,7 +95,7 @@ getLastDraftRecord handle = do
 updateDraftRecord :: Monad m => Handle m -> DraftId -> Text -> m (Either Text DraftId)
 updateDraftRecord handle draftId text = do
   let logh = hLogger handle
-  _ <- updateSetWhere handle tablePosts
+  _ <- updateSetWhere handle tableDrafts
         [colTextDraft]
         [colIdDraft]
         [toSql text]
@@ -137,12 +137,12 @@ getDraftText handle draftId = do
       Logger.logWarning logh msg
       return $ Left msg
 
-insertDraftRecord :: Monad m => Handle m -> Text -> m ()
-insertDraftRecord handle text = do
+insertDraftRecord :: Monad m => Handle m -> Text -> PostId -> m ()
+insertDraftRecord handle text postId = do
   let logh = hLogger handle
   _ <- insertIntoValues handle tableDrafts 
-        [colTextDraft] 
-        [toSql text]
+        [colTextDraft, colIdPostDraft] 
+        [toSql text, toSql postId]
   Logger.logInfo logh "Draft was successfully inserted in db."
 
 deleteDraftRecord :: Monad m => Handle m -> DraftId -> m ()
@@ -156,8 +156,9 @@ deleteDraftRecord handle draftId = do
     <> " from db."
 
 newDraft :: [SqlValue] -> Either Text Draft
-newDraft [idDraft, text] = return $ Draft {
+newDraft [idDraft, text, idPost] = return $ Draft {
   draft_text = fromSql text,
-  draft_id = fromSql idDraft
+  draft_id = fromSql idDraft,
+  draft_post_id = fromSql idPost
 }
 newDraft _ = Left "Invalid draft!"

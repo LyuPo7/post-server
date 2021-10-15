@@ -22,6 +22,15 @@ do
    esac
 done
 
-opt="path=$photoPath&token=$token"
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+if [ -z "${photoPath+x}" ]
+then opt="$opt"
+else opt="$opt&path=$photoPath"
+fi
+
 url=http://$host:$port/setUserPhoto?$opt
 curl ${url}

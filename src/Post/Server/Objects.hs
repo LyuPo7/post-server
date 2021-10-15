@@ -152,7 +152,8 @@ instance ToJSON Comment where
 -- | Draft
 data Draft = Draft {
   draft_id :: DraftId, -- Unique identifier for this Draft.
-  draft_text :: Text -- Draft's text.
+  draft_text :: Text, -- Draft's text.
+  draft_post_id :: PostId -- identifier for Post-owner of this Draft.
 } deriving (Show,Generic)
 
 instance FromJSON Draft where

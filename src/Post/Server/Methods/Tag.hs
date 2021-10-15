@@ -64,7 +64,7 @@ createTagResp handle query = do
         Left msg -> return $ respError msg
     where
       authParams = ["token"]
-      params = ["token"]
+      params = ["title"]
 
 removeTagResp :: Monad m => Handle m -> Query -> m Response
 removeTagResp handle query = do

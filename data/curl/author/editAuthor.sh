@@ -24,6 +24,20 @@ do
    esac
 done
 
-opt="token=$token&id=$id&description=$newDescription"
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+if [ -z "${id+x}" ]
+then opt="$opt"
+else opt="$opt&id=$id"
+fi
+
+if [ -z "${newDescription+x}" ]
+then opt="$opt"
+else opt="$opt&description=$newDescription"
+fi
+
 url=http://$host:$port/editAuthor?$opt
 curl ${url}

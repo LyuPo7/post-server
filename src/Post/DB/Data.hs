@@ -227,7 +227,8 @@ tableDrafts = Table {
   table_name = "drafts",
   table_columns = [
     colIdDraft,
-    colTextDraft
+    colTextDraft,
+    colIdPostDraft
   ]
 }
 
@@ -245,6 +246,12 @@ colTextDraft = Column {
   column_properties = [NotNull]
 }
 
+colIdPostDraft :: Column
+colIdPostDraft = Column {
+  column_name = "post_id",
+  column_type = INTEGER,
+  column_properties = [NotNull, Unique]
+}
 -- | User table and columns
 tableUsers :: Table
 tableUsers = Table {

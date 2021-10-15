@@ -20,5 +20,10 @@ do
    esac
 done
 
-url=http://$host:$port/getAuthors?token=$token
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+url=http://$host:$port/getAuthors?$opt
 curl ${url}

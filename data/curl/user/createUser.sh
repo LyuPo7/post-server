@@ -26,6 +26,25 @@ do
    esac
 done
 
-opt="first_name=$fn&last_name=$ln&login=$login&password=$pass"
+if [ -z "${fn+x}" ]
+then opt=""
+else opt="first_name=$fn"
+fi
+
+if [ -z "${ln+x}" ]
+then opt="$opt"
+else opt="$opt&last_name=$ln"
+fi
+
+if [ -z "${login+x}" ]
+then opt="$opt"
+else opt="$opt&login=$login"
+fi
+
+if [ -z "${pass+x}" ]
+then opt="$opt"
+else opt="$opt&password=$pass"
+fi
+
 url=http://$host:$port/createUser?$opt
 curl ${url}

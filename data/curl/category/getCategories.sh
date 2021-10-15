@@ -20,5 +20,10 @@ do
    esac
 done
 
-url=http://$host:$port/getCategories?token=$token
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+url=http://$host:$port/getCategories?$opt
 curl ${url}

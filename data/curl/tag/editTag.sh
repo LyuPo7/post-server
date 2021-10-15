@@ -24,6 +24,20 @@ do
    esac
 done
 
-opt="new_title=$newTag&old_title=$oldTag&token=$token"
+if [ -z "${token+x}" ]
+then opt=""
+else opt="token=$token"
+fi
+
+if [ -z "${newTag+x}" ]
+then opt="$opt"
+else opt="$opt&new_title=$newTag"
+fi
+
+if [ -z "${oldTag+x}" ]
+then opt="$opt"
+else opt="$opt&old_title=$oldTag"
+fi
+
 url=http://localhost:3000/editTag?$opt
 curl ${url}
