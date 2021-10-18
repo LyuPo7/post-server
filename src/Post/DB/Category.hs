@@ -82,16 +82,23 @@ getCatId handle title = do
               [colTitleCat]
               [toSql title]
   case catIdSql of
+    [] -> do
+      let msg = "No exists Category with title: '"
+            <> title
+            <> "' in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[catId]] -> do
       Logger.logInfo logh $ "Category with title: '"
         <> title 
         <> "' exists in db!"
       return $ Right $ fromSql catId
     _ -> do
-      let msg = "Category with title: '"
-            <> title
-            <> "' doesn't exist in db!"
-      Logger.logWarning logh msg
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Category with title: '"
+                  <> title
+                  <> "' in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getCats :: Monad m => Handle m -> m (Either Text [Category])
@@ -128,25 +135,21 @@ getCatRecordByCatId handle catId = do
               [colIdCat]
               [toSql catId]
   case catsSql of
-    [cat@[_, _, subId]] -> do
-      case (fromSql subId :: Maybe Integer) of
-        Nothing -> do
-          Logger.logInfo logh $ "Category with id: "
-            <> convert catId
-            <> " hasn't sub_category."
-          return $ newCatNull cat
-        Just _ -> do
-          Logger.logInfo logh $ "Category with id: "
-            <> convert catId
-            <> " has sub_category."
-          newCat handle cat
-    _ -> do
+    [] -> do
       let msg = "No Category with id: "
             <> convert catId
             <> " in db!"
       Logger.logError logh msg
       return $ Left msg
-
+    [cat] -> getSub handle cat
+    _ -> do
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Category with Id: "
+                  <> convert catId
+                  <> " in db!"
+      Logger.logError logh msg
+      return $ Left msg
+    
 getCatChildren :: Monad m => Handle m -> CategoryId -> m (Either Text [CategoryId])
 getCatChildren handle catId = runEitherT $ do
   _ <- EitherT $ getCatRecordByCatId handle catId
@@ -186,16 +189,16 @@ getCatPostRecords handle catId = do
                  [colIdCatPostCat]
                  [toSql catId]
   case postsIdSql of
-    [postIds] -> do
-      Logger.logInfo logh "Getting dependency between \
-                          \Post and Category from db."
-      return $ Right $ map fromSql postIds
-    _ -> do
+    [] -> do
       let msg = "No Posts corresponding to Category with id: "
             <> convert catId
             <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
+    postIds -> do
+      Logger.logInfo logh "Getting dependency between \
+                          \Post and Category from db."
+      return $ Right $ map fromSql $ concat postIds
 
 getChildCatIdRecordsByCatId :: Monad m => Handle m ->
                                CategoryId -> m (Either Text [CategoryId])
@@ -206,17 +209,17 @@ getChildCatIdRecordsByCatId handle catId = do
                     [colSubCatCat]
                     [toSql catId]
   case childCatIdSql of
-    [childCatIds] -> do
-      Logger.logInfo logh $ "Category with id: "
-        <> convert catId
-        <> " has child Category."
-      return $ Right $ map fromSql childCatIds
-    _ -> do
+    [] -> do
       let msg = "Category with id: "
             <> convert catId
             <> " hasn't child category."
       Logger.logInfo logh msg
       return $ Left msg
+    childCatIds -> do
+      Logger.logInfo logh $ "Category with id: "
+        <> convert catId
+        <> " has child Category."
+      return $ Right $ map fromSql $ concat childCatIds
 
 insertCatWSubRecord :: Monad m => Handle m -> Title -> CategoryId -> m ()
 insertCatWSubRecord handle title subCatId = do

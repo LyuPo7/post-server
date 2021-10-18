@@ -107,16 +107,23 @@ getUserRecordByLogin handle login = do
                 [colLoginUser]
                 [toSql login]
   case userIdSql of
+    [] -> do
+      let msg = "No exists User with login: '"
+            <> login
+            <> "' in db!"
+      Logger.logInfo logh msg
+      return $ Left msg
     [[idUser]] -> do
       Logger.logInfo logh $ "Getting UserId corresponding to login: '"
         <> login
         <> "' from db."
       return $ Right $ fromSql idUser
     _ -> do
-      let msg = "No exists User with login: "
-            <> login
-            <> " in db."
-      Logger.logInfo logh msg
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for User with login: '"
+                  <> login
+                  <> "' in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getUserRecordbyId :: Monad m => Handle m -> UserId -> m (Either Text User)
@@ -127,16 +134,23 @@ getUserRecordbyId handle userId = do
               [colIdUser] 
               [toSql userId]
   case usersSql of
+    [] -> do
+      let msg = "No exists User with id: "
+            <> convert userId 
+            <> " in db!"
+      Logger.logWarning logh msg 
+      return $ Left msg
     [user] -> do
       Logger.logInfo logh $ "Getting User with id: "
         <> convert userId
         <> " from db."
       newUser handle user
     _ -> do
-      let msg = "No exists User with id: "
-            <> convert userId 
-            <> " in db!"
-      Logger.logWarning logh msg 
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for User with Id: "
+                  <> convert userId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getUserRecords :: Monad m => Handle m -> m (Either Text [User])
@@ -161,15 +175,22 @@ getUserPhotoRecord handle userId = do
                 [colIdUserUserPhoto]
                 [toSql userId]
   case idPhotoSql of
+    [] -> do
+      let msg = "No exists Photo for User with id: "
+            <> convert userId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[photoId]] -> do
       Logger.logInfo logh $ "Getting Photo for User with id: "
         <> convert userId
         <> " from db."
       DBPh.getPhotoRecordById handle $ fromSql photoId
     _ -> do
-      let msg = "No exists Photo for User with id: "
-            <> convert userId
-            <> " in db!"
+      let msg = "Violation of Unique record User-Photo in db: \
+                \exist more than one record for User with Id: "
+                  <> convert userId
+                  <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -181,15 +202,23 @@ getAuthorUserRecord handle userId = do
                   [colIdUserAuthorUser]
                   [toSql userId]
   case authorIdSql of
-    [[authorId]] -> do
-      Logger.logInfo logh "Getting dependency between Author and User from db."
-      return $ Right $ fromSql authorId
-    _ -> do
-      let msg = "No exists Author corresponding to User with id:" 
+    [] -> do
+      let msg = "No exists Author corresponding to User with id: " 
             <> convert userId
             <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
+    [[authorId]] -> do
+      Logger.logInfo logh "Getting dependency between Author and User from db."
+      return $ Right $ fromSql authorId
+    _ -> do
+      let msg = "Violation of Unique record Author-User in db: \
+                \exist more than one record for User with Id: "
+                  <> convert userId
+                  <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
+    
 
 deleteUserRecord :: Monad m => Handle m -> UserId -> m ()
 deleteUserRecord handle userId = do

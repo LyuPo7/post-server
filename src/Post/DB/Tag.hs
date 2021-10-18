@@ -75,15 +75,22 @@ getTagRecordByTitle handle tagTitle = do
             [colTitleTag]
             [toSql tagTitle]
   case tagSQL of
+    [] -> do
+      let msg = "No exists Tag with title: '"
+           <> tagTitle
+           <> "' in db!"
+      Logger.logWarning logh msg 
+      return $ Left msg
     [[idTag]] -> do
       Logger.logInfo logh $ "Getting Tag with title: '"
-        <> convert tagTitle
+        <> tagTitle
         <> "' from db."
       return $ Right $ fromSql idTag
     _ -> do
-      let msg = "No exists Tag with title: '"
-           <> convert tagTitle
-           <> "' in db!"
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Tag with title: '"
+                  <> tagTitle
+                  <> "' in db!"
       Logger.logWarning logh msg 
       return $ Left msg
 
@@ -98,7 +105,8 @@ getAllTagRecords handle = do
       return $ Left "No Tags!"
     titleIds -> do
       Logger.logInfo logh "Getting Tags from db."
-      return $ traverse newTag titleIds
+      tagsE <- mapM newTag titleIds
+      return $ sequenceA tagsE
 
 getTagRecordsById :: Monad m => Handle m -> TagId -> m (Either Text Tag)
 getTagRecordsById handle tagId = do
@@ -108,14 +116,21 @@ getTagRecordsById handle tagId = do
               [colIdTag]
               [toSql tagId]
   case tagsSql of
-    [tag] -> do
-      Logger.logInfo logh "Getting Tag from db."
-      return $ newTag tag
-    _ -> do
+    [] -> do
       let msg = "No Tag with id in: "
             <> convert tagId
             <> " in db!"
       Logger.logWarning logh msg
+      return $ Left msg
+    [tag] -> do
+      Logger.logInfo logh "Getting Tag from db."
+      newTag tag
+    _ -> do
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Tag with Id: "
+                  <> convert tagId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getTagPostRecords :: Monad m => Handle m -> PostId -> m (Either Text [PostId])
@@ -126,17 +141,17 @@ getTagPostRecords handle tagId = do
                 [colIdTagPostTag]
                 [toSql tagId]
   case postsIdSQL of
-    [postIds] -> do
-      Logger.logInfo logh $ "Getting PostId corresponding to Tag with id: "
-        <> convert tagId
-        <> " from db."
-      return $ Right $ map fromSql postIds
-    _ -> do
+    [] -> do
       let msg = "No Posts corresponding to Tag with id: "
             <> convert tagId
             <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
+    postIds -> do
+      Logger.logInfo logh $ "Getting PostId corresponding to Tag with id: "
+        <> convert tagId
+        <> " from db."
+      return $ Right $ map fromSql $ concat postIds
 
 deleteTagPostsRecords :: Monad m => Handle m -> TagId -> m ()
 deleteTagPostsRecords handle tagId = do
@@ -178,9 +193,10 @@ updateTagRecord handle tagId newTitle = do
     <> convert tagId
     <> " in db."
 
-newTag :: [SqlValue] -> Either Text Tag
-newTag [idTag, title] = Right $ Tag {
-  tag_title = fromSql title,
-  tag_id = fromSql idTag
+newTag :: Monad m => [SqlValue] -> m (Either Text Tag)
+newTag [sqlTagId, sqlTitle] = do
+  return $ Right $ Tag {
+  tag_title = fromSql sqlTitle,
+  tag_id = fromSql sqlTagId
 }
-newTag _ = Left "Invalid Tag!"
+newTag _ = return $ Left "Invalid Tag!"

@@ -37,6 +37,12 @@ getPhotoRecordByName handle pathToPhoto = do
                  [colLinkPhoto]
                  [toSql pathToPhoto]
   case idPhotoSql of
+    [] -> do
+      let msg = "No exists Photo: '"
+            <> pathToPhoto
+            <> "' in db!"
+      Logger.logInfo logh msg
+      return $ Left msg
     [[idPhoto]] -> do
       let msg = "Photo: '"
             <> pathToPhoto
@@ -44,10 +50,11 @@ getPhotoRecordByName handle pathToPhoto = do
       Logger.logInfo logh msg
       return $ Right $ fromSql idPhoto
     _ -> do
-      let msg = "No exists Photo: "
-            <> pathToPhoto
-            <> " in db!"
-      Logger.logInfo logh msg
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Photo: '"
+                  <> pathToPhoto
+                  <> "' in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getPhotoRecordById :: Monad m => Handle m -> PhotoId -> m (Either Text Photo)
@@ -58,16 +65,23 @@ getPhotoRecordById handle photoId = do
                [colIdPhoto]
                [toSql photoId]
   case photoSql of
+    [] -> do
+      let msg = "No exists Photo with id: "
+            <> convert photoId
+            <> " in db!" 
+      Logger.logWarning logh msg
+      return $ Left msg
     [idLinks] -> do
       Logger.logInfo logh $ "Photo with id: "
         <> convert photoId
         <> " extracted from db."
       newPhoto handle idLinks
     _ -> do
-      let msg = "No exists Photo with id: "
-            <> convert photoId
-            <> " in db!" 
-      Logger.logWarning logh msg
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Photo with Id: "
+                  <> convert photoId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getLastPhotoRecord :: Monad m => Handle m -> m (Either Text PhotoId)
@@ -77,14 +91,18 @@ getLastPhotoRecord handle = do
                  [colIdPhoto]
                   colIdPhoto 1
   case idPhotoSql of
+    [] -> do
+      let msg = "No exist Photos in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[idPhoto]] -> do
       let photoId = fromSql idPhoto
       Logger.logInfo logh $ "Last Photo inserted in db with id: "
         <> convert photoId
       return $ Right photoId
     _ -> do
-      let msg = "No exist Photos in db!"
-      Logger.logWarning logh msg
+      let msg = "Incorrect Photo record in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 insertPhotoRecord :: Monad m => Handle m -> Text -> m ()

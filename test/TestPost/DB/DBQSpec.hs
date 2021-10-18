@@ -7,13 +7,11 @@ import Database.HDBC (toSql)
 import Data.Text (Text)
 import qualified Data.Text as T
 
-import Test.Tasty.Hspec ()
 import Test.Hspec
 
-import qualified Post.Logger as Logger
+import qualified TestPost.Handlers as H
+
 import qualified Post.DB.DBQSpec as DBQSpec
-import qualified Post.DB.DBSpec as DBSpec
-import qualified Post.Server.ServerConfig as ServerConfig
 import Post.DB.Data
 
 spec_queryFromWhere :: Spec
@@ -321,13 +319,13 @@ spec_querySearchPost :: Spec
 spec_querySearchPost = describe "Testing querySearchPost" $ do
     it "Should successfully return empty Post Search DBQuery" $ do
       let args = []
-          query = DBQSpec.querySearchPost dbqh args
+          query = DBQSpec.querySearchPost H.dbqh args
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Post Search DBQuery" $ do
       let createdAt = ("10.10.10" :: Text)
           args = [("created_at", Just createdAt)]
-          query = DBQSpec.querySearchPost dbqh args
+          query = DBQSpec.querySearchPost H.dbqh args
           check = ("WHERE created_at = ?", [toSql createdAt])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Post Search DBQuery" $ do
@@ -341,7 +339,7 @@ spec_querySearchPost = describe "Testing querySearchPost" $ do
                   ("created_at__gt", Just createdAtGt),
                   ("find_in_title", Just inTitle),
                   ("find_in_text", Just inText)]
-          query = DBQSpec.querySearchPost dbqh args
+          query = DBQSpec.querySearchPost H.dbqh args
           check = ("WHERE created_at = ? \
                    \AND created_at < ? \
                    \AND created_at > ? \
@@ -357,7 +355,7 @@ spec_querySearchPost = describe "Testing querySearchPost" $ do
           incorrectArg = "error" :: Text
           args = [("created_at", Just createdAt),
                   ("incorrect_arg", Just incorrectArg)]
-          query = DBQSpec.querySearchPost dbqh args
+          query = DBQSpec.querySearchPost H.dbqh args
           check = "keyPostToDb function: Incorrect argument: incorrect_arg"
       query `shouldBe` (Identity $ Left check)
 
@@ -365,19 +363,19 @@ spec_querySearchCat :: Spec
 spec_querySearchCat = describe "Testing querySearchCat" $ do
     it "Should successfully return empty Category Search DBQuery" $ do
       let args = []
-          query = DBQSpec.querySearchCat dbqh args
+          query = DBQSpec.querySearchCat H.dbqh args
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Cat Search DBQuery" $ do
       let category = ("2" :: Text)
           args = [("category", Just category)]
-          query = DBQSpec.querySearchCat dbqh args
+          query = DBQSpec.querySearchCat H.dbqh args
           check = ("WHERE category_id = ?", [toSql category])
       query `shouldBe` (Identity $ Right check)
     it "Should fail with nonInteger argument" $ do
       let category = ("sport" :: Text)
           args = [("category", Just category)]
-          query = DBQSpec.querySearchCat dbqh args
+          query = DBQSpec.querySearchCat H.dbqh args
           check = "Value of key: category must be Integer"
       query `shouldBe` (Identity $ Left check)
     it "Should fail with incorrect argument" $ do
@@ -385,7 +383,7 @@ spec_querySearchCat = describe "Testing querySearchCat" $ do
           category = "sport" :: Text
           args = [("created_at", Just createdAt),
                   ("category", Just category)]
-          query = DBQSpec.querySearchCat dbqh args
+          query = DBQSpec.querySearchCat H.dbqh args
           check = "Incorrect argument: created_at"
       query `shouldBe` (Identity $ Left check)
 
@@ -393,35 +391,35 @@ spec_querySearchTag :: Spec
 spec_querySearchTag = describe "Testing querySearchTag" $ do
     it "Should successfully return empty Tag Search DBQuery" $ do
       let args = []
-          query = DBQSpec.querySearchTag dbqh args
+          query = DBQSpec.querySearchTag H.dbqh args
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Tag Search DBQuery with 'tag'" $ do
       let tag = "[10]" :: Text
           sqlTag = map toSql ([10] :: [Integer])
           args = [("tag", Just tag)]
-          query = DBQSpec.querySearchTag dbqh args
+          query = DBQSpec.querySearchTag H.dbqh args
           check = ("WHERE tag_id = ?", sqlTag)
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Tag Search DBQuery with 'tag__in'" $ do
       let tags = "[2,10,4,17]" :: Text
           sqlTags = map toSql ([2,10,4,17] :: [Integer])
           args = [("tag__in", Just tags)]
-          query = DBQSpec.querySearchTag dbqh args
+          query = DBQSpec.querySearchTag H.dbqh args
           check = ("WHERE tag_id IN (?,?,?,?)", sqlTags)
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Tag Search DBQuery with 'tag__all'" $ do
       let tags = "[2,10,4,17]" :: Text
           sqlTags = map toSql ([2,10,4,17] :: [Integer])
           args = [("tag__all", Just tags)]
-          query = DBQSpec.querySearchTag dbqh args
+          query = DBQSpec.querySearchTag H.dbqh args
           check = ("WHERE tag_id = ? AND tag_id = ? AND tag_id = ? AND tag_id = ?", sqlTags)
       query `shouldBe` (Identity $ Right check)
     it "Should fail with more than one key" $ do
       let tags = "[2,10,4,17]" :: Text
           args = [("tag__all", Just tags),
                   ("tag__in", Just tags)]
-          query = DBQSpec.querySearchTag dbqh args
+          query = DBQSpec.querySearchTag H.dbqh args
           check = "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
       query `shouldBe` (Identity $ Left check)
     it "Should fail with incorrect key" $ do
@@ -429,7 +427,7 @@ spec_querySearchTag = describe "Testing querySearchTag" $ do
           category = "sport" :: Text
           args = [("tag__all", Just tags),
                   ("category", Just category)]
-          query = DBQSpec.querySearchTag dbqh args
+          query = DBQSpec.querySearchTag H.dbqh args
           check = "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
       query `shouldBe` (Identity $ Left check)
 
@@ -437,14 +435,14 @@ spec_querySearchAuthor :: Spec
 spec_querySearchAuthor = describe "Testing querySearchAuthor" $ do
     it "Should successfully return empty Author Search DBQuery" $ do
       let args = []
-          query = DBQSpec.querySearchAuthor dbqh args
+          query = DBQSpec.querySearchAuthor H.dbqh args
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Author Search DBQuery with 'author'" $ do
       let author = "Lyuba Portnova" :: Text
           sqlAuthor = map toSql $ T.words author
           args = [("author", Just author)]
-          query = DBQSpec.querySearchAuthor dbqh args
+          query = DBQSpec.querySearchAuthor H.dbqh args
           check = ("WHERE author_id = (\
                      \SELECT author_id \
                      \FROM author_user \
@@ -457,7 +455,7 @@ spec_querySearchAuthor = describe "Testing querySearchAuthor" $ do
     it "Should fail with incorrect arg of 'author'" $ do
       let author = "lyupo" :: Text
           args = [("author", Just author)]
-          query = DBQSpec.querySearchAuthor dbqh args
+          query = DBQSpec.querySearchAuthor H.dbqh args
           check = "Key 'author' \
                   \must contain 'first_name' and 'last_name' \
                   \separated by whitespace."
@@ -467,13 +465,13 @@ spec_findInPosts :: Spec
 spec_findInPosts = describe "Testing findInPosts" $ do
     it "Should successfully return empty DBQuery" $ do
       let args = []
-          query = DBQSpec.findInPosts dbqh args
+          query = DBQSpec.findInPosts H.dbqh args
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Find DBQuery" $ do
       let searchLine = "news" :: Text
           args = [("find", Just searchLine)]
-          query = DBQSpec.findInPosts dbqh args
+          query = DBQSpec.findInPosts H.dbqh args
           check = ("WHERE text \
                   \LIKE ? \
                   \OR title LIKE ? ", [toSql searchLine, toSql searchLine])
@@ -482,7 +480,7 @@ spec_findInPosts = describe "Testing findInPosts" $ do
       let author = "lyupo" :: Text
           args = [("find", Just author),
                   ("tag__in", Just author)]
-          query = DBQSpec.findInPosts dbqh args
+          query = DBQSpec.findInPosts H.dbqh args
           check = "findInPosts function: \
                   \Too many elements in dictionary!"
       query `shouldBe` (Identity $ Left check)
@@ -491,13 +489,13 @@ spec_findInAuthors :: Spec
 spec_findInAuthors = describe "Testing findInAuthors" $ do
     it "Should successfully return empty DBQuery" $ do
       let args = []
-          query = DBQSpec.findInAuthors dbqh args
+          query = DBQSpec.findInAuthors H.dbqh args
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Find DBQuery" $ do
       let searchLine = "Bob" :: Text
           args = [("find", Just searchLine)]
-          query = DBQSpec.findInAuthors dbqh args
+          query = DBQSpec.findInAuthors H.dbqh args
           check = ("WHERE author_id = (\
                    \SELECT author_id \
                    \FROM author_user \
@@ -511,7 +509,7 @@ spec_findInAuthors = describe "Testing findInAuthors" $ do
       let author = "lyupo" :: Text
           args = [("find", Just author),
                   ("tag__in", Just author)]
-          query = DBQSpec.findInAuthors dbqh args
+          query = DBQSpec.findInAuthors H.dbqh args
           check = "findInAuthors function: \
                   \Too many elements in dictionary!"
       query `shouldBe` (Identity $ Left check)
@@ -520,13 +518,13 @@ spec_findInCats :: Spec
 spec_findInCats = describe "Testing findInCats" $ do
     it "Should successfully return empty DBQuery" $ do
       let args = []
-          query = DBQSpec.findInCats dbqh args
+          query = DBQSpec.findInCats H.dbqh args
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Find DBQuery" $ do
       let searchLine = "news" :: Text
           args = [("find", Just searchLine)]
-          query = DBQSpec.findInCats dbqh args
+          query = DBQSpec.findInCats H.dbqh args
           check = ("WHERE category_id \
                    \IN (\
                      \SELECT id \
@@ -538,7 +536,7 @@ spec_findInCats = describe "Testing findInCats" $ do
       let author = "lyupo" :: Text
           args = [("find", Just author),
                   ("tag__in", Just author)]
-          query = DBQSpec.findInCats dbqh args
+          query = DBQSpec.findInCats H.dbqh args
           check = "findInCats function: \
                   \Too many elements in dictionary!"
       query `shouldBe` (Identity $ Left check)
@@ -547,13 +545,13 @@ spec_findInTags :: Spec
 spec_findInTags = describe "Testing findInTags" $ do
     it "Should successfully return empty DBQuery" $ do
       let args = []
-          query = DBQSpec.findInTags dbqh args
+          query = DBQSpec.findInTags H.dbqh args
           check = ("", [])
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create Find DBQuery" $ do
       let searchLine = "news" :: Text
           args = [("find", Just searchLine)]
-          query = DBQSpec.findInTags dbqh args
+          query = DBQSpec.findInTags H.dbqh args
           check = ("WHERE tag_id \
                    \IN (\
                      \SELECT id \
@@ -565,7 +563,7 @@ spec_findInTags = describe "Testing findInTags" $ do
       let author = "lyupo" :: Text
           args = [("find", Just author),
                   ("tag__in", Just author)]
-          query = DBQSpec.findInTags dbqh args
+          query = DBQSpec.findInTags H.dbqh args
           check = "findInTags function: \
                   \Too many elements in dictionary!"
       query `shouldBe` (Identity $ Left check)
@@ -575,7 +573,7 @@ spec_querySort = describe "Testing querySort" $ do
     it "Should successfully create default Sort DBQuery" $ do
       let args = []
           ids = map toSql ([1,10,25] :: [Integer])
-          query = DBQSpec.querySort dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids
           check = ("SELECT id \
                    \FROM posts \
                    \WHERE id \
@@ -585,7 +583,7 @@ spec_querySort = describe "Testing querySort" $ do
     it "Should successfully create default Sort DBQuery with 'order_by_date'" $ do
       let args = [("order_by_date", Just "True")]
           ids = map toSql ([1,10,25] :: [Integer])
-          query = DBQSpec.querySort dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids
           check = ("SELECT id \
                   \FROM posts \
                   \WHERE id IN (?,?,?) \
@@ -594,7 +592,7 @@ spec_querySort = describe "Testing querySort" $ do
     it "Should successfully create default Sort DBQuery with 'order_by_category'" $ do
       let args = [("order_by_category", Just "True")]
           ids = map toSql ([1,10,25] :: [Integer])
-          query = DBQSpec.querySort dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids
           check = ("SELECT id \
                   \FROM post_category \
                   \JOIN categories \
@@ -606,7 +604,7 @@ spec_querySort = describe "Testing querySort" $ do
     it "Should successfully create default Sort DBQuery with 'order_by_photos'" $ do
       let args = [("order_by_photos", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
-          query = DBQSpec.querySort dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids
           check = ("SELECT posts.id, COUNT(*) as photo_count \
                   \FROM posts \
                   \LEFT JOIN post_add_photo \
@@ -619,7 +617,7 @@ spec_querySort = describe "Testing querySort" $ do
     it "Should successfully create default Sort DBQuery with 'order_by_author'" $ do
       let args = [("order_by_author", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
-          query = DBQSpec.querySort dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids
           check = ("SELECT id \
                   \FROM post_author \
                   \INNER JOIN author_user \
@@ -631,62 +629,13 @@ spec_querySort = describe "Testing querySort" $ do
     it "Should fail with unsupported key" $ do
       let args = [("order_by_tag", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
-          query = DBQSpec.querySort dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids
           check = "querySort function: Incorrect key: order_by_tag"
       query `shouldBe` (Identity $ Left check)
     it "Should fail with more than one key" $ do
       let args = [("order_by_category", Just "True"),
                   ("order_by_author", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
-          query = DBQSpec.querySort dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids
           check = "querySort function: Too many elements in dictionary!"
       query `shouldBe` (Identity $ Left check)
-
-dbqh :: DBQSpec.Handle Identity
-dbqh = DBQSpec.Handle {
-  DBQSpec.hLogger = logH,
-  DBQSpec.hDB = dbH,
-  DBQSpec.cDB = dbC,
-
-  DBQSpec.makeDBRequest = undefined,
-  DBQSpec.runDBRequest = undefined,
-  DBQSpec.encryptPassM = undefined,
-  DBQSpec.createToken = undefined,
-  DBQSpec.upload = undefined,
-  DBQSpec.getCurrentTime = undefined
-}
-
-dbH :: DBSpec.Handle Identity
-dbH = DBSpec.Handle {
-  DBSpec.hLogger = logH,
-  DBSpec.conn = undefined,
-  DBSpec.cDB = dbC,
-  DBSpec.cServer = serverC,
-
-  DBSpec.openTempFile = \_ _ -> return undefined,
-  DBSpec.openBinaryFile = \_ _ -> return undefined,
-  DBSpec.hPutStr =  \_ _ -> return (),
-  DBSpec.hClose =  \_ -> return (),
-
-  DBSpec.newManager = \_ -> return undefined,
-  DBSpec.httpLbs = \_ _ -> return undefined
-}
-
-logH :: Logger.Handle Identity
-logH = Logger.Handle {
-    Logger.log = \_ _ -> return (),
-    Logger.hconfig = Logger.Config {Logger.cVerbocity = Nothing}
-}
-
-dbC :: DBSpec.Config
-dbC = DBSpec.Config {
-  DBSpec.dbname = "post-server",
-  DBSpec.user = Just "lyupo",
-  DBSpec.admins = ["lyupo"]
-}
-
-serverC :: ServerConfig.Config
-serverC = ServerConfig.Config {
-  ServerConfig.host = "localhost",
-  ServerConfig.port = "3000"
-}

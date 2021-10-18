@@ -84,14 +84,21 @@ getAuthorRecord handle authorId = do
                 [colIdAuthor]
                 [toSql authorId]
   case authorSql of
+    [] -> do
+      let msg = "No exists Author with id: "
+            <> convert authorId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [author] -> do
       Logger.logInfo logh "Getting Author from db."
       newAuthor handle author
     _ -> do
-      let msg = "No author with id: "
-            <> convert authorId
-            <> " in db!"
-      Logger.logWarning logh msg
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Author with Id: "
+                  <> convert authorId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getUserIdRecordByAuthorId :: Monad m => Handle m ->
@@ -103,14 +110,22 @@ getUserIdRecordByAuthorId handle authorId = do
                 [colIdAuthorAuthorUser]
                 [toSql authorId]
   case idUserSql of
+    [] -> do
+      let msg = "No User corresponding to Author with id: "
+            <> convert authorId
+            <> " in db!"
+      Logger.logError logh msg
+      return $ Left msg
     [[idUser]] -> do
       Logger.logInfo logh $ "Getting UserId corresponding to Author with id: "
         <> convert authorId
         <> " from db."
       return $ Right $ fromSql idUser
     _ -> do
-      let msg = "No User corresponding to Author with id: "
-            <> convert authorId
+      let msg = "Violation of Unique record Author-User in db: \
+                \exist more than one record for Author with Id: "
+                  <> convert authorId
+                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -135,15 +150,20 @@ getLastAuthorRecord handle = do
                   [colIdAuthor] 
                    colIdAuthor 1
   case idAuthorSql of
+    [] -> do
+      let msg = "No exist Authors in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[idAuthor]] -> do
       let authorId = fromSql idAuthor
       Logger.logInfo logh $ "Last Author inserted in db with id: "
         <> convert authorId
       return $ Right authorId
     _ -> do
-      let msg = "No exist Authors in db!"
+      let msg = "Incorrect Author record in db!"
       Logger.logWarning logh msg
       return $ Left msg
+    
 
 getAuthorPostRecord :: Monad m => Handle m -> AuthorId -> m (Either Text [PostId])
 getAuthorPostRecord handle authorId = do
@@ -171,14 +191,21 @@ getAuthorUserRecord handle userId = do
                  [colIdUserAuthorUser]
                  [toSql userId]
   case authorIdSql of
-    [[authorId]] -> do
-      Logger.logInfo logh "Getting dependency between Author and User from db."
-      return $ Right $ fromSql authorId
-    _ -> do
+    [] -> do
       let msg = "No exists Author corresponding to User with id: "
             <> convert userId
             <> " in db!"
       Logger.logWarning logh msg
+      return $ Left msg
+    [[authorId]] -> do
+      Logger.logInfo logh "Getting dependency between Author and User from db."
+      return $ Right $ fromSql authorId
+    _ -> do
+      let msg = "Violation of Unique record Author-User in db: \
+                \exist more than one record for User with Id: "
+                  <> convert userId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 insertAuthorRecord :: Monad m => Handle m -> Description -> m ()
@@ -232,7 +259,7 @@ newAuthor handle [idAuthor, desc] = do
   runEitherT $ do
     let authorId = fromSql idAuthor
         descr = fromSql desc
-    userId <- EitherT $ getUserIdRecordByAuthorId  handle authorId
+    userId <- EitherT $ getUserIdRecordByAuthorId handle authorId
     user <- EitherT $ DBU.getUserRecordbyId handle userId
     return $ Author {
       author_user = user,

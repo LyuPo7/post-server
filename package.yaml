@@ -43,6 +43,7 @@ dependencies:
 - transformers-either
 - either
 - exceptions
+- convertible
 
 library:
   source-dirs: src
@@ -67,7 +68,17 @@ tests:
   post-server-test:
     main:                Test.hs
     source-dirs:         test
-    other-modules: [TestPost.DB.DBQSpec]
+    other-modules: [
+      TestPost.Handlers,
+      TestPost.DB.DBQSpec,
+      TestPost.DB.Tag,
+      TestPost.DB.User,
+      TestPost.DB.Photo,
+      TestPost.DB.Draft,
+      TestPost.DB.Comment,
+      TestPost.DB.Category,
+      TestPost.DB.Author,
+      ]
     ghc-options:
     - -Wall 
     - -Werror 

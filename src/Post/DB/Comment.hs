@@ -31,16 +31,23 @@ getCommentRecord handle commentId = do
               [colIdCom]
               [toSql commentId]
   case comsSql of
+    [] -> do
+      let msg = "No exists Comment with id: "
+            <> convert commentId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [idTexts] -> do
       Logger.logInfo logh $ "Comment with id: "
         <> convert commentId
         <> " extracted from db."
       return $ newComment idTexts
     _ -> do
-      let msg = "No exists Comment with id: "
-            <> convert commentId
-            <> " in db!"
-      Logger.logWarning logh msg
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Comment with Id: "
+                  <> convert commentId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getLastCommentRecord :: Monad m => Handle m -> m (Either Text CommentId)
@@ -50,15 +57,20 @@ getLastCommentRecord handle = do
                [colIdCom]
                 colIdCom 1
   case idComSql of
+    [] -> do
+      let msg = "No exist Comments in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[idCom]] -> do
       let comId = fromSql idCom
       Logger.logInfo logh $ "Last Comment inserted in db with id: "
         <> convert comId
       return $ Right comId
     _ -> do
-      let msg = "No exist Comments in db!"
-      Logger.logWarning logh msg
+      let msg = "Incorrect Comment record in db!"
+      Logger.logError logh msg
       return $ Left msg
+
 
 insertCommentRecord :: Monad m => Handle m -> Text -> m ()
 insertCommentRecord handle text = do

@@ -82,14 +82,18 @@ getLastDraftRecord handle = do
                  [colIdDraft]
                   colIdDraft 1
   case idDraftSql of
+    [] -> do
+      let msg = "No exist Drafts in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[idDraft]] -> do
       let draftId = fromSql idDraft
       Logger.logInfo logh $ "Last Draft inserted in db with id: "
         <> convert draftId
       return $ Right draftId
     _ -> do
-      let msg = "No exist Drafts in db!"
-      Logger.logWarning logh msg
+      let msg = "Incorrect Draft record in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 updateDraftRecord :: Monad m => Handle m -> DraftId -> Text -> m (Either Text DraftId)
@@ -126,15 +130,22 @@ getDraftText handle draftId = do
               [colIdDraft]
               [toSql draftId]
   case textSql of
+    [] -> do
+      let msg = "Draft with id: "
+            <> convert draftId
+            <> " hasn't text"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[text]] -> do
       Logger.logWarning logh $ "Extracting text from Draft with id: "
         <> convert draftId
       return $ Right $ fromSql text
     _ -> do
-      let msg = "Draft with id: "
-            <> convert draftId
-            <> " hasn't text"
-      Logger.logWarning logh msg
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record for Draft with Id: "
+                  <> convert draftId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 insertDraftRecord :: Monad m => Handle m -> Text -> PostId -> m ()
@@ -161,4 +172,4 @@ newDraft [idDraft, text, idPost] = return $ Draft {
   draft_id = fromSql idDraft,
   draft_post_id = fromSql idPost
 }
-newDraft _ = Left "Invalid draft!"
+newDraft _ = Left "Invalid Draft!"

@@ -60,7 +60,7 @@ data User = User {
   user_firstName :: FirstName, -- User's first name.
   user_lastName :: LastName, -- User's last name.
   user_photo :: Maybe Photo -- User's Photo.
-  } deriving (Show,Generic)
+  } deriving (Show, Generic, Eq)
 
 instance FromJSON User where
   parseJSON = genericParseJSON defaultOptions {
@@ -74,7 +74,7 @@ instance ToJSON User where
 data Author = Author {
   author_user :: User, -- User.
   author_description :: Description -- Author's description.
-  } deriving (Show,Generic)
+  } deriving (Show, Generic, Eq)
 
 instance FromJSON Author where
   parseJSON = genericParseJSON defaultOptions {
@@ -89,7 +89,7 @@ data Category = Category {
   category_id :: CategoryId, -- Unique identifier for this Category.
   category_title :: Title, -- Title of Category.
   category_subcategory :: Maybe Category -- Subcategory of Category.
-  } deriving (Show,Generic)
+  } deriving (Show, Generic, Eq)
 
 instance FromJSON Category where
   parseJSON = genericParseJSON defaultOptions {
@@ -103,7 +103,7 @@ instance ToJSON Category where
 data Tag = Tag {
   tag_id :: TagId, -- Unique identifier for this Tag.
   tag_title :: Title -- Title of Tag.
-} deriving (Show,Generic)
+} deriving (Show, Generic, Eq)
 
 instance FromJSON Tag where
   parseJSON = genericParseJSON defaultOptions {
@@ -139,7 +139,7 @@ instance ToJSON Post where
 data Comment = Comment {
   comment_id :: CommentId, -- Unique identifier for this Comment.
   comment_text :: Text -- Comment's text.
-} deriving (Show,Generic)
+} deriving (Show, Generic, Eq)
 
 instance FromJSON Comment where
   parseJSON = genericParseJSON defaultOptions {
@@ -154,7 +154,7 @@ data Draft = Draft {
   draft_id :: DraftId, -- Unique identifier for this Draft.
   draft_text :: Text, -- Draft's text.
   draft_post_id :: PostId -- identifier for Post-owner of this Draft.
-} deriving (Show,Generic)
+} deriving (Show, Generic, Eq)
 
 instance FromJSON Draft where
   parseJSON = genericParseJSON defaultOptions {
@@ -168,7 +168,7 @@ instance ToJSON Draft where
 data Photo = Photo {
   photo_id :: PhotoId, -- Identifier for this Photo.
   photo_link :: Link -- Link to Photo.
-  } deriving (Show,Generic) 
+  } deriving (Show, Generic, Eq) 
 
 instance FromJSON Photo where
   parseJSON = genericParseJSON defaultOptions {

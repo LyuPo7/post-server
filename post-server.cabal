@@ -70,6 +70,7 @@ library
     , aeson
     , base >=4.7 && <5
     , bytestring
+    , convertible
     , either
     , exceptions
     , filepath
@@ -103,6 +104,7 @@ executable post-server-exe
     , aeson
     , base >=4.7 && <5
     , bytestring
+    , convertible
     , either
     , exceptions
     , filepath
@@ -128,7 +130,15 @@ test-suite post-server-test
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules:
+      TestPost.Handlers
       TestPost.DB.DBQSpec
+      TestPost.DB.Tag
+      TestPost.DB.User
+      TestPost.DB.Photo
+      TestPost.DB.Draft
+      TestPost.DB.Comment
+      TestPost.DB.Category
+      TestPost.DB.Author
   hs-source-dirs:
       test
   ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
@@ -138,6 +148,7 @@ test-suite post-server-test
     , aeson
     , base >=4.7 && <5
     , bytestring
+    , convertible
     , either
     , exceptions
     , filepath
