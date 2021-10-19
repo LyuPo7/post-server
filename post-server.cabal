@@ -139,6 +139,8 @@ test-suite post-server-test
       TestPost.DB.Comment
       TestPost.DB.Category
       TestPost.DB.Author
+      TestPost.DB.Account
+      TestPost.DB.Post
   hs-source-dirs:
       test
   ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N

@@ -125,7 +125,7 @@ data Post = Post {
   post_mainPhoto :: Maybe Photo, -- Main Photo of Post.
   post_addPhotos :: Maybe [Photo], -- Array of Additional Photos of Post.
   post_comments :: Maybe [Comment] -- Array of Comments of Post.
-  } deriving (Show,Generic)
+  } deriving (Show, Generic, Eq)
 
 instance FromJSON Post where
   parseJSON = genericParseJSON defaultOptions {

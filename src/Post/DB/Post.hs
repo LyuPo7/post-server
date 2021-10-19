@@ -229,14 +229,21 @@ getPostRecord handle postId = do
               [colIdPost]
               [toSql postId]
   case postSQL of
+    [] -> do
+      let msg = "No exists Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [post] -> do
       Logger.logInfo logh "Getting Post from db."
       newPost handle post
     _ -> do
-      let msg = "No Post with id: "
-            <> convert postId
-            <> " in db!"
-      Logger.logWarning logh msg
+      let msg = "Violation of Unique Post record in db: \
+                \exist more than one record for Post with Id: "
+                  <> convert postId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getLastPostRecord :: Monad m => Handle m -> m (Either Text PostId)
@@ -246,13 +253,17 @@ getLastPostRecord handle = do
                 [colIdPost]
                  colIdPost 1
   case idPostSql of
+    [] -> do
+      let msg = "No exist Posts in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[idPost]] -> do
       let postId = fromSql idPost
       Logger.logInfo logh $ "Last Post inserted in db with id: "
         <> convert postId
       return $ Right postId
     _ -> do
-      let msg = "No exist Posts in db!"
+      let msg = "Incorrect Post record in db!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -264,16 +275,23 @@ getPostIdRecordByTitle handle title = do
                 [colTitlePost]
                 [toSql title]
   case postIdSQL of
+    [] -> do
+      let msg = "No exists Post with title: '"
+            <> title
+            <> "' in db!"
+      Logger.logError logh msg
+      return $ Left msg
     [[idPost]] -> do
       Logger.logInfo logh $ "Getting PostId corresponding to title: '"
         <> title
         <> "' from db."
       return $ Right $ fromSql idPost
     _ -> do
-      let msg = "No exists Post with title: "
-            <> title
-            <> " in db!"
-      Logger.logError logh msg
+      let msg = "Violation of Unique record Post in db: \
+                \exist more than one record for Post with title: '"
+                  <> title
+                  <> "' in db!"
+      Logger.logWarning logh msg
       return $ Left msg
 
 getPostAuthorRecord :: Monad m => Handle m -> PostId -> m (Either Text AuthorId)
@@ -284,6 +302,12 @@ getPostAuthorRecord handle postId = do
                   [colIdPostPostAuthor]
                   [toSql postId]
   case authorIdSql of
+    [] -> do
+      let msg = "No exists Author corresponding to Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logInfo logh msg
+      return $ Left msg
     [[authorId]] -> do
       Logger.logInfo logh $ "Getting AuthorId \
            \corresponding to Post with id: "
@@ -291,11 +315,13 @@ getPostAuthorRecord handle postId = do
         <> " from db."
       return $ Right $ fromSql authorId
     _ -> do
-      let msg = "No Author corresponding to Post with id: "
-            <> convert postId
-            <> "in db!"
-      Logger.logInfo logh msg
+      let msg = "Violation of Unique record Post-Author in db: \
+                \exist more than one record for Post with Id: "
+                  <> convert postId
+                  <> " in db!"
+      Logger.logWarning logh msg
       return $ Left msg
+    
 
 getPostCategoryRecord :: Monad m => Handle m -> PostId -> m (Either Text CategoryId)
 getPostCategoryRecord handle postId = do
@@ -305,6 +331,12 @@ getPostCategoryRecord handle postId = do
                [colIdPostPostCat]
                [toSql postId]
   case catIdSql of
+    [] -> do
+      let msg = "No exists Category corresponding to Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logInfo logh msg
+      return $ Left msg
     [[catId]] -> do
       Logger.logInfo logh $ "Getting CategoryId \
            \corresponding to Post with id: "
@@ -312,10 +344,11 @@ getPostCategoryRecord handle postId = do
         <> " from db."
       return $ Right $ fromSql catId
     _ -> do
-      let msg = "No exists Category corresponding to Post with id: "
-            <> convert postId
-            <> "in db!"
-      Logger.logInfo logh msg
+      let msg = "Violation of Unique record Post-Category in db: \
+                \exist more than one record for Post with Id: "
+                  <> convert postId
+                  <> " in db!"
+      Logger.logWarning logh msg
       return $ Left msg
 
 getPostTagRecords :: Monad m => Handle m -> PostId -> m (Either Text [TagId])
@@ -326,18 +359,18 @@ getPostTagRecords handle postId = do
                 [colIdPostPostTag]
                 [toSql postId]
   case tagsIdSql of
-    [tagIds] -> do
-      Logger.logInfo logh $ "Getting TagId \
-           \corresponding to Post with id: "
-        <> convert postId
-        <> " from db."
-      return $ Right $ map fromSql tagIds
-    _ -> do
+    [] -> do
       let msg = "No exist Tags corresponding to Post with id: "
             <> convert postId
             <> " in db!"
       Logger.logInfo logh msg
       return $ Left msg
+    tagIds -> do
+      Logger.logInfo logh $ "Getting TagId \
+           \corresponding to Post with id: "
+        <> convert postId
+        <> " from db."
+      return $ Right $ map fromSql $ concat tagIds
 
 getPostMainPhotoRecords :: Monad m => Handle m -> PostId -> m (Either Text Photo)
 getPostMainPhotoRecords handle postId = do
@@ -347,14 +380,21 @@ getPostMainPhotoRecords handle postId = do
                  [colIdPostPostMainPhoto]
                  [toSql postId]
   case photoIdSql of
+    [] -> do
+      let msg = "No exists Main Photo for Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[photoId]] -> do
       Logger.logInfo logh $ "Getting Main Photo for Post with id: "
         <> convert postId <> "."
       DBPh.getPhotoRecordById handle $ fromSql photoId
     _ -> do
-      let msg = "No exists Main Photo for Post with id: "
-            <> convert postId
-            <> " in db!"
+      let msg = "Violation of Unique record Post-MainPhoto in db: \
+                \exist more than one record for Post with Id: "
+                  <> convert postId
+                  <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -388,14 +428,23 @@ getPostDraftRecord handle postId = do
                  [colIdPostPostDraft]
                  [toSql postId]
   case draftIdSql of
+    [] -> do
+      let msg = "No exists Draft corresponding to Post with id: "
+            <> convert postId
+            <> " in db!"
+      Logger.logError logh msg
+      return $ Left msg
     [[draftId]] -> do 
       Logger.logInfo logh "Dependency between Post and Draft already exists."
       return $ Right $ fromSql draftId
     _ -> do
-      let msg = "Dependency between Post and Draft doesn't exist."
-      Logger.logError logh msg
+      let msg = "Violation of Unique record Post-Draft in db: \
+                \exist more than one record for Post with Id: "
+                  <> convert postId
+                  <> " in db!"
+      Logger.logWarning logh msg
       return $ Left msg
-
+    
 getPostDraftRecords :: Monad m => Handle m -> [PostId] -> m (Either Text [DraftId])
 getPostDraftRecords handle postIds = do
   let logh = hLogger handle
@@ -405,11 +454,14 @@ getPostDraftRecords handle postIds = do
                   $ map toSql postIds
   case draftIdsSql of
     [] -> do
-      let msg = "No Drafts for Posts with Id: " <> (T.intercalate "," (map convert postIds))
+      let msg = "No exists Drafts corresponding to Posts with id: "
+            <> (T.intercalate "," (map convert postIds))
+            <> " in db!"
       Logger.logError logh msg
       return $ Left msg
     draftIds -> do 
-      Logger.logInfo logh $ "Getting Drafts of Posts with Id: " <> (T.intercalate "," (map convert postIds))
+      Logger.logInfo logh $ "Getting Drafts of Posts with Id: "
+        <> (T.intercalate "," (map convert postIds))
       return $ Right $ map fromSql $ concat draftIds
 
 getPostCommentRecords :: Monad m => Handle m -> PostId -> m (Either Text [Comment])

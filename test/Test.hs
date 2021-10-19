@@ -10,6 +10,8 @@ import qualified TestPost.DB.Draft as DBD
 import qualified TestPost.DB.Comment as DBCo
 import qualified TestPost.DB.Category as DBC
 import qualified TestPost.DB.Author as DBA
+import qualified TestPost.DB.Account as DBAc
+import qualified TestPost.DB.Post as DBP
 
 main :: IO ()
 --main = defaultMain $ testGroup "(no tests)" []
@@ -67,7 +69,25 @@ main = do
                DBA.spec_getLastAuthorRecord,
                DBA.spec_getAuthorRecords,
                DBA.spec_getUserIdRecordByAuthorId,
-               DBA.spec_getAuthorRecord
+               DBA.spec_getAuthorRecord,
+               DBAc.spec_getPasswordRecordByLogin,
+               DBAc.spec_getIsAdminRecordByToken,
+               DBAc.spec_getUserIdRecordByToken,
+               DBAc.spec_getAuthorIdRecordByUserId,
+               DBAc.spec_checkAuthorWritePerm,
+               DBAc.spec_checkUserPerm,
+               DBAc.spec_checkAdminPerm,
+               DBAc.spec_checkPassword,
+               DBP.spec_getPostDraftRecords,
+               DBP.spec_getPostDraftRecord,
+               DBP.spec_getPostAddPhotoRecords,
+               DBP.spec_getPostMainPhotoRecords,
+               DBP.spec_getPostTagRecords,
+               DBP.spec_getPostCategoryRecord,
+               DBP.spec_getPostAuthorRecord,
+               DBP.spec_getPostIdRecordByTitle,
+               DBP.spec_getLastPostRecord,
+               DBP.spec_getPostRecord
              ]
   defaultMain (testGroup "All Tests" [
                   testGroup "Specs" specs

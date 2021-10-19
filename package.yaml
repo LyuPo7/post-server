@@ -78,6 +78,8 @@ tests:
       TestPost.DB.Comment,
       TestPost.DB.Category,
       TestPost.DB.Author,
+      TestPost.DB.Account,
+      TestPost.DB.Post
       ]
     ghc-options:
     - -Wall 

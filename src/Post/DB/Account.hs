@@ -115,15 +115,24 @@ getAuthorIdRecordByUserId handle userId = do
                   [colIdUserAuthorUser]
                   [toSql userId]
   case authorIdSql of
+    [] -> do
+      let msg = "No exists Author corresponding to User with id: "
+            <> convert userId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
     [[authorId]] -> do
       Logger.logInfo logh $ "Getting AuthorId corresponding to UserId: "
         <> convert userId
         <> " from db."
       return $ Right $ fromSql authorId
     _ -> do
-      let msg = "No Author corresponding to UserId:"
-            <> convert userId
-      Logger.logWarning logh msg
+      let msg = "Violation of Unique record in db: \
+                \exist more than one record Author-User \
+                \record for User with Id: "
+                  <> convert userId
+                  <> " in db!"
+      Logger.logError logh msg
       return $ Left msg
 
 getUserIdRecordByToken :: Monad m => Handle m -> Text -> m (Either Text UserId)
@@ -160,7 +169,9 @@ getIsAdminRecordByToken handle userToken = do
         <> " from db."
       return $ Right $ fromSql isAdmin
     _ -> do
-      let msg = "Incorrect token: " <> userToken
+      let msg = "Incorrect token: '" 
+            <> userToken
+            <> "'."
       Logger.logWarning logh msg 
       return $ Left msg
 
