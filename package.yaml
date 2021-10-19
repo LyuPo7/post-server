@@ -81,7 +81,8 @@ tests:
       TestPost.DB.Account,
       TestPost.DB.Post,
       TestPost.Server.Util,
-      TestPost.Server.QueryParameters
+      TestPost.Server.QueryParameters,
+      TestPost.Config
       ]
     ghc-options:
     - -Wall 

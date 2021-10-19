@@ -8,6 +8,7 @@ import qualified Post.Logger as Logger
 import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Server.ServerConfig as ServerConfig
+import qualified Post.Config as PostConfig
 
 dbqh :: DBQSpec.Handle Identity
 dbqh = DBQSpec.Handle {
@@ -42,7 +43,12 @@ dbH = DBSpec.Handle {
 logH :: Logger.Handle Identity
 logH = Logger.Handle {
     Logger.log = \_ _ -> return (),
-    Logger.hconfig = Logger.Config {Logger.cVerbocity = Nothing}
+    Logger.hconfig = logC
+}
+
+logC :: Logger.Config
+logC = Logger.Config {
+  Logger.cVerbocity = Nothing
 }
 
 dbC :: DBSpec.Config
@@ -56,4 +62,11 @@ serverC :: ServerConfig.Config
 serverC = ServerConfig.Config {
   ServerConfig.host = "localhost",
   ServerConfig.port = "3000"
+}
+
+postC :: PostConfig.Config
+postC = PostConfig.Config {
+  PostConfig.cLogger = logC,
+  PostConfig.cDB = dbC,
+  PostConfig.cServer = serverC
 }

@@ -14,6 +14,7 @@ import qualified TestPost.DB.Account as DBAc
 import qualified TestPost.DB.Post as DBP
 import qualified TestPost.Server.Util as Util
 import qualified TestPost.Server.QueryParameters as QP
+import qualified TestPost.Config as Config
 
 main :: IO ()
 --main = defaultMain $ testGroup "(no tests)" []
@@ -97,7 +98,8 @@ main = do
                QP.spec_extractOptional,
                QP.spec_createOptionalDict,
                QP.spec_lookupReqParam,
-               QP.spec_extractRequired
+               QP.spec_extractRequired,
+               Config.spec_checkConfig
              ]
   defaultMain (testGroup "All Tests" [
                   testGroup "Specs" specs

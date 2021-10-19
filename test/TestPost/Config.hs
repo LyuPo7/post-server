@@ -1,0 +1,31 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+module TestPost.Config where
+
+import Test.Hspec
+import Data.Text (Text)
+
+import qualified TestPost.Handlers as H
+
+import qualified Post.Config as Config
+import qualified Post.Logger as Logger
+import qualified Post.DB.DBSpec as DBSpec
+import qualified Post.Server.ServerConfig as ServerConfig
+import qualified Post.Exception as E
+--import Post.Server.Objects
+
+spec_checkConfig :: Spec
+spec_checkConfig = describe "Testing checkConfig" $ do
+    it "Should successfully return correct Config" $ do
+      let draftIdsE = Config.checkConfig H.postC
+      draftIdsE `shouldBe` (Right H.postC)
+    it "Should fail if Config is without 'dbname'" $ do
+      let dbC' = H.dbC { DBSpec.dbname = "" }
+          postC' = H.postC { Config.cDB = dbC' }
+          draftIdsE = Config.checkConfig postC'
+      draftIdsE `shouldBe` (Left E.ConfigDBNameEmptyError)
+    it "Should fail if Config is without 'host'" $ do
+      let serverC' = H.serverC { ServerConfig.host = "" }
+          postC' = H.postC { Config.cServer = serverC' }
+          draftIdsE = Config.checkConfig postC'
+      draftIdsE `shouldBe` (Left E.ConfigServerHostEmptyError)
