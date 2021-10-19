@@ -19,7 +19,7 @@ convert :: Show a => a -> Text
 convert = T.pack . show
 
 sqlAtoText :: [SqlValue] -> Text
-sqlAtoText = T.intercalate "," . map T.pack . map fromSql 
+sqlAtoText = T.intercalate "," . map (T.pack . fromSql) 
 
 sqlDAtoText :: [[SqlValue]] -> Text
-sqlDAtoText = T.intercalate "," . map T.pack . map fromSql . concat
+sqlDAtoText = T.intercalate "," . map (T.pack . fromSql) . concat

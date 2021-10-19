@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, DeriveAnyClass, DeriveGeneric #-}
-
 module Post.Server.ServerSpec where
 
 import Post.Server.ServerConfig (Config(..))

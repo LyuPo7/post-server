@@ -18,7 +18,7 @@ extractRequired :: Monad m => Handle m ->
                    Query -> [BC.ByteString] -> m (Either Text [Text])
 extractRequired logh params paramNames = do
   paramsE <- mapM (lookupReqParam logh params) paramNames
-  return $ (fmap $ fmap (T.pack . BC.unpack)) $ sequenceA paramsE
+  return $ fmap (T.pack . BC.unpack) <$> sequenceA paramsE
 
 lookupReqParam :: (Monad m, Show a, Eq a) => Handle m -> 
                   [(a, Maybe b)] -> a -> m (Either Text b)

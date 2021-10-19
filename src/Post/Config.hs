@@ -39,9 +39,15 @@ getConfig = do
 
 checkConfig :: Config -> Either E.PostError Config
 checkConfig config 
-  | T.null $ DBSpec.dbname dbSet = Left $ E.ConfigDBNameEmptyError
-  | T.null $ ServerConfig.host serverSet = Left $ E.ConfigServerHostEmptyError
-  | Logger.cVerbocity logSet `notElem` [Just Logger.Debug, Just Logger.Info, Just Logger.Warning, Just Logger.Error, Nothing] = Left $ E.ConfigLoggerRangeError
+  | T.null $ DBSpec.dbname dbSet = Left E.ConfigDBNameEmptyError
+  | T.null $ ServerConfig.host serverSet = Left E.ConfigServerHostEmptyError
+  | Logger.cVerbocity logSet `notElem` [
+      Just Logger.Debug,
+      Just Logger.Info,
+      Just Logger.Warning,
+      Just Logger.Error,
+      Nothing
+    ] = Left E.ConfigLoggerRangeError
   | otherwise = Right config where
       logSet = cLogger config
       dbSet = cDB config

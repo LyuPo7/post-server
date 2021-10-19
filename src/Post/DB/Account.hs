@@ -32,7 +32,7 @@ getToken handle login password = do
       Logger.logWarning logh $ "User with login: '"
         <> login
         <> "' entered."
-      return $ Right $ newUserToken
+      return $ Right newUserToken
     Left msg -> return $ Left msg
 
 checkPassword :: Monad m => Handle m ->
@@ -44,9 +44,9 @@ checkPassword handle truePass intentPass = do
       }
       (res, _) = verifyPass defaultParams (
           Pass $ BC.pack $ T.unpack truePass) encrypted
-  case res of
-    True -> return $ Right ()
-    False -> do
+  if res
+    then return $ Right ()
+    else do
       let msg = "Incorrect password!"
       Logger.logError logh msg 
       return $ Left msg
@@ -56,7 +56,7 @@ checkAdminPerm handle userToken = do
   let logh = hLogger handle
   adminPerm <- runEitherT $ do
     isAdmin <- EitherT $ getIsAdminRecordByToken handle userToken
-    guard $ isAdmin == True
+    guard isAdmin
   case adminPerm of
     Right _ -> do
       Logger.logInfo logh "Admin authentication is successfull."

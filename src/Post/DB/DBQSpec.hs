@@ -6,8 +6,7 @@ import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.Text (Text)
 import Crypto.Scrypt (ScryptParams, Pass, EncryptedPass)
 import Data.Time.Clock (UTCTime)
-import Data.List (intercalate)
-import Data.List (union)
+import Data.List (intercalate, union)
 import Text.Read (readEither)
 import Control.Monad.Trans.Either
 import Control.Monad.Trans (lift)
@@ -239,7 +238,7 @@ queryUpdateSetWhere table colSet colWhere valSet valWhere = do
 
 -- | Special query for Posts
 specialQuery :: Monad m => Handle m ->
-                Table -> Column -> DbQuery -> m ([PostId])
+                Table -> Column -> DbQuery -> m [PostId]
 specialQuery handle table column dbParams = do
   dbQuery <- querySpecialPosts table column dbParams
   case dbQuery of
@@ -261,7 +260,7 @@ querySpecialPosts table column dbParams = do
   return $ Right (query, snd dbParams)
 
 -- | Query Search Post
-searchPost :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
+searchPost :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 searchPost handle params = do
   let logh = hLogger handle
       postParams = filter (\x -> fst x `elem` dbPostReqParams) params
@@ -317,7 +316,7 @@ keyPostToDb handle postQuery = do
         _ -> return $ Left $ "keyPostToDb function: Incorrect argument: " <> key
 
 -- | Query Search Category
-searchCat :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
+searchCat :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 searchCat handle params = do
   let logh = hLogger handle
       catParams = filter (\x -> fst x `elem` dbCatReqParams) params
@@ -377,15 +376,15 @@ keyCatToDb handle (key, _) = do
   return $ Left $ "Incorrect argument: " <> key
 
 -- | Query Search Tag
-searchTag :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
+searchTag :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 searchTag handle params = do
   let logh = hLogger handle
       tagParams = filter (\x -> fst x `elem` dbTagReqParams) params
   searchQuery <- runEitherT $ do
     search <- EitherT $ querySearchTag handle tagParams
-    case null $ snd search of
-      True -> EitherT $ querySpecialPosts tablePosts colIdPost search
-      False -> EitherT $ querySpecialPosts tablePostTag colIdPostPostTag search
+    if null $ snd search
+      then EitherT $ querySpecialPosts tablePosts colIdPost search
+      else EitherT $ querySpecialPosts tablePostTag colIdPostPostTag search
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
@@ -418,8 +417,8 @@ querySearchTag handle [(key, Just value)] = do
           return $ Left $ "Incorrect tag argument: " <> msg
 querySearchTag handle _ = do
   let logh = hLogger handle
-  Logger.logError logh $ "querySearchTag function: Used more than one keys: ['tag', 'tag__in', 'tag__all']"
-  return $ Left $ "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
+  Logger.logError logh "querySearchTag function: Used more than one keys: ['tag', 'tag__in', 'tag__all']"
+  return $ Left "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
 
 keyTagToDb :: Monad m => Handle m -> Text -> Int -> m (Either Text Text)
 keyTagToDb handle key n = do
@@ -427,9 +426,9 @@ keyTagToDb handle key n = do
       cIdTPT = column_name colIdTagPostTag
   case key of
     "tag" -> do
-      case n == 1 of
-        True -> return $ Right $ cIdTPT <> " = ?"
-        False -> do
+      if n == 1
+        then return $ Right $ cIdTPT <> " = ?"
+        else do
           Logger.logError logh "keyTagToDb function: too many values in argument: tag"
           return $ Left "Array of key tag must contain only one tag_id"
     "tag__in" -> return $ Right 
@@ -442,7 +441,7 @@ keyTagToDb handle key n = do
       $ "keyTagToDb function: Incorrect argument: " <> key
 
 -- | Query Search Author
-searchAuthor :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
+searchAuthor :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 searchAuthor handle params = do
   let logh = hLogger handle
       tagParams = filter (\x -> fst x `elem` dbAuthorReqParams) params
@@ -471,7 +470,7 @@ querySearchAuthor handle [(_, value)] = do
       Logger.logInfo logh msg
       return $ Right ("", [])
     Just param -> do
-      if (length $ T.words param) == 2
+      if length (T.words param) == 2
         then do
           let tAuthorUserAU = table_name tableAuthorUser
               tUsersU = table_name tableUsers
@@ -504,7 +503,7 @@ querySearchAuthor handle _ = do
   return $ Left msg
 
 -- | Query Find Post
-findIn :: Monad m => Handle m -> [PostQuery] -> m ([PostId])
+findIn :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 findIn handle params = do
   let logh = hLogger handle
       findParams = filter (\x -> fst x `elem` dbSearchParams) params
@@ -512,19 +511,19 @@ findIn handle params = do
     -- posts
     postFindInPosts <- EitherT $ findInPosts handle findParams
     queryIdPost <- EitherT $ querySpecialPosts tablePosts colIdPost postFindInPosts
-    idSPosts <- lift $ fmap concat $ makeDBRequest handle queryIdPost
+    idSPosts <- lift (concat <$> makeDBRequest handle queryIdPost)
     -- authors
     postFindInAuthors <- EitherT $ findInAuthors handle findParams
     queryIdAuthor <- EitherT $ querySpecialPosts tablePostAuthor colIdPostPostAuthor postFindInAuthors
-    idAuthorSPosts <- lift $ fmap concat $ makeDBRequest handle queryIdAuthor
+    idAuthorSPosts <- lift (concat <$> makeDBRequest handle queryIdAuthor)
     -- categories
     postFindInCats <- EitherT $ findInCats handle findParams
     queryIdCat <- EitherT $ querySpecialPosts tablePostCat colIdPostPostCat postFindInCats
-    idCatSPosts <- lift $ fmap concat $ makeDBRequest handle queryIdCat
+    idCatSPosts <- lift (concat <$> makeDBRequest handle queryIdCat)
     -- tags
     postFindInTags <- EitherT $ findInTags handle findParams
     queryIdTag <- EitherT $ querySpecialPosts tablePostTag colIdPostPostTag postFindInTags
-    idTagSPosts <- lift $ fmap concat $ makeDBRequest handle queryIdTag
+    idTagSPosts <- lift (concat <$> makeDBRequest handle queryIdTag)
     return $ ((idSPosts 
         `union` idCatSPosts) 
         `union` idTagSPosts) 
@@ -687,7 +686,7 @@ findInTags handle _ = do
   return $ Left msg
 
 -- | Sort query
-sortQuery :: Monad m => Handle m -> [PostQuery] -> [SqlValue] -> m ([PostId])
+sortQuery :: Monad m => Handle m -> [PostQuery] -> [SqlValue] -> m [PostId]
 sortQuery handle params ids = do
   let orderParams = filter (\x -> fst x `elem` dbOrderParams) params
   dbQuery <- querySort handle orderParams ids

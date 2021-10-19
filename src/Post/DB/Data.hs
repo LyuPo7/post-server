@@ -5,7 +5,7 @@ module Post.DB.Data where
 import qualified Data.Text as T
 import Data.Text (Text)
 import Database.HDBC (SqlValue(..))
-import Data.List (intercalate, sort)
+import Data.List (sort)
 
 --
 type TableName = Text
@@ -29,7 +29,7 @@ data Property = PrimaryKey | NotNull | Unique deriving (Eq, Ord)
 instance Show Column where
   show (Column cName cType cProps) = case cProps of
     [] -> T.unpack cName ++ " " ++ show cType
-    xs -> T.unpack cName ++ " " ++ show cType ++ " " ++ intercalate " " (map show $ sort xs)
+    xs -> T.unpack cName ++ " " ++ show cType ++ " " ++ unwords (map show $ sort xs)
 
 instance Show Property where
   show PrimaryKey = "PRIMARY KEY"

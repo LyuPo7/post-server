@@ -455,13 +455,13 @@ getPostDraftRecords handle postIds = do
   case draftIdsSql of
     [] -> do
       let msg = "No exists Drafts corresponding to Posts with id: "
-            <> (T.intercalate "," (map convert postIds))
+            <> T.intercalate "," (map convert postIds)
             <> " in db!"
       Logger.logError logh msg
       return $ Left msg
     draftIds -> do 
       Logger.logInfo logh $ "Getting Drafts of Posts with Id: "
-        <> (T.intercalate "," (map convert postIds))
+        <> T.intercalate "," (map convert postIds)
       return $ Right $ map fromSql $ concat draftIds
 
 getPostCommentRecords :: Monad m => Handle m -> PostId -> m (Either Text [Comment])
@@ -643,8 +643,7 @@ newPost handle [idPost, title, created_at, text] = do
   commentsE <- getPostCommentRecords handle postId
   tagsE <- runEitherT $ do 
     tagIds <- EitherT $ getPostTagRecords handle postId
-    tags <- EitherT $ DBT.getTagByIds handle tagIds
-    return tags
+    EitherT $ DBT.getTagByIds handle tagIds
   let photoMainM = rightToMaybe photoMainE
       photosAddM = rightToMaybe photosAddE
       commentsM = rightToMaybe commentsE
