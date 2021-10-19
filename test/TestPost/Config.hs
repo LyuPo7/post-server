@@ -3,16 +3,13 @@
 module TestPost.Config where
 
 import Test.Hspec
-import Data.Text (Text)
 
 import qualified TestPost.Handlers as H
 
 import qualified Post.Config as Config
-import qualified Post.Logger as Logger
 import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Exception as E
---import Post.Server.Objects
 
 spec_checkConfig :: Spec
 spec_checkConfig = describe "Testing checkConfig" $ do
