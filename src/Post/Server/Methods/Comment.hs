@@ -14,6 +14,7 @@ import qualified Post.DB.Post as DBP
 import qualified Post.DB.Comment as DBCo
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
+import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respError, respSucc, resp404)
 
@@ -23,7 +24,7 @@ createCommentResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Comment record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -32,7 +33,7 @@ createCommentResp handle query = do
     Left _ -> return resp404
     Right token -> do
       msgE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [idPost, text] = reqParams
         userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
         postId <- EitherT $ Util.readEitherMa idPost "post_id"

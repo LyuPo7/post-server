@@ -13,6 +13,7 @@ import qualified Post.Logger as Logger
 import qualified Post.DB.Post as DBP
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
+import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
@@ -22,14 +23,14 @@ getPostsResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Post records"
   permParamsE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
   case permParamsE of
     Left _ -> return resp404
     Right _ -> do
-      dbQueryParams <- Util.createOptionalDict logh query paramsOpt
+      dbQueryParams <- QP.createOptionalDict logh query paramsOpt
       postsE <- runEitherT $ do
         EitherT $ DBP.getPosts dbqh dbQueryParams
       case postsE of
@@ -47,7 +48,7 @@ createPostResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Post record"
   permParamsE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAuthorWritePerm dbqh token
     guard $ perm == AuthorWritePerm
@@ -56,7 +57,7 @@ createPostResp handle query = do
     Left _ -> return resp404
     Right token -> do
       postE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        reqParams <- EitherT $ QP.extractRequired logh query paramsReq
         let [title, text, idCat, idsTag] = reqParams
         catId <- EitherT $ Util.readEitherMa idCat "category_id"
         tagIds <- EitherT $ Util.readEitherMa idsTag "tag_id"
@@ -78,7 +79,7 @@ removePostResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Post record"
   permParamsE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -86,7 +87,7 @@ removePostResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       msgE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        reqParams <- EitherT $ QP.extractRequired logh query paramsReq
         let [idPost] = reqParams
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
         EitherT $ DBP.removePost dbqh postId
@@ -106,7 +107,7 @@ setPostMainPhotoResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add main Photo to Post"
   writeAuthorPermE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     writeAuthorPerm <- lift $ DBAC.checkAuthorWritePerm dbqh token
     guard $ writeAuthorPerm == AuthorWritePerm
@@ -115,7 +116,7 @@ setPostMainPhotoResp handle query = do
     Left _ -> return resp404
     Right token -> do
       readAuthorPermE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        reqParams <- EitherT $ QP.extractRequired logh query paramsReq
         let [idPost, path] = reqParams
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
         _ <- EitherT $ DBP.getPostRecord dbqh postId
@@ -141,7 +142,7 @@ setPostAddPhotoResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add additional Photo to Post"
   writeAuthorPermE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     writeAuthorPerm <- lift $ DBAC.checkAuthorWritePerm dbqh token
     guard $ writeAuthorPerm == AuthorWritePerm
@@ -150,7 +151,7 @@ setPostAddPhotoResp handle query = do
     Left _ -> return resp404
     Right token -> do
       readAuthorPermE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        reqParams <- EitherT $ QP.extractRequired logh query paramsReq
         let [idPost, path] = reqParams
         postId <- EitherT $ Util.readEitherMa idPost "post_id"
         _ <- EitherT $ DBP.getPostRecord dbqh postId

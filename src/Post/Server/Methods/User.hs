@@ -13,6 +13,7 @@ import qualified Post.Logger as Logger
 import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
+import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
@@ -22,7 +23,7 @@ getUsersResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get User records"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -44,7 +45,7 @@ createUserResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create User record"
   loginE <- runEitherT $ do
-    reqParams <- EitherT $ Util.extractRequired logh query params
+    reqParams <- EitherT $ QP.extractRequired logh query params
     let [firstName, lastName, login, password] = reqParams
     _ <- EitherT $ DBU.createUser dbqh firstName lastName login password
     return login
@@ -63,7 +64,7 @@ removeUserResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove User record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -71,7 +72,7 @@ removeUserResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       userIdE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [idUser] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         _ <- EitherT $ DBU.removeUser dbqh userId
@@ -93,7 +94,7 @@ setUserPhotoResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add Photo to User record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -102,7 +103,7 @@ setUserPhotoResp handle query = do
     Left _ -> return resp404
     Right token -> do
       photoIdE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [path] = reqParams
         userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
         EitherT $ DBU.setUserPhoto dbqh userId path

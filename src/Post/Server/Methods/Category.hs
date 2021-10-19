@@ -13,6 +13,7 @@ import qualified Post.Logger as Logger
 import qualified Post.DB.Category as DBC
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
+import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
@@ -22,7 +23,7 @@ getCatsResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Category records"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -44,17 +45,17 @@ createCatResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Category record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      optParams <- Util.extractOptional logh query paramsOpt
+      optParams <- QP.extractOptional logh query paramsOpt
       let [subcat] = optParams
       msgE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        reqParams <- EitherT $ QP.extractRequired logh query paramsReq
         let [title] = reqParams
         EitherT $ DBC.createCat dbqh title subcat
       case msgE of
@@ -74,7 +75,7 @@ removeCatResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Category record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -82,7 +83,7 @@ removeCatResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       msgE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [idCat] = reqParams
         catId <- EitherT $ Util.readEitherMa idCat "category_id"
         EitherT $ DBC.removeCat dbqh catId
@@ -102,17 +103,17 @@ editCatResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Category record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      optParams <- Util.extractOptional logh query paramsOpt
+      optParams <- QP.extractOptional logh query paramsOpt
       let [subNew] = optParams
       catIdE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query paramsReq
+        reqParams <- EitherT $ QP.extractRequired logh query paramsReq
         let [idUser, newTitle] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         EitherT $ DBC.editCat dbqh userId newTitle subNew

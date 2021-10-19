@@ -10,7 +10,7 @@ import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Logger as Logger
 import qualified Post.DB.DBQImpl as DBQImpl
 import qualified Post.Server.Methods.Photo as MPh
-import qualified Post.Server.Util as Util
+import qualified Post.Server.Token as Token
 
 withHandleIO :: Logger.Handle IO -> DBSpec.Handle IO ->
                 DBSpec.Config -> (Handle IO -> IO a) -> IO a
@@ -23,7 +23,7 @@ withHandleIO logger dbh config f = do
     makeDBRequest = DBQImpl.makeDBRequest dbh,
     runDBRequest = DBQImpl.runDBRequest dbh,
     encryptPassM = CS.encryptPassIO,
-    createToken = Util.createToken,
+    createToken = Token.createToken,
     upload = MPh.upload dbh,
     getCurrentTime = Time.getCurrentTime
   }

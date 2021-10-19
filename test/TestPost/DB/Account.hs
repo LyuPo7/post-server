@@ -4,7 +4,6 @@ module TestPost.DB.Account where
 
 import Control.Monad.Identity
 import Database.HDBC (toSql)
---import Data.Text (Text)
 
 import Test.Hspec
 

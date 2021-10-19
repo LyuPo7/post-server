@@ -53,10 +53,12 @@ library
       Post.Server.Methods.Tag
       Post.Server.Methods.User
       Post.Server.Objects
+      Post.Server.QueryParameters
       Post.Server.Responses
       Post.Server.Server
       Post.Server.ServerConfig
       Post.Server.ServerSpec
+      Post.Server.Token
       Post.Server.Util
       Post.Settings
   other-modules:
@@ -141,6 +143,8 @@ test-suite post-server-test
       TestPost.DB.Author
       TestPost.DB.Account
       TestPost.DB.Post
+      TestPost.Server.Util
+      TestPost.Server.QueryParameters
   hs-source-dirs:
       test
   ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N

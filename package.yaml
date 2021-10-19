@@ -79,7 +79,9 @@ tests:
       TestPost.DB.Category,
       TestPost.DB.Author,
       TestPost.DB.Account,
-      TestPost.DB.Post
+      TestPost.DB.Post,
+      TestPost.Server.Util,
+      TestPost.Server.QueryParameters
       ]
     ghc-options:
     - -Wall 

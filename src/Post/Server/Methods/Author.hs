@@ -14,6 +14,7 @@ import qualified Post.DB.Author as DBA
 import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
+import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
@@ -23,7 +24,7 @@ getAuthorsResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Author records"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -45,7 +46,7 @@ createAuthorResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Author record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -53,7 +54,7 @@ createAuthorResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       authorIdE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [idUser, description] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         _ <- EitherT $ DBU.getUserRecordbyId dbqh userId
@@ -74,7 +75,7 @@ removeAuthorResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Author record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -82,7 +83,7 @@ removeAuthorResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       userIdE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [idUser] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         _ <- EitherT $ DBU.getUserRecordbyId dbqh userId
@@ -105,7 +106,7 @@ editAuthorResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Author record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -113,7 +114,7 @@ editAuthorResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       authorIdE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [idUser, newDescription] = reqParams
         userId <- EitherT $ Util.readEitherMa idUser "user_id"
         _ <- EitherT $ DBU.getUserRecordbyId dbqh userId

@@ -12,7 +12,7 @@ import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
 import qualified Post.DB.Tag as DBT
 import qualified Post.DB.Account as DBAC
-import qualified Post.Server.Util as Util
+import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
@@ -22,7 +22,7 @@ getTagsResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Tag records"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -45,7 +45,7 @@ createTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Tag record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -53,7 +53,7 @@ createTagResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       tagIdE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [title] = reqParams
         EitherT $ DBT.createTag dbqh title
       case tagIdE of
@@ -72,7 +72,7 @@ removeTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Tag record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -80,7 +80,7 @@ removeTagResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       tagIdE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [tagTitle] = reqParams
         EitherT $ DBT.removeTag dbqh tagTitle
       case tagIdE of
@@ -100,7 +100,7 @@ editTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Tag record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ Util.extractRequired logh query authParams
+    givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -108,7 +108,7 @@ editTagResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       tagE <- runEitherT $ do
-        reqParams <- EitherT $ Util.extractRequired logh query params
+        reqParams <- EitherT $ QP.extractRequired logh query params
         let [oldTitle, newTitle] = reqParams
         EitherT $ DBT.editTag dbqh oldTitle newTitle
       case tagE of

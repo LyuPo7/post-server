@@ -12,6 +12,8 @@ import qualified TestPost.DB.Category as DBC
 import qualified TestPost.DB.Author as DBA
 import qualified TestPost.DB.Account as DBAc
 import qualified TestPost.DB.Post as DBP
+import qualified TestPost.Server.Util as Util
+import qualified TestPost.Server.QueryParameters as QP
 
 main :: IO ()
 --main = defaultMain $ testGroup "(no tests)" []
@@ -87,7 +89,15 @@ main = do
                DBP.spec_getPostAuthorRecord,
                DBP.spec_getPostIdRecordByTitle,
                DBP.spec_getLastPostRecord,
-               DBP.spec_getPostRecord
+               DBP.spec_getPostRecord,
+               Util.spec_sqlDAtoText,
+               Util.spec_sqlAtoText,
+               Util.spec_readEitherMa,
+               QP.spec_lookupOptionalParam,
+               QP.spec_extractOptional,
+               QP.spec_createOptionalDict,
+               QP.spec_lookupReqParam,
+               QP.spec_extractRequired
              ]
   defaultMain (testGroup "All Tests" [
                   testGroup "Specs" specs
