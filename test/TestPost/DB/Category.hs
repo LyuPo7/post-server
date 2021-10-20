@@ -164,8 +164,8 @@ spec_newCat = describe "Testing newCat" $ do
           msg = "Invalid Category!"
       catE `shouldBe` (Identity $ Left msg)
 
-spec_getChildCatIdRecordsByCatId :: Spec
-spec_getChildCatIdRecordsByCatId = describe "Testing getChildCatIdRecordsByCatId" $ do
+spec_getChildCatIdsByCatId :: Spec
+spec_getChildCatIdsByCatId = describe "Testing getChildCatIdsByCatId" $ do
     it "Should successfully return [CategoryId]" $ do
       let catId = 11 :: CategoryId
           childCatId1 = 18 :: CategoryId
@@ -179,19 +179,19 @@ spec_getChildCatIdRecordsByCatId = describe "Testing getChildCatIdRecordsByCatId
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          catIdsE = DBC.getChildCatIdRecordsByCatId dbqh' catId
+          catIdsE = DBC.getChildCatIdsByCatId dbqh' catId
       catIdsE `shouldBe` (Identity $ Right [childCatId1, childCatId2, childCatId3])
     it "Should fail on empty array" $ do
       let catId = 11 :: CommentId
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          comE = DBC.getChildCatIdRecordsByCatId dbqh' catId
+          comE = DBC.getChildCatIdsByCatId dbqh' catId
           msg = "Category with id: 11 hasn't child category."
       comE `shouldBe` (Identity $ Left msg)
 
-spec_getCatPostRecords :: Spec
-spec_getCatPostRecords = describe "Testing getCatPostRecords" $ do
+spec_getCatPostIdsByCatId :: Spec
+spec_getCatPostIdsByCatId = describe "Testing getCatPostIdsByCatId" $ do
     it "Should successfully return [PostId] for array of one element" $ do
       let catId = 11 :: DraftId
           postId = 15 :: PostId
@@ -199,7 +199,7 @@ spec_getCatPostRecords = describe "Testing getCatPostRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          postIdsE = DBC.getCatPostRecords dbqh' catId
+          postIdsE = DBC.getCatPostIdsByCatId dbqh' catId
       postIdsE `shouldBe` (Identity $ Right [postId])
     it "Should successfully return [PostId] for array of many elements" $ do
       let catId = 11 :: DraftId
@@ -214,14 +214,14 @@ spec_getCatPostRecords = describe "Testing getCatPostRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          postIdsE = DBC.getCatPostRecords dbqh' catId
+          postIdsE = DBC.getCatPostIdsByCatId dbqh' catId
       postIdsE `shouldBe` (Identity $ Right [postId1, postId2, postId3])
     it "Should fail on empty array" $ do
       let catId = 11 :: CategoryId
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          postIdsE = DBC.getCatPostRecords dbqh' catId
+          postIdsE = DBC.getCatPostIdsByCatId dbqh' catId
           msg = "No Posts corresponding to Category with id: 11 in db!"
       postIdsE `shouldBe` (Identity $ Left msg)
 

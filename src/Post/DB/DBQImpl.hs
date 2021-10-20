@@ -11,6 +11,8 @@ import qualified Post.Logger as Logger
 import qualified Post.Exception as E
 import Post.DB.Data
 
+{-- | Db IO actions --}
+--  | Make quickQuery' to db
 makeDBRequest :: Handle IO -> DbQuery -> IO [[SqlValue]]
 makeDBRequest handle dbQuery = handleSql errorHandler $ do
   let dbh = conn handle
@@ -27,6 +29,7 @@ makeDBRequest handle dbQuery = handleSql errorHandler $ do
           Exc.throwIO $ E.DbError $ "Error: Error in makeDBRequest!\n"
             <> show e
 
+-- | Run db query
 runDBRequest :: Handle IO -> DbQuery -> IO ()
 runDBRequest handle dbQuery = handleSql errorHandler $ do
   let dbh = conn handle

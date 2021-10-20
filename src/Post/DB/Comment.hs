@@ -13,7 +13,8 @@ import Post.DB.Data
 import Post.Server.Objects
 import Post.Server.Util (convert)
 
--- | DB methods for Comment
+{-- | DB methods for Comment --}
+{-- | Create new Comment and all Comment-Dependencies --}
 createComment :: Monad m => Handle m ->
                  PostId -> UserId -> Text -> m (Either Text CommentId)
 createComment handle postId userId text = runEitherT $ do
@@ -23,6 +24,7 @@ createComment handle postId userId text = runEitherT $ do
   _ <- lift $ createPostCommentRecord handle commentId postId
   return commentId
 
+-- | Get Comment record if exists
 getCommentRecord :: Monad m => Handle m -> CommentId -> m (Either Text Comment)
 getCommentRecord handle commentId = do
   let logh = hLogger handle
@@ -50,6 +52,7 @@ getCommentRecord handle commentId = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Get last Comment record if exists
 getLastCommentRecord :: Monad m => Handle m -> m (Either Text CommentId)
 getLastCommentRecord handle = do
   let logh = hLogger handle
@@ -71,7 +74,7 @@ getLastCommentRecord handle = do
       Logger.logError logh msg
       return $ Left msg
 
-
+-- | Insert Comment record
 insertCommentRecord :: Monad m => Handle m -> Text -> m ()
 insertCommentRecord handle text = do
   let logh = hLogger handle
@@ -82,6 +85,7 @@ insertCommentRecord handle text = do
     <> text
     <> "' was successfully inserted in db."
 
+-- | Insert User-Comment record
 createCommentUserRecord :: Monad m => Handle m -> CommentId -> UserId -> m ()
 createCommentUserRecord handle commentId userId = do
   let logh = hLogger handle
@@ -90,6 +94,7 @@ createCommentUserRecord handle commentId userId = do
         [toSql commentId, toSql userId]
   Logger.logInfo logh "Creating dependency between Comment and User."
 
+-- | Insert Post-Comment record
 createPostCommentRecord :: Monad m => Handle m -> CommentId -> PostId -> m ()
 createPostCommentRecord handle commentId postId = do
   let logh = hLogger handle
@@ -98,6 +103,7 @@ createPostCommentRecord handle commentId postId = do
         [toSql postId, toSql commentId]
   Logger.logInfo logh "Creating dependency between Post and Comment."
 
+-- | Create Comment from [SqlValue]
 newComment :: [SqlValue] -> Either Text Comment
 newComment [idCom, text] = return $ Comment {
   comment_id = fromSql idCom,

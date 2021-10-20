@@ -14,7 +14,9 @@ import Post.Server.Objects
 import Post.DB.Data
 import Post.Server.Util (convert)
 
--- | DB methods for Category
+{-- | DB methods for Category --}
+{-- | Create new Category and all category-Dependencies
+      if doesn't already exist Category with the same Title --}
 createCat :: Monad m => Handle m ->
              Title -> Maybe Title -> m (Either Text Title)
 createCat handle title subcat = do
@@ -29,6 +31,7 @@ createCat handle title subcat = do
       Logger.logInfo logh msg
       return $ Left msg
 
+-- | Insert Category record
 insertCat :: Monad m => Handle m ->
              Title -> Maybe Title -> m (Either Text Title)
 insertCat handle title subcat = do
@@ -36,12 +39,14 @@ insertCat handle title subcat = do
     Nothing -> insertCatWOSubRecord handle title
     Just subTitle -> insertCatWSub handle title subTitle
 
+-- | Edit Category record if exists
 editCat :: Monad m => Handle m -> 
            CategoryId -> Title -> Maybe Title -> m (Either Text CategoryId)
 editCat handle catId newTitle newSub = runEitherT $ do
   _ <- EitherT $ getCatRecordByCatId handle catId
   EitherT $ updateCat handle catId newTitle newSub
 
+-- | Update Category records if exists
 updateCat :: Monad m => Handle m ->
              CategoryId -> Title -> Maybe Title -> m (Either Text CategoryId)
 updateCat handle catId newTitle newSub = do
@@ -59,6 +64,7 @@ updateCat handle catId newTitle newSub = do
         Nothing -> updateCatWOSubRecord handle catId newTitle
         Just subTitle -> updateCatWSub handle catId newTitle subTitle
 
+-- | Insert Category with SubCategory
 insertCatWSub :: Monad m => Handle m -> Title -> Title -> m (Either Text Title)
 insertCatWSub handle title subTitle = runEitherT $ do
   _ <- EitherT $ checkIfChildCatIsValid handle title subTitle
@@ -66,6 +72,8 @@ insertCatWSub handle title subTitle = runEitherT $ do
   lift $ insertCatWSubRecord handle title subCatId
   return title
 
+{-- | Update Category with SubCategory 
+        if Category with subTitle doesn't exist --}
 updateCatWSub :: Monad m => Handle m ->
                  CategoryId -> Title -> Title -> m (Either Text CategoryId)
 updateCatWSub handle catId newTitle subTitle = runEitherT $ do
@@ -74,6 +82,7 @@ updateCatWSub handle catId newTitle subTitle = runEitherT $ do
   lift $ updateCatWSubRecord handle catId subCatId newTitle
   return catId
 
+-- | Get CategoryId by title if exists
 getCatId :: Monad m => Handle m -> Title -> m (Either Text CategoryId)
 getCatId handle title = do
   let logh = hLogger handle
@@ -101,6 +110,7 @@ getCatId handle title = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Get all Category records
 getCats :: Monad m => Handle m -> m (Either Text [Category])
 getCats handle = do
   let logh = hLogger handle
@@ -115,6 +125,7 @@ getCats handle = do
       catsE <- mapM (getSub handle) catcategories
       return $ sequenceA catsE
 
+-- | Compare title and subTitle of Categories
 checkIfChildCatIsValid :: Monad m => Handle m ->
                           Title -> Title -> m (Either Text ())
 checkIfChildCatIsValid handle title subTitle = do
@@ -126,6 +137,7 @@ checkIfChildCatIsValid handle title subTitle = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Get Category record by CategoryId if exists
 getCatRecordByCatId :: Monad m => Handle m ->
                        CategoryId -> m (Either Text Category)
 getCatRecordByCatId handle catId = do
@@ -149,12 +161,16 @@ getCatRecordByCatId handle catId = do
                   <> " in db!"
       Logger.logError logh msg
       return $ Left msg
-    
+
+-- | Get all children Categories of Category
 getCatChildren :: Monad m => Handle m -> CategoryId -> m (Either Text [CategoryId])
 getCatChildren handle catId = runEitherT $ do
   _ <- EitherT $ getCatRecordByCatId handle catId
-  EitherT $ getChildCatIdRecordsByCatId handle catId
+  EitherT $ getChildCatIdsByCatId handle catId
 
+{-- | Remove Category record with SubCategory 
+        - if Category hasn't any child Category
+        - if Category hasn't any Post-Category record --}
 removeCat :: Monad m => Handle m -> CategoryId -> m (Either Text CategoryId)
 removeCat handle catId = do
   let logh = hLogger handle
@@ -168,7 +184,7 @@ removeCat handle catId = do
       Logger.logWarning logh msg
       return $ Left msg
     Left _ -> do
-      postIdsE <- getCatPostRecords handle catId
+      postIdsE <- getCatPostIdsByCatId handle catId
       case postIdsE of
         Left _ -> do
           _ <- deleteCatRecord handle catId
@@ -181,8 +197,9 @@ removeCat handle catId = do
           Logger.logWarning logh msg
           return $ Left msg
 
-getCatPostRecords :: Monad m => Handle m -> CategoryId -> m (Either Text [PostId])
-getCatPostRecords handle catId = do
+-- | Get all [PostId] of Category
+getCatPostIdsByCatId :: Monad m => Handle m -> CategoryId -> m (Either Text [PostId])
+getCatPostIdsByCatId handle catId = do
   let logh = hLogger handle
   postsIdSql <- selectFromWhere handle tablePostCat
                  [colIdPostPostCat]
@@ -200,9 +217,10 @@ getCatPostRecords handle catId = do
                           \Post and Category from db."
       return $ Right $ map fromSql $ concat postIds
 
-getChildCatIdRecordsByCatId :: Monad m => Handle m ->
+-- | Get all child [CategoryId] of category
+getChildCatIdsByCatId :: Monad m => Handle m ->
                                CategoryId -> m (Either Text [CategoryId])
-getChildCatIdRecordsByCatId handle catId = do
+getChildCatIdsByCatId handle catId = do
   let logh = hLogger handle
   childCatIdSql <- selectFromWhere handle tableCats
                     [colIdCat]
@@ -221,6 +239,7 @@ getChildCatIdRecordsByCatId handle catId = do
         <> " has child Category."
       return $ Right $ map fromSql $ concat childCatIds
 
+-- | Insert Category record with SubCategory
 insertCatWSubRecord :: Monad m => Handle m -> Title -> CategoryId -> m ()
 insertCatWSubRecord handle title subCatId = do
   let logh = hLogger handle
@@ -229,6 +248,7 @@ insertCatWSubRecord handle title subCatId = do
         [toSql title, toSql subCatId]
   Logger.logInfo logh "Category was successfully inserted in db."
 
+-- | Insert Category record without SubCategory
 insertCatWOSubRecord :: Monad m => Handle m -> Title -> m (Either Text Title)
 insertCatWOSubRecord handle title = do
   let logh = hLogger handle
@@ -238,6 +258,7 @@ insertCatWOSubRecord handle title = do
   Logger.logInfo logh "Category was successfully inserted in db."
   return $ Right title
 
+-- | Update Category record with SubCategory
 updateCatWSubRecord :: Monad m => Handle m ->
                        CategoryId -> CategoryId -> Title -> m ()
 updateCatWSubRecord handle catId subId newTitle = do
@@ -251,6 +272,7 @@ updateCatWSubRecord handle catId subId newTitle = do
     <> convert catId
     <> " in db."
 
+-- | Update Category record without SubCategory
 updateCatWOSubRecord :: Monad m => Handle m ->
                         CategoryId -> Title -> m (Either Text CategoryId)
 updateCatWOSubRecord handle catId newTitle = do
@@ -265,6 +287,7 @@ updateCatWOSubRecord handle catId newTitle = do
     <> " in db."
   return $ Right catId
 
+-- | Delete Category record
 deleteCatRecord :: Monad m => Handle m -> CategoryId -> m ()
 deleteCatRecord handle catId = do
   let logh = hLogger handle
@@ -275,6 +298,7 @@ deleteCatRecord handle catId = do
     <> convert catId
     <> " from db."
 
+-- | Create Category from [SqlValue]
 newCat :: Monad m => Handle m -> [SqlValue] -> m (Either Text Category)
 newCat handle [idCat, title, subId] = do
   catSubE <- getCatRecordByCatId handle $ fromSql subId

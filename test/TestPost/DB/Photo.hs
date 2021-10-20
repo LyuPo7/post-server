@@ -118,8 +118,8 @@ spec_getPhotoRecordById = describe "Testing getPhotoRecordById" $ do
           msg = "No exists Photo with id: 101 in db!"
       user `shouldBe` (Identity $ Left msg)
 
-spec_getPhotoRecordByName :: Spec
-spec_getPhotoRecordByName = describe "Testing getPhotoRecordByName" $ do
+spec_getPhotoIdByName :: Spec
+spec_getPhotoIdByName = describe "Testing getPhotoIdByName" $ do
     it "Should successfully return PhotoId for array of one element" $ do
       let photoLink = "image/new-11.png" :: Link
           photoId = 11 :: PhotoId
@@ -127,7 +127,7 @@ spec_getPhotoRecordByName = describe "Testing getPhotoRecordByName" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPhotoA
           }
-          photoIdE = DBPh.getPhotoRecordByName dbqh' photoLink
+          photoIdE = DBPh.getPhotoIdByName dbqh' photoLink
       photoIdE `shouldBe` (Identity $ Right photoId)
     it "Should fail on array of many elements" $ do
       let photoLink = "image/new-11.png" :: Link
@@ -140,7 +140,7 @@ spec_getPhotoRecordByName = describe "Testing getPhotoRecordByName" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPhotoA
           }
-          photoIdE = DBPh.getPhotoRecordByName dbqh' photoLink
+          photoIdE = DBPh.getPhotoIdByName dbqh' photoLink
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Photo: \
                 \'image/new-11.png' in db!"
@@ -150,7 +150,7 @@ spec_getPhotoRecordByName = describe "Testing getPhotoRecordByName" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          photoIdE = DBPh.getPhotoRecordByName dbqh' photoLink
+          photoIdE = DBPh.getPhotoIdByName dbqh' photoLink
           msg = "No exists Photo: \
                 \'image/new-11.png' in db!"
       photoIdE `shouldBe` (Identity $ Left msg)

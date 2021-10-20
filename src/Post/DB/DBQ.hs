@@ -12,6 +12,7 @@ import qualified Post.DB.DBQImpl as DBQImpl
 import qualified Post.Server.Methods.Photo as MPh
 import qualified Post.Server.Token as Token
 
+-- | DBQ IO Handle
 withHandleIO :: Logger.Handle IO -> DBSpec.Handle IO ->
                 DBSpec.Config -> (Handle IO -> IO a) -> IO a
 withHandleIO logger dbh config f = do

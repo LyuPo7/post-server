@@ -14,13 +14,15 @@ import Post.Server.Objects
 import Post.DB.Data
 import Post.Server.Util (convert)
 
--- | DB methods for Draft
+{-- | DB methods for Draft --}
+{-- | Create new Draft and all Draft-Dependencies
+      if doesn't already exist Draft of Post with PostId --}
 createDraft :: Monad m => Handle m -> PostId -> Text -> m (Either Text DraftId)
 createDraft handle postId text = do
   let logh = hLogger handle
   draftIdE <- runEitherT $ do
     _ <- EitherT $ DBP.getPostRecord handle postId
-    EitherT $ DBP.getPostDraftRecord handle postId
+    EitherT $ DBP.getPostDraftIdByPostId handle postId
   case draftIdE of
     Left _ -> runEitherT $ do
       _ <- lift $ insertDraftRecord handle text postId
@@ -34,23 +36,26 @@ createDraft handle postId text = do
       Logger.logWarning logh msg
       return $ Left msg
 
+-- | Remove Draft record if exists
 removeDraft :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
 removeDraft handle postId = runEitherT $ do
-  draftId <- EitherT $ DBP.getPostDraftRecord handle postId
+  draftId <- EitherT $ DBP.getPostDraftIdByPostId handle postId
   lift $ deleteDraftRecord handle draftId
   _ <- lift $ DBP.removePostDraftDep handle postId
   return draftId
 
+-- | Edit Draft record if exists
 editDraft :: Monad m => Handle m -> PostId -> Text -> m (Either Text DraftId)
 editDraft handle postId newText = runEitherT $ do
-  draftId <- EitherT $ DBP.getPostDraftRecord handle postId
+  draftId <- EitherT $ DBP.getPostDraftIdByPostId handle postId
   EitherT $ updateDraftRecord handle draftId newText
 
+-- | Publish Draft record if exists
 publishDraft :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
 publishDraft handle postId = do
   let logh = hLogger handle
   draftIdTextE <- runEitherT $ do
-    draftId <- EitherT $ DBP.getPostDraftRecord handle postId
+    draftId <- EitherT $ DBP.getPostDraftIdByPostId handle postId
     text <- EitherT $ getDraftText handle draftId
     return (draftId, text)
   case draftIdTextE of
@@ -60,6 +65,7 @@ publishDraft handle postId = do
       Logger.logWarning logh "Publishing Draft"
       return $ Right draftId
 
+-- | Get all Draft records corresponding [DraftId] if exist
 getDraftRecords :: Monad m => Handle m -> [DraftId] -> m (Either Text [Draft])
 getDraftRecords handle draftIds = do
   let logh = hLogger handle
@@ -75,6 +81,7 @@ getDraftRecords handle draftIds = do
       Logger.logInfo logh "Getting Drafts from db."
       return $ traverse newDraft idTexts
 
+-- | Get last Draft record if exists
 getLastDraftRecord :: Monad m => Handle m -> m (Either Text DraftId)
 getLastDraftRecord handle = do
   let logh = hLogger handle
@@ -96,6 +103,7 @@ getLastDraftRecord handle = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Update Draft record
 updateDraftRecord :: Monad m => Handle m -> DraftId -> Text -> m (Either Text DraftId)
 updateDraftRecord handle draftId text = do
   let logh = hLogger handle
@@ -109,6 +117,7 @@ updateDraftRecord handle draftId text = do
     <> "."
   return $ Right draftId
 
+-- | Update Post record (update Post's Text when publish Draft)
 updatePostRecord :: Monad m => Handle m -> PostId -> Text -> m (Either Text PostId)
 updatePostRecord handle postId text = do
   let logh = hLogger handle
@@ -122,6 +131,7 @@ updatePostRecord handle postId text = do
     <> "in db."
   return $ Right postId
 
+-- | Get Draft Text
 getDraftText :: Monad m => Handle m -> DraftId -> m (Either Text Text)
 getDraftText handle draftId = do
   let logh = hLogger handle
@@ -148,6 +158,7 @@ getDraftText handle draftId = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Insert Draft record
 insertDraftRecord :: Monad m => Handle m -> Text -> PostId -> m ()
 insertDraftRecord handle text postId = do
   let logh = hLogger handle
@@ -156,6 +167,7 @@ insertDraftRecord handle text postId = do
         [toSql text, toSql postId]
   Logger.logInfo logh "Draft was successfully inserted in db."
 
+-- | Delete Draft record
 deleteDraftRecord :: Monad m => Handle m -> DraftId -> m ()
 deleteDraftRecord handle draftId = do
   let logh = hLogger handle
@@ -166,6 +178,7 @@ deleteDraftRecord handle draftId = do
     <> convert draftId
     <> " from db."
 
+-- | Create Draft from [SqlValue]
 newDraft :: [SqlValue] -> Either Text Draft
 newDraft [idDraft, text, idPost] = return $ Draft {
   draft_text = fromSql text,

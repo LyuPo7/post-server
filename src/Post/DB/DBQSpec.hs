@@ -20,7 +20,7 @@ import Post.DB.Data
 import Post.Server.Objects (Token, PostId)
 import Post.Server.Util (convert, sqlAtoText, sqlDAtoText)
 
--- | Tag Handle
+-- | DBQ Handle
 data Handle m = Handle {
   hLogger :: Logger.Handle m,
   hDB :: DBSpec.Handle m,
@@ -44,6 +44,7 @@ selectFromWhere handle table colSelect colWhere values = do
       $ "Error: Error in selectFromWhere!\n"
       <> show msg
 
+-- | Build SELECT FROM WHERE query
 queryFromWhere :: Monad m => Table ->
                  [Column] -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
 queryFromWhere table colSelect colWhere values = do
@@ -73,6 +74,7 @@ selectFromWhereIn handle table colSelect colWhere values = do
       $ "Error: Error in selectFromWhereIn!\n"
       <> show msg
 
+-- | Build SELECT FROM WHERE IN query
 queryFromWhereIn :: Monad m => Table ->
                    [Column] -> Column -> [SqlValue] -> m (Either Text DbQuery)
 queryFromWhereIn table colSelect colWhere values = do
@@ -101,6 +103,7 @@ selectFrom handle table colSelect = do
     Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in selectFrom!\n"
       <> show msg
 
+-- | Build SELECT FROM query
 queryFrom :: Monad m => Table -> [Column] -> m (Either Text DbQuery)
 queryFrom table colSelect = do
   let action | null colSelect = do
@@ -125,6 +128,7 @@ selectFromOrderLimit handle table colSelect colOrder limit = do
       $ "Error: Error in selectFromOrderLimit!\n"
       <> show msg
 
+-- | Build SELECT FROM ORDER LIMIT query
 queryFromOrderLimit :: Monad m => Table ->
                       [Column] -> Column -> Integer -> m (Either Text DbQuery)
 queryFromOrderLimit table colSelect colOrder limit = do
@@ -151,6 +155,7 @@ deleteWhere handle table colWhere values = do
     Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in deleteWhere!\n"
       <> show msg
 
+-- | Build DELETE FROM WHERE query
 queryDeleteWhere :: Monad m =>
                     Table -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
 queryDeleteWhere table colWhere values = do
@@ -180,6 +185,7 @@ insertIntoValues handle table colInsert values = do
       $ "Error: Error in insertIntoValues!\n"
       <> show msg
 
+-- | Build INSERT INTO VALUES query
 queryInsertIntoValues :: Monad m =>
                          Table -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
 queryInsertIntoValues table colInsert values = do
@@ -211,6 +217,7 @@ updateSetWhere handle table colSet colWhere valSet valWhere = do
       $ "Error: Error in updateSetWhere!\n"
       <> show msg
 
+-- | Build UPDATE INTO VALUES query
 queryUpdateSetWhere :: Monad m => Table ->[Column] -> [Column] ->
                       [SqlValue] -> [SqlValue] -> m (Either Text DbQuery)
 queryUpdateSetWhere table colSet colWhere valSet valWhere = do
@@ -249,6 +256,7 @@ specialQuery handle table column dbParams = do
       $ "Error: Error in specialQuery!\n"
       <> show msg
 
+-- | Build Special query for Posts
 querySpecialPosts :: Monad m => Table -> Column -> DbQuery -> m (Either Text DbQuery)
 querySpecialPosts table column dbParams = do
   let query = "SELECT "
@@ -275,6 +283,7 @@ searchPost handle params = do
       return $ map fromSql $ concat idPosts
     Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
+-- | Build Query Search Post
 querySearchPost :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 querySearchPost handle args = do
   let logh = hLogger handle
@@ -295,6 +304,7 @@ querySearchPost handle args = do
           Logger.logInfo logh msg
           return $ Right ("", [])
 
+-- | Convert key in PostQuery to DbQueryString
 keyPostToDb :: Monad m => Handle m -> PostQuery -> m (Either Text Text)
 keyPostToDb handle postQuery = do
   let logh = hLogger handle
@@ -331,6 +341,7 @@ searchCat handle params = do
       return $ map fromSql $ concat idPosts
     Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
+-- | Build Query Search Category
 querySearchCat :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 querySearchCat handle args = do
   let logh = hLogger handle
@@ -353,6 +364,7 @@ querySearchCat handle args = do
           Logger.logInfo logh msg
           return $ Right ("", [])                   
 
+-- | Convert key in PostQuery to DbQueryString
 keyCatToDb :: Monad m => Handle m -> PostQuery -> m (Either Text Text)
 keyCatToDb handle ("category", valueM) = do
   let logh = hLogger handle
@@ -393,6 +405,7 @@ searchTag handle params = do
       return $ map fromSql $ concat idPosts
     Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
+-- | Build Query Search Tag
 querySearchTag :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 querySearchTag handle [] = do
   let logh = hLogger handle
@@ -420,6 +433,7 @@ querySearchTag handle _ = do
   Logger.logError logh "querySearchTag function: Used more than one keys: ['tag', 'tag__in', 'tag__all']"
   return $ Left "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
 
+-- | Convert key in PostQuery to DbQueryString
 keyTagToDb :: Monad m => Handle m -> Text -> Int -> m (Either Text Text)
 keyTagToDb handle key n = do
   let logh = hLogger handle
@@ -456,6 +470,7 @@ searchAuthor handle params = do
       return $ map fromSql $ concat idPosts
     Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
+-- | Build Query Search Author
 querySearchAuthor :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 querySearchAuthor handle [] = do
   let logh = hLogger handle
@@ -536,6 +551,7 @@ findIn handle params = do
     Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in searchAuthor!\n"
       <> show msg
 
+-- | Build Query Find Post in Posts
 findInPosts :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 findInPosts handle [] = do
   let logh = hLogger handle
@@ -569,6 +585,7 @@ findInPosts handle _ = do
   Logger.logError logh msg
   return $ Left msg
 
+-- | Build Query Find Post in Authors
 findInAuthors :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 findInAuthors handle [] = do
   let logh = hLogger handle
@@ -611,6 +628,7 @@ findInAuthors handle _ = do
   Logger.logError logh msg
   return $ Left msg
 
+-- | Build Query Find Post in Categories
 findInCats :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 findInCats handle [] = do
   let logh = hLogger handle
@@ -648,6 +666,7 @@ findInCats handle _ = do
   Logger.logError logh msg
   return $ Left msg
 
+-- | Build Query Find Post in Tags
 findInTags :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
 findInTags handle [] = do
   let logh = hLogger handle
@@ -697,6 +716,7 @@ sortQuery handle params ids = do
     Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in searchAuthor!\n"
       <> show msg
 
+-- | Build Sort query
 querySort :: Monad m => Handle m ->
              [PostQuery] -> [SqlValue] -> m (Either Text DbQuery)
 querySort handle [] ids = do

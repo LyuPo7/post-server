@@ -157,57 +157,6 @@ spec_getUserIdRecordByToken = describe "Testing getUserIdRecordByToken" $ do
           msg = "Incorrect token: '32d1c72f-e962-48c5-9b32-5c386e6f0ec9'."
       isAdminE `shouldBe` (Identity $ Left msg)
 
-spec_getAuthorIdRecordByUserId :: Spec
-spec_getAuthorIdRecordByUserId = describe "Testing getAuthorIdRecordByUserId" $ do
-    it "Should successfully return AuthorId for array of one element" $ do
-      let userId = 100 :: UserId
-          authorId = 22 :: AuthorId
-          sqlUserA = [[toSql authorId]]
-          dbqh' = H.dbqh {
-            DBQSpec.makeDBRequest = \_ -> return sqlUserA
-          }
-          authorIdE = DBAc.getAuthorIdRecordByUserId dbqh' userId
-      authorIdE `shouldBe` (Identity $ Right authorId)
-    it "Should fail on empty array" $ do
-      let userId = 100
-          dbqh' = H.dbqh {
-            DBQSpec.makeDBRequest = \_ -> return []
-          }
-          authorIdE = DBAc.getAuthorIdRecordByUserId dbqh' userId
-          msg = "No exists Author corresponding to User with id: 100 in db!"
-      authorIdE `shouldBe` (Identity $ Left msg)
-    it "Should fail on array of many elements" $ do
-      let userId = 100 :: UserId
-          authorId1 = 22 :: AuthorId
-          authorId2 = 30 :: AuthorId
-          sqlUserA = [
-            [toSql authorId1],
-            [toSql authorId2]]
-          dbqh' = H.dbqh {
-            DBQSpec.makeDBRequest = \_ -> return sqlUserA
-          }
-          authorIdE = DBAc.getAuthorIdRecordByUserId dbqh' userId
-          msg = "Violation of Unique record in db: \
-                \exist more than one record Author-User \
-                \record for User with Id: 100 in db!"
-      authorIdE `shouldBe` (Identity $ Left msg)
-    it "Should fail on inner array of many elements" $ do
-      let userId = 100 :: UserId
-          authorId1 = 22 :: AuthorId
-          authorId2 = 30 :: AuthorId
-          sqlUserA = [[
-            toSql authorId1,
-            toSql authorId2
-           ]]
-          dbqh' = H.dbqh {
-            DBQSpec.makeDBRequest = \_ -> return sqlUserA
-          }
-          authorIdE = DBAc.getAuthorIdRecordByUserId dbqh' userId
-          msg = "Violation of Unique record in db: \
-                \exist more than one record Author-User \
-                \record for User with Id: 100 in db!"
-      authorIdE `shouldBe` (Identity $ Left msg)
-
 spec_checkAuthorWritePerm :: Spec
 spec_checkAuthorWritePerm = describe "Testing checkAuthorWritePerm" $ do
     it "Should successfully return AuthorWritePerm for array of one element" $ do

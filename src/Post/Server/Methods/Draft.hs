@@ -20,6 +20,7 @@ import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
+-- | Create getDrafts Response
 getDraftsResp :: Monad m => Handle m -> Query -> m Response
 getDraftsResp handle query = do
   let logh = hLogger handle
@@ -29,13 +30,13 @@ getDraftsResp handle query = do
     givenToken <- EitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
-    EitherT $ DBU.getAuthorUserRecord dbqh userId
+    EitherT $ DBU.getAuthorIdByUserId dbqh userId
   case authorIdE of
     Left _ -> return resp404
     Right authorId -> do
       draftsE <- runEitherT $ do
-        postIds <- EitherT $ DBA.getAuthorPostRecord dbqh authorId
-        draftIds <- EitherT $ DBP.getPostDraftRecords dbqh postIds
+        postIds <- EitherT $ DBA.getPostIdsByAuthorId dbqh authorId
+        draftIds <- EitherT $ DBP.getPostDraftIdsByPostIds dbqh postIds
         EitherT $ DBD.getDraftRecords dbqh draftIds
       case draftsE of
         Right drafts -> do
@@ -44,6 +45,7 @@ getDraftsResp handle query = do
         Left msg -> return $ respError msg
   where authParams = ["token"]
 
+-- | Create createDraft Response
 createDraftResp :: Monad m => Handle m -> Query -> m Response
 createDraftResp handle query = do
   let logh = hLogger handle
@@ -79,6 +81,7 @@ createDraftResp handle query = do
       authParams = ["token"]
       params = ["post_id", "text"]
 
+-- | Create removeDrafts Response
 removeDraftResp :: Monad m => Handle m -> Query -> m Response
 removeDraftResp handle query = do
   let logh = hLogger handle
@@ -114,6 +117,7 @@ removeDraftResp handle query = do
       authParams = ["token"]
       params = ["post_id"]
 
+-- | Create editDrafts Response
 editDraftResp :: Monad m => Handle m -> Query -> m Response
 editDraftResp handle query = do
   let logh = hLogger handle
@@ -149,6 +153,7 @@ editDraftResp handle query = do
       authParams = ["token"]
       params = ["post_id", "text"]
 
+-- | Create publishDrafts Response
 publishDraftResp :: Monad m => Handle m -> Query -> m Response
 publishDraftResp handle query = do
   let logh = hLogger handle

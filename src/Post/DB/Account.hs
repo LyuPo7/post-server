@@ -14,11 +14,13 @@ import Crypto.Scrypt (Pass(..), EncryptedPass(..),
 import Post.DB.DBQSpec
 import qualified Post.Logger as Logger
 import qualified Post.DB.Post as DBP
+import qualified Post.DB.Author as DBA
 import Post.Server.Objects
 import Post.DB.Data
-import Post.Server.Util (convert)
 
--- | DB methods for Account
+{-- | DB methods for Account --}
+{-- | Create new for User Token 
+        - verify by Password if Login exist --}
 getToken :: Monad m => Handle m -> Login -> Password -> m (Either Text Token)
 getToken handle login password = do
   let logh = hLogger handle
@@ -35,6 +37,7 @@ getToken handle login password = do
       return $ Right newUserToken
     Left msg -> return $ Left msg
 
+-- | Compare truePass and intentPass
 checkPassword :: Monad m => Handle m ->
                  Password -> Password -> m (Either Text ())
 checkPassword handle truePass intentPass = do
@@ -51,6 +54,7 @@ checkPassword handle truePass intentPass = do
       Logger.logError logh msg 
       return $ Left msg
 
+-- | Check if User has Admin Permissions by Token
 checkAdminPerm :: Monad m => Handle m -> Text -> m Permission
 checkAdminPerm handle userToken = do
   let logh = hLogger handle
@@ -63,6 +67,7 @@ checkAdminPerm handle userToken = do
       return AdminPerm
     Left _ -> return NoPerm
 
+-- | Check if User has User Permissions by Token
 checkUserPerm :: Monad m => Handle m -> Text -> m Permission
 checkUserPerm handle userToken = do
   let logh = hLogger handle
@@ -73,6 +78,7 @@ checkUserPerm handle userToken = do
       Logger.logInfo logh "User authentication is successfull."
       return UserPerm
 
+-- | Check if User has Author Write Permissions by Token
 checkAuthorWritePerm :: Monad m => Handle m -> Text -> m Permission
 checkAuthorWritePerm handle userToken = do
   let logh = hLogger handle
@@ -85,11 +91,12 @@ checkAuthorWritePerm handle userToken = do
       Logger.logInfo logh "Given access for Post creation."
       return AuthorWritePerm
 
+-- | Check if User has Author Read Permissions by Token
 checkAuthorReadPerm :: Monad m => Handle m -> Text -> PostId -> m Permission
 checkAuthorReadPerm handle userToken postId = do
   let logh = hLogger handle
   perm <- runEitherT $ do
-    authorPostId <- EitherT $ DBP.getPostAuthorRecord handle postId
+    authorPostId <- EitherT $ DBP.getPostAuthorIdbyPostId handle postId
     authorId <- EitherT $ getAuthorId handle userToken
     guard $ authorId == authorPostId
   case perm of
@@ -98,43 +105,13 @@ checkAuthorReadPerm handle userToken postId = do
       return AuthorReadPerm
     Left _ -> return NoPerm
 
+-- | Get AuthorId by Token if exists
 getAuthorId :: Monad m => Handle m -> Text -> m (Either Text AuthorId)
 getAuthorId handle authorToken = runEitherT $ do
   userId <- EitherT $ getUserIdRecordByToken  handle authorToken
-  EitherT $ getAuthorIdRecordByUserId handle userId
+  EitherT $ DBA.getAuthorIdByUserId handle userId
 
-getAuthorIdRecordByUserId :: Monad m => Handle m ->
-                             UserId -> m (Either Text AuthorId)
-getAuthorIdRecordByUserId handle userId = do
-  let logh = hLogger handle
-  Logger.logInfo logh $ "Getting AuthorId corresponding to User with id: "
-    <> convert userId
-    <> " from db."
-  authorIdSql <- selectFromWhere handle tableAuthorUser
-                  [colIdAuthorAuthorUser]
-                  [colIdUserAuthorUser]
-                  [toSql userId]
-  case authorIdSql of
-    [] -> do
-      let msg = "No exists Author corresponding to User with id: "
-            <> convert userId
-            <> " in db!"
-      Logger.logWarning logh msg
-      return $ Left msg
-    [[authorId]] -> do
-      Logger.logInfo logh $ "Getting AuthorId corresponding to UserId: "
-        <> convert userId
-        <> " from db."
-      return $ Right $ fromSql authorId
-    _ -> do
-      let msg = "Violation of Unique record in db: \
-                \exist more than one record Author-User \
-                \record for User with Id: "
-                  <> convert userId
-                  <> " in db!"
-      Logger.logError logh msg
-      return $ Left msg
-
+-- | Get UserId by Token if exists
 getUserIdRecordByToken :: Monad m => Handle m -> Text -> m (Either Text UserId)
 getUserIdRecordByToken handle userToken = do
   let logh = hLogger handle
@@ -155,6 +132,7 @@ getUserIdRecordByToken handle userToken = do
       Logger.logWarning logh msg 
       return $ Left msg
 
+-- | Get 'is_admin' by Token if exists
 getIsAdminRecordByToken :: Monad m => Handle m -> Text -> m (Either Text Bool)
 getIsAdminRecordByToken handle userToken = do
   let logh = hLogger handle
@@ -175,6 +153,7 @@ getIsAdminRecordByToken handle userToken = do
       Logger.logWarning logh msg 
       return $ Left msg
 
+-- | Get Password by Login
 getPasswordRecordByLogin :: Monad m => Handle m ->
                             Login -> m (Either Text Password)
 getPasswordRecordByLogin handle login = do
@@ -194,6 +173,7 @@ getPasswordRecordByLogin handle login = do
       Logger.logError logh msg 
       return $ Left msg
 
+-- | Update Token in User record
 updateTokenRecord :: Monad m => Handle m -> Login -> Token -> m ()
 updateTokenRecord handle login userToken = do
   let logh = hLogger handle

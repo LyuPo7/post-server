@@ -7,7 +7,7 @@ import qualified Data.Text as T
 
 import Post.Server.Objects (Token)
 
--- | createToken
+-- | Create Token
 createToken :: IO Token
 createToken = do
   token <- fmap show V4.nextRandom

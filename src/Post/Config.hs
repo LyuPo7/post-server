@@ -14,7 +14,7 @@ import qualified Post.Logger as Logger
 import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 
--- | General Bot Config
+-- | General Post Server Config
 data Config = Config {
   cLogger :: Logger.Config,
   cDB :: DBSpec.Config,
@@ -37,6 +37,7 @@ getConfig = do
     Right cnfg -> return cnfg
     Left err -> Exc.throwIO err
 
+-- | Check config settings
 checkConfig :: Config -> Either E.PostError Config
 checkConfig config 
   | T.null $ DBSpec.dbname dbSet = Left E.ConfigDBNameEmptyError

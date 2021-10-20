@@ -9,7 +9,7 @@ import Data.Aeson.Types (ToJSON(..), FromJSON(..),
                          genericToJSON, defaultOptions, 
                          fieldLabelModifier, genericParseJSON)
 
--- Synonims
+-- Synonyms
 type UserId = Integer
 type AuthorId = Integer
 type CategoryId = Integer
@@ -28,28 +28,12 @@ type Link = Text
 type Admin = Text
 type Token = Text
 
--- | Account
-data Account = Account {
-  account_id :: UserId,
-  account_token :: Token,
-  account_password :: Password,
-  account_login :: Login,
-  account_user :: User
-} deriving (Show,Generic)
-
-instance FromJSON Account where
-  parseJSON = genericParseJSON defaultOptions {
-    fieldLabelModifier = camelTo2 '_' . drop 8 }
-
-instance ToJSON Account where
-  toJSON = genericToJSON defaultOptions {
-    fieldLabelModifier = camelTo2 '_' . drop 8 }
-
 -- | Permission
-data Permission = AdminPerm 
-                | AuthorReadPerm 
-                | AuthorWritePerm 
-                | UserPerm 
+data Permission = AdminPerm -- All Admin permissions.
+                | AuthorReadPerm  -- Access to create Posts.
+                | AuthorWritePerm -- Access to get/publish Drafts a
+                                  -- and set Photos for Post.
+                | UserPerm -- All User Permissions.
                 | NoPerm
                 deriving (Show, Eq, Ord)
 

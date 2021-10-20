@@ -4,6 +4,7 @@ module Post.Exception where
 
 import Control.Exception (Exception)
 
+-- | Post Server Errors
 data PostError = ConfigLoggerRangeError
                | ConfigDBNameEmptyError
                | ConfigServerHostEmptyError

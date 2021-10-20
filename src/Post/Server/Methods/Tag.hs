@@ -16,6 +16,7 @@ import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
+-- | Create getTags Response
 getTagsResp :: Monad m => Handle m -> Query -> m Response
 getTagsResp handle query = do
   let logh = hLogger handle
@@ -39,6 +40,7 @@ getTagsResp handle query = do
     where
       authParams = ["token"]
 
+-- | Create createTag Response
 createTagResp :: Monad m => Handle m -> Query -> m Response
 createTagResp handle query = do
   let logh = hLogger handle
@@ -66,6 +68,7 @@ createTagResp handle query = do
       authParams = ["token"]
       params = ["title"]
 
+-- | Create removeTag Response
 removeTagResp :: Monad m => Handle m -> Query -> m Response
 removeTagResp handle query = do
   let logh = hLogger handle
@@ -94,6 +97,7 @@ removeTagResp handle query = do
       authParams = ["token"]
       params = ["title", "token"]
 
+-- | Create editTag Response
 editTagResp :: Monad m => Handle m -> Query -> m Response
 editTagResp handle query = do
   let logh = hLogger handle

@@ -13,8 +13,8 @@ import qualified Post.DB.Author as DBA
 import qualified Post.DB.DBQSpec as DBQSpec
 import Post.Server.Objects
 
-spec_getAuthorUserRecord :: Spec
-spec_getAuthorUserRecord = describe "Testing getAuthorUserRecord" $ do
+spec_getAuthorIdByUserId :: Spec
+spec_getAuthorIdByUserId = describe "Testing getAuthorIdByUserId" $ do
     it "Should successfully return AuthorId for array of one element" $ do
       let userId = 100 :: UserId
           authorId = 22 :: AuthorId
@@ -22,14 +22,14 @@ spec_getAuthorUserRecord = describe "Testing getAuthorUserRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          authorIdE = DBA.getAuthorUserRecord dbqh' userId
+          authorIdE = DBA.getAuthorIdByUserId dbqh' userId
       authorIdE `shouldBe` (Identity $ Right authorId)
     it "Should fail on empty array" $ do
       let userId = 100
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorIdE = DBA.getAuthorUserRecord dbqh' userId
+          authorIdE = DBA.getAuthorIdByUserId dbqh' userId
           msg = "No exists Author corresponding to User with id: 100 in db!"
       authorIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on array of many elements" $ do
@@ -42,14 +42,14 @@ spec_getAuthorUserRecord = describe "Testing getAuthorUserRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          authorIdE = DBA.getAuthorUserRecord dbqh' userId
+          authorIdE = DBA.getAuthorIdByUserId dbqh' userId
           msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for User with Id: \
                 \100 in db!"
       authorIdE `shouldBe` (Identity $ Left msg)
 
-spec_getAuthorPostRecord :: Spec
-spec_getAuthorPostRecord = describe "Testing getAuthorPostRecord" $ do
+spec_getPostIdsByAuthorId :: Spec
+spec_getPostIdsByAuthorId = describe "Testing getPostIdsByAuthorId" $ do
     it "Should successfully return [PostId] for array of one element" $ do
       let authorId = 11 :: AuthorId
           postId = 15 :: PostId
@@ -57,7 +57,7 @@ spec_getAuthorPostRecord = describe "Testing getAuthorPostRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          postIdsE = DBA.getAuthorPostRecord dbqh' authorId
+          postIdsE = DBA.getPostIdsByAuthorId dbqh' authorId
       postIdsE `shouldBe` (Identity $ Right [postId])
     it "Should successfully return [PostId] for array of many elements" $ do
       let authorId = 11 :: AuthorId
@@ -72,14 +72,14 @@ spec_getAuthorPostRecord = describe "Testing getAuthorPostRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          postIdsE = DBA.getAuthorPostRecord dbqh' authorId
+          postIdsE = DBA.getPostIdsByAuthorId dbqh' authorId
       postIdsE `shouldBe` (Identity $ Right [postId1, postId2, postId3])
     it "Should fail on empty array" $ do
       let authorId = 11 :: AuthorId
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          postIdsE = DBA.getAuthorPostRecord dbqh' authorId
+          postIdsE = DBA.getPostIdsByAuthorId dbqh' authorId
           msg = "No Posts corresponding to Author with id: 11 in db!"
       postIdsE `shouldBe` (Identity $ Left msg)
 
@@ -122,8 +122,8 @@ spec_getAuthorRecords = describe "Testing getAuthorRecords" $ do
           msg = "No Authors!"
       authorsE `shouldBe` (Identity $ Left msg)
 
-spec_getUserIdRecordByAuthorId :: Spec
-spec_getUserIdRecordByAuthorId = describe "Testing getUserIdRecordByAuthorId" $ do
+spec_getUserIdByAuthorId :: Spec
+spec_getUserIdByAuthorId = describe "Testing getUserIdByAuthorId" $ do
     it "Should successfully return UserId for array of one element" $ do
       let userId = 100 :: UserId
           authorId = 22 :: AuthorId
@@ -131,14 +131,14 @@ spec_getUserIdRecordByAuthorId = describe "Testing getUserIdRecordByAuthorId" $ 
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          userIdE = DBA.getUserIdRecordByAuthorId dbqh' authorId
+          userIdE = DBA.getUserIdByAuthorId dbqh' authorId
       userIdE `shouldBe` (Identity $ Right userId)
     it "Should fail on empty array" $ do
       let authorId = 100
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          userIdE = DBA.getUserIdRecordByAuthorId dbqh' authorId
+          userIdE = DBA.getUserIdByAuthorId dbqh' authorId
           msg = "No User corresponding to Author with id: 100 in db!"
       userIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on array of many elements" $ do
@@ -151,7 +151,7 @@ spec_getUserIdRecordByAuthorId = describe "Testing getUserIdRecordByAuthorId" $ 
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          userIdE = DBA.getUserIdRecordByAuthorId dbqh' authorId
+          userIdE = DBA.getUserIdByAuthorId dbqh' authorId
           msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for Author with Id: \
                 \100 in db!"

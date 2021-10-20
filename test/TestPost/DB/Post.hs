@@ -14,8 +14,8 @@ import qualified Post.DB.Post as DBP
 import qualified Post.DB.DBQSpec as DBQSpec
 import Post.Server.Objects
 
-spec_getPostDraftRecords :: Spec
-spec_getPostDraftRecords = describe "Testing getPostDraftRecords" $ do
+spec_getPostDraftIdsByPostIds :: Spec
+spec_getPostDraftIdsByPostIds = describe "Testing getPostDraftIdsByPostIds" $ do
     it "Should successfully return [DraftId] for array of one element" $ do
       let postId = 100 :: PostId
           draftId = 1 :: DraftId
@@ -23,7 +23,7 @@ spec_getPostDraftRecords = describe "Testing getPostDraftRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdsE = DBP.getPostDraftRecords dbqh' [postId]
+          draftIdsE = DBP.getPostDraftIdsByPostIds dbqh' [postId]
           check = [draftId]
       draftIdsE `shouldBe` (Identity $ Right check)
     it "Should successfully return [DraftId] for array of many elements" $ do
@@ -35,7 +35,7 @@ spec_getPostDraftRecords = describe "Testing getPostDraftRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdsE = DBP.getPostDraftRecords dbqh' [postId]
+          draftIdsE = DBP.getPostDraftIdsByPostIds dbqh' [postId]
           check = [draftId1, draftId2, draftId3]
       draftIdsE `shouldBe` (Identity $ Right check)
     it "Should fail on empty array" $ do
@@ -44,12 +44,12 @@ spec_getPostDraftRecords = describe "Testing getPostDraftRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          draftIdsE = DBP.getPostDraftRecords dbqh' [postId1, postId2]
+          draftIdsE = DBP.getPostDraftIdsByPostIds dbqh' [postId1, postId2]
           msg = "No exists Drafts corresponding to Posts with id: 100,105 in db!"
       draftIdsE `shouldBe` (Identity $ Left msg)
 
-spec_getPostDraftRecord :: Spec
-spec_getPostDraftRecord = describe "Testing getPostDraftRecord" $ do
+spec_getPostDraftIdByPostId :: Spec
+spec_getPostDraftIdByPostId = describe "Testing getPostDraftRecord" $ do
     it "Should successfully DraftId for array of one element" $ do
       let postId = 100 :: PostId
           draftId = 1 :: DraftId
@@ -57,7 +57,7 @@ spec_getPostDraftRecord = describe "Testing getPostDraftRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdE = DBP.getPostDraftRecord dbqh' postId
+          draftIdE = DBP.getPostDraftIdByPostId dbqh' postId
       draftIdE `shouldBe` (Identity $ Right draftId)
     it "Should fail on array of many elements" $ do
       let postId = 100 :: PostId
@@ -68,7 +68,7 @@ spec_getPostDraftRecord = describe "Testing getPostDraftRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdE = DBP.getPostDraftRecord dbqh' postId
+          draftIdE = DBP.getPostDraftIdByPostId dbqh' postId
           msg = "Violation of Unique record Post-Draft in db: \
                 \exist more than one record for Post with Id: \
                 \100 in db!"
@@ -82,7 +82,7 @@ spec_getPostDraftRecord = describe "Testing getPostDraftRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdE = DBP.getPostDraftRecord dbqh' postId
+          draftIdE = DBP.getPostDraftIdByPostId dbqh' postId
           msg = "Violation of Unique record Post-Draft in db: \
                 \exist more than one record for Post with Id: \
                 \100 in db!"
@@ -92,29 +92,29 @@ spec_getPostDraftRecord = describe "Testing getPostDraftRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          draftIdE = DBP.getPostDraftRecord dbqh' postId
+          draftIdE = DBP.getPostDraftIdByPostId dbqh' postId
           msg = "No exists Draft corresponding to Post with id: 100 in db!"
       draftIdE `shouldBe` (Identity $ Left msg)
 
-spec_getPostAddPhotoRecords :: Spec
-spec_getPostAddPhotoRecords = describe "Testing getPostAddPhotoRecords" $ do
+spec_getPostAddPhotoIdsByPostId :: Spec
+spec_getPostAddPhotoIdsByPostId = describe "Testing getPostAddPhotoIdsByPostId" $ do
     it "Should fail on empty array" $ do
       let postId = 100 :: PostId
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          addPhotosE = DBP.getPostAddPhotoRecords dbqh' postId
+          addPhotosE = DBP.getPostAddPhotoIdsByPostId dbqh' postId
           msg = "No exist Add Photos for Post with id: 100 in db!"
       addPhotosE `shouldBe` (Identity $ Left msg)
 
-spec_getPostMainPhotoRecords :: Spec
-spec_getPostMainPhotoRecords = describe "Testing getPostMainPhotoRecords" $ do
+spec_getPostMainPhotoIdByPostId :: Spec
+spec_getPostMainPhotoIdByPostId = describe "Testing getPostMainPhotoIdByPostId" $ do
     it "Should fail on empty array" $ do
       let postId = 100 :: PostId
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          addPhotosE = DBP.getPostMainPhotoRecords dbqh' postId
+          addPhotosE = DBP.getPostMainPhotoIdByPostId dbqh' postId
           msg = "No exists Main Photo for Post with id: 100 in db!"
       addPhotosE `shouldBe` (Identity $ Left msg)
     it "Should fail on array with many elements" $ do
@@ -125,7 +125,7 @@ spec_getPostMainPhotoRecords = describe "Testing getPostMainPhotoRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          addPhotosE = DBP.getPostMainPhotoRecords dbqh' postId
+          addPhotosE = DBP.getPostMainPhotoIdByPostId dbqh' postId
           msg = "Violation of Unique record Post-MainPhoto in db: \
                 \exist more than one record for Post with Id: \
                 \100 in db!"
@@ -138,14 +138,14 @@ spec_getPostMainPhotoRecords = describe "Testing getPostMainPhotoRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          addPhotosE = DBP.getPostMainPhotoRecords dbqh' postId
+          addPhotosE = DBP.getPostMainPhotoIdByPostId dbqh' postId
           msg = "Violation of Unique record Post-MainPhoto in db: \
                 \exist more than one record for Post with Id: \
                 \100 in db!"
       addPhotosE `shouldBe` (Identity $ Left msg)
 
-spec_getPostTagRecords :: Spec
-spec_getPostTagRecords = describe "Testing getPostTagRecords" $ do
+spec_getPostTagIdsByPostId :: Spec
+spec_getPostTagIdsByPostId = describe "Testing getPostTagIdsByPostId" $ do
     it "Should successfully return [TagId] for array of one element" $ do
       let postId = 100
           idTag = 1 :: PostId
@@ -153,7 +153,7 @@ spec_getPostTagRecords = describe "Testing getPostTagRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIds = DBP.getPostTagRecords dbqh' postId
+          tagIds = DBP.getPostTagIdsByPostId dbqh' postId
           check = [idTag]
       tagIds `shouldBe` (Identity $ Right check)
     it "Should successfully return [TagId] for array of many elements" $ do
@@ -165,7 +165,7 @@ spec_getPostTagRecords = describe "Testing getPostTagRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIds = DBP.getPostTagRecords dbqh' postId
+          tagIds = DBP.getPostTagIdsByPostId dbqh' postId
           check = [idTag1, idTag2, idTag3]
       tagIds `shouldBe` (Identity $ Right check)
     it "Should fail on empty array" $ do
@@ -173,12 +173,12 @@ spec_getPostTagRecords = describe "Testing getPostTagRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          tagIds = DBP.getPostTagRecords dbqh' postId
+          tagIds = DBP.getPostTagIdsByPostId dbqh' postId
           msg = "No exist Tags corresponding to Post with id: 100 in db!"
       tagIds `shouldBe` (Identity $ Left msg)
 
-spec_getPostCategoryRecord :: Spec
-spec_getPostCategoryRecord = describe "Testing getPostCategoryRecord" $ do
+spec_getPostCategoryIdByPostId :: Spec
+spec_getPostCategoryIdByPostId = describe "Testing getPostCategoryIdByPostId" $ do
     it "Should successfully CategoryId for array of one element" $ do
       let postId = 100 :: PostId
           catId = 1 :: CategoryId
@@ -186,7 +186,7 @@ spec_getPostCategoryRecord = describe "Testing getPostCategoryRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          catIdE = DBP.getPostCategoryRecord dbqh' postId
+          catIdE = DBP.getPostCategoryIdByPostId dbqh' postId
       catIdE `shouldBe` (Identity $ Right catId)
     it "Should fail on array of many elements" $ do
       let postId = 100 :: PostId
@@ -197,7 +197,7 @@ spec_getPostCategoryRecord = describe "Testing getPostCategoryRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          catIdE = DBP.getPostCategoryRecord dbqh' postId
+          catIdE = DBP.getPostCategoryIdByPostId dbqh' postId
           msg = "Violation of Unique record Post-Category in db: \
                 \exist more than one record for Post with Id: \
                 \100 in db!"
@@ -211,7 +211,7 @@ spec_getPostCategoryRecord = describe "Testing getPostCategoryRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          catIdE = DBP.getPostCategoryRecord dbqh' postId
+          catIdE = DBP.getPostCategoryIdByPostId dbqh' postId
           msg = "Violation of Unique record Post-Category in db: \
                 \exist more than one record for Post with Id: \
                 \100 in db!"
@@ -221,12 +221,12 @@ spec_getPostCategoryRecord = describe "Testing getPostCategoryRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          catIdE = DBP.getPostCategoryRecord dbqh' postId
+          catIdE = DBP.getPostCategoryIdByPostId dbqh' postId
           msg = "No exists Category corresponding to Post with id: 100 in db!"
       catIdE `shouldBe` (Identity $ Left msg)
 
-spec_getPostAuthorRecord :: Spec
-spec_getPostAuthorRecord = describe "Testing getPostAuthorRecord" $ do
+spec_getPostAuthorIdbyPostId :: Spec
+spec_getPostAuthorIdbyPostId = describe "Testing getPostAuthorIdbyPostId" $ do
     it "Should successfully AuthorId for array of one element" $ do
       let postId = 100 :: PostId
           authorId = 1 :: AuthorId
@@ -234,7 +234,7 @@ spec_getPostAuthorRecord = describe "Testing getPostAuthorRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          authorIdE = DBP.getPostAuthorRecord dbqh' postId
+          authorIdE = DBP.getPostAuthorIdbyPostId dbqh' postId
       authorIdE `shouldBe` (Identity $ Right authorId)
     it "Should fail on array of many elements" $ do
       let postId = 100 :: PostId
@@ -245,7 +245,7 @@ spec_getPostAuthorRecord = describe "Testing getPostAuthorRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          authorIdE = DBP.getPostAuthorRecord dbqh' postId
+          authorIdE = DBP.getPostAuthorIdbyPostId dbqh' postId
           msg = "Violation of Unique record Post-Author in db: \
                 \exist more than one record for Post with Id: \
                 \100 in db!"
@@ -259,7 +259,7 @@ spec_getPostAuthorRecord = describe "Testing getPostAuthorRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          authorIdE = DBP.getPostAuthorRecord dbqh' postId
+          authorIdE = DBP.getPostAuthorIdbyPostId dbqh' postId
           msg = "Violation of Unique record Post-Author in db: \
                 \exist more than one record for Post with Id: \
                 \100 in db!"
@@ -269,12 +269,12 @@ spec_getPostAuthorRecord = describe "Testing getPostAuthorRecord" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorIdE = DBP.getPostAuthorRecord dbqh' postId
+          authorIdE = DBP.getPostAuthorIdbyPostId dbqh' postId
           msg = "No exists Author corresponding to Post with id: 100 in db!"
       authorIdE `shouldBe` (Identity $ Left msg)
 
-spec_getPostIdRecordByTitle :: Spec
-spec_getPostIdRecordByTitle = describe "Testing getPostIdRecordByTitle" $ do
+spec_getPostIdByTitle :: Spec
+spec_getPostIdByTitle = describe "Testing getPostIdByTitle" $ do
     it "Should successfully return Title for array of one element" $ do
       let title = "box" :: Title
           postId = 100 :: PostId
@@ -282,7 +282,7 @@ spec_getPostIdRecordByTitle = describe "Testing getPostIdRecordByTitle" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          postIdE = DBP.getPostIdRecordByTitle dbqh' title
+          postIdE = DBP.getPostIdByTitle dbqh' title
       postIdE `shouldBe` (Identity $ Right postId)
     it "Should fail on array of many elements" $ do
       let title = "box" :: Title
@@ -293,7 +293,7 @@ spec_getPostIdRecordByTitle = describe "Testing getPostIdRecordByTitle" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          postIdE = DBP.getPostIdRecordByTitle dbqh' title
+          postIdE = DBP.getPostIdByTitle dbqh' title
           msg = "Violation of Unique record Post in db: \
                 \exist more than one record for Post with title: \
                 \'box' in db!"
@@ -307,7 +307,7 @@ spec_getPostIdRecordByTitle = describe "Testing getPostIdRecordByTitle" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          postIdE = DBP.getPostIdRecordByTitle dbqh' title
+          postIdE = DBP.getPostIdByTitle dbqh' title
           msg = "Violation of Unique record Post in db: \
                 \exist more than one record for Post with title: \
                 \'box' in db!"
@@ -317,7 +317,7 @@ spec_getPostIdRecordByTitle = describe "Testing getPostIdRecordByTitle" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          postIdE = DBP.getPostIdRecordByTitle dbqh' title
+          postIdE = DBP.getPostIdByTitle dbqh' title
           msg = "No exists Post with title: 'box' in db!"
       postIdE `shouldBe` (Identity $ Left msg)
 

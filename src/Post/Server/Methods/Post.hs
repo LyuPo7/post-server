@@ -17,6 +17,7 @@ import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
+-- | Create getPosts Response
 getPostsResp :: Monad m => Handle m -> Query -> m Response
 getPostsResp handle query = do
   let logh = hLogger handle
@@ -40,8 +41,24 @@ getPostsResp handle query = do
           return $ respOk posts
     where
       authParams = ["token"]
-      paramsOpt = ["created_at", "created_at__lt", "created_at__gt", "category", "tag", "tag__in", "tag__all", "author", "find_in_title", "find_in_text", "find", "order_by_date", "order_by_author", "order_by_category", "order_by_photos"]
+      paramsOpt = [
+        "created_at", 
+        "created_at__lt", 
+        "created_at__gt", 
+        "category", "tag", 
+        "tag__in", 
+        "tag__all", 
+        "author", 
+        "find_in_title", 
+        "find_in_text", 
+        "find", 
+        "order_by_date", 
+        "order_by_author", 
+        "order_by_category", 
+        "order_by_photos"
+       ]
 
+-- | Create createPost Response
 createPostResp :: Monad m => Handle m -> Query -> m Response
 createPostResp handle query = do
   let logh = hLogger handle
@@ -73,6 +90,7 @@ createPostResp handle query = do
       authParams = ["token"]
       paramsReq = ["title", "text", "category_id", "tag_ids"]
 
+-- | Create removePost Response
 removePostResp :: Monad m => Handle m -> Query -> m Response
 removePostResp handle query = do
   let logh = hLogger handle
@@ -101,6 +119,7 @@ removePostResp handle query = do
       authParams = ["token"]
       paramsReq = ["post_id"]
 
+-- | Create setPostMainPhoto Response
 setPostMainPhotoResp :: Monad m => Handle m -> Query -> m Response
 setPostMainPhotoResp handle query = do
   let logh = hLogger handle
@@ -136,6 +155,7 @@ setPostMainPhotoResp handle query = do
       authParams = ["token"]
       paramsReq = ["post_id", "path"]
 
+-- | Create setPostAddPhoto Response
 setPostAddPhotoResp :: Monad m => Handle m -> Query -> m Response
 setPostAddPhotoResp handle query = do
   let logh = hLogger handle

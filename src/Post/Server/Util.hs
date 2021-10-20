@@ -7,6 +7,7 @@ import Database.HDBC (SqlValue, fromSql)
 import Data.Text (Text)
 import Text.Read (readEither)
 
+-- | Read Parameter from Query
 readEitherMa :: (Monad m, Read a) => Text -> Text -> m (Either Text a)
 readEitherMa arg argName = case readEither $ T.unpack arg of
   Right y -> return $ Right y
@@ -15,9 +16,11 @@ readEitherMa arg argName = case readEither $ T.unpack arg of
     <> "': "
     <> arg
 
+-- | Convert value to Text
 convert :: Show a => a -> Text
 convert = T.pack . show
 
+-- | Convert SqlValue array to Text
 sqlAtoText :: [SqlValue] -> Text
 sqlAtoText = T.intercalate "," . map (T.pack . fromSql) 
 

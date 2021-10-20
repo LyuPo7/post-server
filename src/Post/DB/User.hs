@@ -19,13 +19,14 @@ import Post.Server.Objects
 import Post.DB.Data
 import Post.Server.Util (convert)
 
--- | DB methods for User
+{-- | DB methods for User --}
+--  | Create new User if doesn't already exist User with the same Login
 createUser :: Monad m => Handle m -> 
               FirstName -> LastName -> Login -> Password -> m (Either Text Login)
 createUser handle firstName lastName login password = do
   let logh = hLogger handle
       adminList = DBSpec.admins $ cDB handle
-  userIdE <- getUserRecordByLogin handle login
+  userIdE <- getUserIdByLogin handle login
   case userIdE of
     Left _ -> do
       encrypted <- encryptPassM handle defaultParams (
@@ -57,6 +58,12 @@ createUser handle firstName lastName login password = do
       Logger.logWarning logh msg
       return $ Left msg
 
+{-- | Remove User 
+      if User isn't Author 
+        - remove User record;
+        - remove User-Photo record;
+      if User is Author 
+        - exeption --}
 removeUser :: Monad m => Handle m -> UserId -> m (Either Text UserId)
 removeUser handle userId = do
   let logh = hLogger handle
@@ -64,7 +71,7 @@ removeUser handle userId = do
   case userIdE of
     Left msg -> return $ Left msg
     Right _ -> do
-      idAuthorE <- getAuthorUserRecord handle userId
+      idAuthorE <- getAuthorIdByUserId handle userId
       case idAuthorE of
         Left _ -> do
           _ <- deleteUserRecord handle userId
@@ -76,6 +83,9 @@ removeUser handle userId = do
           Logger.logError logh msg
           return $ Left msg
 
+{-- | Set User Photo 
+      if User Photo doesn't exist - create
+      if User Photo exists - update --}
 setUserPhoto :: Monad m => Handle m -> UserId -> Text -> m (Either Text PhotoId)
 setUserPhoto handle userId path = do
   let logh = hLogger handle
@@ -93,14 +103,16 @@ setUserPhoto handle userId path = do
         Right _ -> updateUserPhotoRecord handle userId photoId
       return $ Right photoId
 
+-- | Remove User-Photo record if exists record User-Photo
 removeUserPhotoDeps :: Monad m => Handle m -> UserId -> m (Either Text PhotoId)
 removeUserPhotoDeps handle userId = runEitherT $ do
   photo <- EitherT $ getUserPhotoRecord handle userId
   lift $ deleteUserPhotoRecord handle userId
   return $ photo_id photo
 
-getUserRecordByLogin :: Monad m => Handle m -> Login -> m (Either Text UserId)
-getUserRecordByLogin handle login = do
+-- | Remove UserId by Login if exists record User with such Login
+getUserIdByLogin :: Monad m => Handle m -> Login -> m (Either Text UserId)
+getUserIdByLogin handle login = do
   let logh = hLogger handle
   userIdSql <- selectFromWhere handle tableUsers
                 [colIdUser]
@@ -126,6 +138,7 @@ getUserRecordByLogin handle login = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Remove User record by Id if exists record User with UserId
 getUserRecordbyId :: Monad m => Handle m -> UserId -> m (Either Text User)
 getUserRecordbyId handle userId = do
   let logh = hLogger handle
@@ -153,6 +166,7 @@ getUserRecordbyId handle userId = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Get all User records
 getUserRecords :: Monad m => Handle m -> m (Either Text [User])
 getUserRecords handle = do
   let logh = hLogger handle
@@ -167,6 +181,7 @@ getUserRecords handle = do
       usersE <- mapM (newUser handle) userRecs
       return $ sequenceA usersE
 
+-- | Get User-Photo record if exists record User-Photo
 getUserPhotoRecord :: Monad m => Handle m -> UserId -> m (Either Text Photo)
 getUserPhotoRecord handle userId = do
   let logh = hLogger handle
@@ -194,8 +209,9 @@ getUserPhotoRecord handle userId = do
       Logger.logWarning logh msg
       return $ Left msg
 
-getAuthorUserRecord :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
-getAuthorUserRecord handle userId = do
+-- | Get AuthorId by UserId if exists record Author-User
+getAuthorIdByUserId :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
+getAuthorIdByUserId handle userId = do
   let logh = hLogger handle
   authorIdSql <- selectFromWhere handle tableAuthorUser
                   [colIdAuthorAuthorUser]
@@ -219,7 +235,7 @@ getAuthorUserRecord handle userId = do
       Logger.logWarning logh msg
       return $ Left msg
     
-
+-- | Delete User record
 deleteUserRecord :: Monad m => Handle m -> UserId -> m ()
 deleteUserRecord handle userId = do
   let logh = hLogger handle
@@ -230,6 +246,7 @@ deleteUserRecord handle userId = do
     <> convert userId
     <> " from db."
 
+-- | Insert User-Photo record
 insertUserPhotoRecord :: Monad m => Handle m -> UserId -> PhotoId -> m ()
 insertUserPhotoRecord handle userId photoId = do
   let logh = hLogger handle
@@ -238,6 +255,7 @@ insertUserPhotoRecord handle userId photoId = do
         [toSql photoId, toSql userId]
   Logger.logInfo logh "Creating dependencies between User and Photo in db."
 
+-- | Update User-photo record
 updateUserPhotoRecord :: Monad m => Handle m -> UserId -> PhotoId -> m ()
 updateUserPhotoRecord handle userId photoIdNew = do
   let logh = hLogger handle
@@ -248,6 +266,7 @@ updateUserPhotoRecord handle userId photoIdNew = do
         [toSql userId]
   Logger.logInfo logh "Updating dependencies between User and Photo in db."
 
+-- | Delete User-Photo record
 deleteUserPhotoRecord :: Monad m => Handle m -> UserId -> m ()
 deleteUserPhotoRecord handle userId = do
   let logh = hLogger handle
@@ -256,6 +275,7 @@ deleteUserPhotoRecord handle userId = do
         [toSql userId]
   Logger.logInfo logh "Removing dependencies between User and Photo from db."
 
+-- | Create User from [SqlValue]
 newUser :: Monad m => Handle m -> [SqlValue] -> m (Either Text User)
 newUser handle [idUser, fn, ln, ia] = do
   let userId = fromSql idUser

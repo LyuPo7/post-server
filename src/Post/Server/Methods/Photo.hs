@@ -14,13 +14,15 @@ import Control.Monad.Catch (MonadThrow)
 import Post.DB.DBSpec (Handle(..))
 import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
+import Post.Server.Util (convert)
 
+-- | Upload Photo to Server
 upload :: (MonadThrow m, Monad m) => Handle m -> Text -> m Text
 upload handle pathToFile = do
   let logh = hLogger handle
       hostServer = ServerConfig.host $ cServer handle
       portServer = ServerConfig.port $ cServer handle
-      server = "http://" <> hostServer <> ":" <> portServer
+      server = "http://" <> hostServer <> ":" <> convert portServer
       link = server <> pathToFile
       dir = "src/files/photos/"
       fileName = takeFileName $ T.unpack pathToFile

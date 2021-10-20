@@ -15,10 +15,12 @@ import Post.Server.Objects
 import Post.DB.Data
 import Post.Server.Util (convert)
 
+{-- | DB methods for Photo --}
+--  | Save Photo if doesn't exist Photo with the same name
 savePhoto :: Monad m => Handle m -> Text -> m (Either Text PhotoId)
 savePhoto handle path = do
   pathToPhoto <- upload handle path
-  idPhotoE <- getPhotoRecordByName handle pathToPhoto
+  idPhotoE <- getPhotoIdByName handle pathToPhoto
   case idPhotoE of
     Left _ -> do
       _ <- insertPhotoRecord handle pathToPhoto
@@ -29,8 +31,9 @@ savePhoto handle path = do
             <> "' already exists in db!"
       return $ Left msg
 
-getPhotoRecordByName :: Monad m => Handle m -> Text -> m (Either Text PhotoId)
-getPhotoRecordByName handle pathToPhoto = do
+-- | Save Photo if doesn't exist Photo with the same name
+getPhotoIdByName :: Monad m => Handle m -> Text -> m (Either Text PhotoId)
+getPhotoIdByName handle pathToPhoto = do
   let logh = hLogger handle
   idPhotoSql <- selectFromWhere handle tablePhotos
                  [colIdPhoto]
@@ -57,6 +60,7 @@ getPhotoRecordByName handle pathToPhoto = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Get Photo record by PhotoId if exists
 getPhotoRecordById :: Monad m => Handle m -> PhotoId -> m (Either Text Photo)
 getPhotoRecordById handle photoId = do
   let logh = hLogger handle
@@ -84,6 +88,7 @@ getPhotoRecordById handle photoId = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Get Last Photo if exists
 getLastPhotoRecord :: Monad m => Handle m -> m (Either Text PhotoId)
 getLastPhotoRecord handle = do
   let logh = hLogger handle
@@ -105,6 +110,7 @@ getLastPhotoRecord handle = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Insery Photo record
 insertPhotoRecord :: Monad m => Handle m -> Text -> m ()
 insertPhotoRecord handle pathToPhoto = do
   let logh = hLogger handle
@@ -115,11 +121,12 @@ insertPhotoRecord handle pathToPhoto = do
     <> pathToPhoto
     <> "' in db!"
 
+-- | Create Photo from [SqlValue]
 newPhoto :: Monad m => Handle m -> [SqlValue] -> m (Either Text Photo)
 newPhoto handle [idPhoto, link] = do
   let hostServer = ServerConfig.host $ DBSpec.cServer $ hDB handle
       portServer = ServerConfig.port $ DBSpec.cServer $ hDB handle
-      server = "http://" <> hostServer <> ":" <> portServer
+      server = "http://" <> hostServer <> ":" <> convert portServer
       fullLink = T.unpack server </> fromSql link
   return $ Right $ Photo {
     photo_id = fromSql idPhoto,

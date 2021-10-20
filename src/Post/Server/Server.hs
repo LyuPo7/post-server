@@ -18,8 +18,9 @@ import qualified Post.Server.Methods.Draft as MD
 import qualified Post.Server.Methods.Post as MP
 import qualified Post.Server.Methods.Comment as MCo
 import qualified Post.Server.Methods.Account as MAC
-import Post.Server.Responses (resp404, invalidJson)
+import Post.Server.Responses (resp404, respInvalid)
 
+-- | Server IO Handle
 withHandleIO :: Logger.Handle IO -> DBQSpec.Handle IO -> 
                 Config -> (Handle IO -> IO a) -> IO a
 withHandleIO logger dbh config f = do
@@ -30,12 +31,15 @@ withHandleIO logger dbh config f = do
   }
   f serverH
 
+-- | Run Server
 runServer :: Handle IO -> IO ()
 runServer serverh = do
-  run 3000 (app serverh)
+  let serverPort = port $ cServer serverh
+  run serverPort (app serverh)
 
+-- | Router
 app :: Handle IO -> Application
-app serverh req sendResponse = handle (sendResponse . invalidJson) $ do
+app serverh req sendResponse = handle (sendResponse . respInvalid) $ do
   let options = queryString req
   case pathInfo req of
     ["login"] -> do MAC.login serverh options

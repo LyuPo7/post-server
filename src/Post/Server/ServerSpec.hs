@@ -4,7 +4,7 @@ import Post.Server.ServerConfig (Config(..))
 import qualified Post.Logger as Logger
 import qualified Post.DB.DBQSpec as DBQSpec
 
--- | DB Handle
+-- | Server Handle
 data Handle m = Handle {
   hLogger :: Logger.Handle m,
   hDBQ :: DBQSpec.Handle m,

@@ -18,6 +18,7 @@ import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respError, respSucc, resp404)
 
+-- | Create createComment Response
 createCommentResp :: Monad m => Handle m -> Query -> m Response
 createCommentResp handle query = do
   let logh = hLogger handle

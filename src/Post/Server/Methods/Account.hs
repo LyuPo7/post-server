@@ -12,6 +12,7 @@ import qualified Post.DB.Account as DBAC
 import qualified Post.Server.QueryParameters as QP
 import Post.Server.Responses (respOk, respError)
 
+-- | Create login Response: Send new token
 login :: Monad m => Handle m -> Query -> m Response
 login handle query = do
   let logh = hLogger handle

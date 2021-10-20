@@ -13,11 +13,12 @@ import Post.Server.Objects
 import Post.DB.Data
 import Post.Server.Util (convert)
 
--- | DB methods for Tag
+{-- | DB methods for Tag --}
+--  | Create new Tag if doesn't already exist Tag with the same Title
 createTag :: Monad m => Handle m -> Title -> m (Either Text Title)
 createTag handle tagTitle = do
   let logh = hLogger handle
-  tagIdE <- getTagRecordByTitle handle tagTitle
+  tagIdE <- getTagIdByTitle handle tagTitle
   case tagIdE of
     Left _ -> do
       _ <- insertTagRecord handle tagTitle
@@ -29,8 +30,9 @@ createTag handle tagTitle = do
       Logger.logWarning logh msg 
       return $ Left msg
 
-getTagByIds :: Monad m => Handle m -> [TagId] -> m (Either Text [Tag])
-getTagByIds handle tagIds = do
+-- | Create Tag records by [TagId] if all Tag in [TagId] exist
+getTagRecordsByIds :: Monad m => Handle m -> [TagId] -> m (Either Text [Tag])
+getTagRecordsByIds handle tagIds = do
   let logh = hLogger handle
   tagsE <- mapM (getTagRecordsById handle) tagIds
   case sequenceA tagsE of
@@ -39,16 +41,20 @@ getTagByIds handle tagIds = do
       return $ Right tags
     Left msg -> return $ Left msg
 
+-- | Remove Tag record if exist
 removeTag :: Monad m => Handle m -> Title -> m (Either Text TagId)
 removeTag handle tagTitle = runEitherT $ do
-  tagId <- EitherT $ getTagRecordByTitle handle tagTitle
+  tagId <- EitherT $ getTagIdByTitle handle tagTitle
   lift $ deleteTagRecord handle tagId
   return tagId
 
+{-- | Edit Tag record 
+       - if exist this Tag record
+       - if doesn't already exist Tag newTitle --}
 editTag :: Monad m => Handle m -> Title -> Title -> m (Either Text Title)
 editTag handle oldTitle newTitle = do
   let logh = hLogger handle
-  tagIdNewE <- getTagRecordByTitle handle newTitle
+  tagIdNewE <- getTagIdByTitle handle newTitle
   case tagIdNewE of
     Right _ -> do
       let msg = "Tag with title: '"
@@ -57,18 +63,20 @@ editTag handle oldTitle newTitle = do
       Logger.logWarning logh msg
       return $ Left msg
     Left _ -> runEitherT $ do
-      tagIdOld <- EitherT $ getTagRecordByTitle handle oldTitle
+      tagIdOld <- EitherT $ getTagIdByTitle handle oldTitle
       lift $ updateTagRecord handle tagIdOld newTitle
       return newTitle
 
+-- | Remove Tag-Post record
 removeTagPostsDeps :: Monad m => Handle m -> TagId -> m (Either Text [PostId])
 removeTagPostsDeps handle tagId = runEitherT $ do
   postIds <- EitherT $ getTagPostRecords handle tagId
   lift $ deleteTagPostsRecords handle tagId
   return postIds
 
-getTagRecordByTitle :: Monad m => Handle m -> Title -> m (Either Text TagId)
-getTagRecordByTitle handle tagTitle = do
+-- | Get TagId if exists Tag record with such title
+getTagIdByTitle :: Monad m => Handle m -> Title -> m (Either Text TagId)
+getTagIdByTitle handle tagTitle = do
   let logh = hLogger handle
   tagSQL <- selectFromWhere handle tableTags
             [colIdTag]
@@ -94,6 +102,7 @@ getTagRecordByTitle handle tagTitle = do
       Logger.logWarning logh msg 
       return $ Left msg
 
+-- | Get all Tag records
 getAllTagRecords :: Monad m => Handle m -> m (Either Text [Tag])
 getAllTagRecords handle = do
   let logh = hLogger handle
@@ -108,6 +117,7 @@ getAllTagRecords handle = do
       tagsE <- mapM newTag titleIds
       return $ sequenceA tagsE
 
+-- | Get Tag record by TagId if exists
 getTagRecordsById :: Monad m => Handle m -> TagId -> m (Either Text Tag)
 getTagRecordsById handle tagId = do
   let logh = hLogger handle
@@ -133,6 +143,7 @@ getTagRecordsById handle tagId = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Get all [PostId] with this TagId
 getTagPostRecords :: Monad m => Handle m -> PostId -> m (Either Text [PostId])
 getTagPostRecords handle tagId = do
   let logh = hLogger handle
@@ -153,6 +164,7 @@ getTagPostRecords handle tagId = do
         <> " from db."
       return $ Right $ map fromSql $ concat postIds
 
+-- | Delete Tag-Post records
 deleteTagPostsRecords :: Monad m => Handle m -> TagId -> m ()
 deleteTagPostsRecords handle tagId = do
   let logh = hLogger handle
@@ -161,6 +173,7 @@ deleteTagPostsRecords handle tagId = do
         [toSql tagId]
   Logger.logInfo logh "Removing dependencies between Post and Tag from db."
 
+-- | Insert Tag record
 insertTagRecord :: Monad m => Handle m -> Title -> m ()
 insertTagRecord handle tagTitle = do
   let logh = hLogger handle
@@ -171,6 +184,7 @@ insertTagRecord handle tagTitle = do
     <> tagTitle
     <> "' was successfully inserted in db."
 
+-- | Delete Tag record
 deleteTagRecord :: Monad m => Handle m -> TagId -> m ()
 deleteTagRecord handle tagId = do
   let logh = hLogger handle
@@ -181,6 +195,7 @@ deleteTagRecord handle tagId = do
     <> convert tagId
     <> " from db."
 
+-- | Update Tag record
 updateTagRecord :: Monad m => Handle m -> TagId -> Title -> m ()
 updateTagRecord handle tagId newTitle = do
   let logh = hLogger handle
@@ -193,6 +208,7 @@ updateTagRecord handle tagId newTitle = do
     <> convert tagId
     <> " in db."
 
+-- Create Tag from [SqlValue]
 newTag :: Monad m => [SqlValue] -> m (Either Text Tag)
 newTag [sqlTagId, sqlTitle] = do
   return $ Right $ Tag {

@@ -14,12 +14,14 @@ import Post.Server.Objects
 import Post.DB.Data
 import Post.Server.Util (convert)
 
--- | DB methods for Author
+{-- | DB methods for Author --}
+{-- | Create new Author and all Author-Dependencies
+      if doesn't already exist Author-User record --}
 createAuthor :: Monad m => Handle m -> 
                 UserId -> Description -> m (Either Text AuthorId)
 createAuthor handle userId description = do
   let logh = hLogger handle
-  authorIdE <- getAuthorUserRecord handle userId
+  authorIdE <- getAuthorIdByUserId handle userId
   case authorIdE of
     Left _ -> runEitherT $ do
       _ <- lift $ insertAuthorRecord handle description
@@ -33,13 +35,15 @@ createAuthor handle userId description = do
       Logger.logWarning logh msg 
       return $ Left msg
 
+{-- | Remove Author record if exists
+        - if Author hasn't any Post --}
 removeAuthor :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
 removeAuthor handle userId = do
   let logh = hLogger handle
-  authorIdE <- getAuthorUserRecord  handle userId
+  authorIdE <- getAuthorIdByUserId  handle userId
   case authorIdE of
     Right authorId -> do
-      postsIdE <- getAuthorPostRecord  handle authorId
+      postsIdE <- getPostIdsByAuthorId  handle authorId
       case postsIdE of
         Left _ -> do
           _ <- deleteAuthorRecord handle authorId
@@ -52,17 +56,19 @@ removeAuthor handle userId = do
           return $ Left msg
     Left msg -> return $ Left msg
 
+-- | Edit Author id exists
 editAuthor :: Monad m => Handle m ->
               UserId -> Description -> m (Either Text AuthorId)
 editAuthor handle userId newDescription = runEitherT $ do
-  authorId <- EitherT $ getAuthorUserRecord  handle userId
+  authorId <- EitherT $ getAuthorIdByUserId  handle userId
   lift $ updateAuthorRecord handle authorId newDescription
   return authorId
 
+-- | Create Author-User Dependency if doesn't exist
 createAuthorUserDep :: Monad m => Handle m -> AuthorId -> UserId -> m ()
 createAuthorUserDep handle authorId userId = do
   let logh = hLogger handle
-  oldAuthorIdE <- getAuthorUserRecord  handle userId
+  oldAuthorIdE <- getAuthorIdByUserId  handle userId
   case oldAuthorIdE of
     Left _ -> insertAuthorUserRecord handle authorId userId
     Right _ -> do
@@ -70,12 +76,14 @@ createAuthorUserDep handle authorId userId = do
                 \Author and User already exists."
       Logger.logError logh msg
 
+-- | Remove Author-User Dependency if exists
 removeAuthorUserDep :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
 removeAuthorUserDep handle userId = runEitherT $ do
-  authorId <- EitherT $ getAuthorUserRecord  handle userId
+  authorId <- EitherT $ getAuthorIdByUserId  handle userId
   lift $ deleteAuthorUserRecord handle userId
   return authorId
 
+-- | Get Author record by AuthorId if exists
 getAuthorRecord :: Monad m => Handle m -> AuthorId -> m (Either Text Author)
 getAuthorRecord handle authorId = do
   let logh = hLogger handle
@@ -101,9 +109,10 @@ getAuthorRecord handle authorId = do
       Logger.logError logh msg
       return $ Left msg
 
-getUserIdRecordByAuthorId :: Monad m => Handle m ->
+-- | Get UserId by AuthorId if exists record Author-User
+getUserIdByAuthorId :: Monad m => Handle m ->
                              AuthorId -> m (Either Text UserId)
-getUserIdRecordByAuthorId handle authorId = do
+getUserIdByAuthorId handle authorId = do
   let logh = hLogger handle
   idUserSql <- selectFromWhere handle tableAuthorUser
                 [colIdUserAuthorUser]
@@ -129,62 +138,9 @@ getUserIdRecordByAuthorId handle authorId = do
       Logger.logError logh msg
       return $ Left msg
 
-getAuthorRecords :: Monad m => Handle m -> m (Either Text [Author])
-getAuthorRecords handle = do
-  let logh = hLogger handle
-  authorsSQL <- selectFrom handle tableAuthors
-                 [colIdAuthor, colDescAuthor]
-  case authorsSQL of
-    [] -> do
-      Logger.logWarning logh "No Authors in db!"
-      return $ Left "No Authors!"
-    idDescs -> do
-      Logger.logInfo logh "Getting Authors from db."
-      authorsM <- mapM (newAuthor handle) idDescs
-      return $ sequenceA authorsM
-
-getLastAuthorRecord :: Monad m => Handle m -> m (Either Text AuthorId)
-getLastAuthorRecord handle = do
-  let logh = hLogger handle
-  idAuthorSql <- selectFromOrderLimit handle tableAuthors
-                  [colIdAuthor] 
-                   colIdAuthor 1
-  case idAuthorSql of
-    [] -> do
-      let msg = "No exist Authors in db!"
-      Logger.logWarning logh msg
-      return $ Left msg
-    [[idAuthor]] -> do
-      let authorId = fromSql idAuthor
-      Logger.logInfo logh $ "Last Author inserted in db with id: "
-        <> convert authorId
-      return $ Right authorId
-    _ -> do
-      let msg = "Incorrect Author record in db!"
-      Logger.logWarning logh msg
-      return $ Left msg
-    
-
-getAuthorPostRecord :: Monad m => Handle m -> AuthorId -> m (Either Text [PostId])
-getAuthorPostRecord handle authorId = do
-  let logh = hLogger handle
-  postsIdSql <- selectFromWhere handle tablePostAuthor
-                 [colIdPostPostAuthor]
-                 [colIdAuthorPostAuthor]
-                 [toSql authorId]
-  case postsIdSql of
-    [] -> do
-      let msg = "No Posts corresponding to Author with id: "
-            <> convert authorId
-            <> " in db!"
-      Logger.logWarning logh msg
-      return $ Left msg
-    _ -> do
-      Logger.logInfo logh "Getting dependency between Author and Post from db."
-      return $ Right $ map fromSql $ concat postsIdSql
-
-getAuthorUserRecord :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
-getAuthorUserRecord handle userId = do
+-- | Get UserId by AuthorId if exists record Author-User
+getAuthorIdByUserId :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
+getAuthorIdByUserId handle userId = do
   let logh = hLogger handle
   authorIdSql <- selectFromWhere handle tableAuthorUser
                  [colIdAuthorAuthorUser]
@@ -208,6 +164,63 @@ getAuthorUserRecord handle userId = do
       Logger.logError logh msg
       return $ Left msg
 
+-- | Get all Author records if exist
+getAuthorRecords :: Monad m => Handle m -> m (Either Text [Author])
+getAuthorRecords handle = do
+  let logh = hLogger handle
+  authorsSQL <- selectFrom handle tableAuthors
+                 [colIdAuthor, colDescAuthor]
+  case authorsSQL of
+    [] -> do
+      Logger.logWarning logh "No Authors in db!"
+      return $ Left "No Authors!"
+    idDescs -> do
+      Logger.logInfo logh "Getting Authors from db."
+      authorsM <- mapM (newAuthor handle) idDescs
+      return $ sequenceA authorsM
+
+-- | Get last Author record if exists
+getLastAuthorRecord :: Monad m => Handle m -> m (Either Text AuthorId)
+getLastAuthorRecord handle = do
+  let logh = hLogger handle
+  idAuthorSql <- selectFromOrderLimit handle tableAuthors
+                  [colIdAuthor] 
+                   colIdAuthor 1
+  case idAuthorSql of
+    [] -> do
+      let msg = "No exist Authors in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
+    [[idAuthor]] -> do
+      let authorId = fromSql idAuthor
+      Logger.logInfo logh $ "Last Author inserted in db with id: "
+        <> convert authorId
+      return $ Right authorId
+    _ -> do
+      let msg = "Incorrect Author record in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
+    
+-- | Get all [PostId] by AuthorId if exist
+getPostIdsByAuthorId :: Monad m => Handle m -> AuthorId -> m (Either Text [PostId])
+getPostIdsByAuthorId handle authorId = do
+  let logh = hLogger handle
+  postsIdSql <- selectFromWhere handle tablePostAuthor
+                 [colIdPostPostAuthor]
+                 [colIdAuthorPostAuthor]
+                 [toSql authorId]
+  case postsIdSql of
+    [] -> do
+      let msg = "No Posts corresponding to Author with id: "
+            <> convert authorId
+            <> " in db!"
+      Logger.logWarning logh msg
+      return $ Left msg
+    _ -> do
+      Logger.logInfo logh "Getting dependency between Author and Post from db."
+      return $ Right $ map fromSql $ concat postsIdSql
+
+-- | Insert Author record
 insertAuthorRecord :: Monad m => Handle m -> Description -> m ()
 insertAuthorRecord handle description = do
   let logh = hLogger handle
@@ -216,6 +229,7 @@ insertAuthorRecord handle description = do
         [toSql description]
   Logger.logInfo logh "Author was successfully inserted in db."
 
+-- | Update Author record
 updateAuthorRecord :: Monad m => Handle m -> AuthorId -> Description -> m ()
 updateAuthorRecord handle authorId newDescription = do
   let logh = hLogger handle
@@ -228,6 +242,7 @@ updateAuthorRecord handle authorId newDescription = do
     <> convert authorId
     <> " in db."
 
+-- | Delete Author record
 deleteAuthorRecord :: Monad m => Handle m -> AuthorId -> m ()
 deleteAuthorRecord handle authorId = do
   let logh = hLogger handle
@@ -238,6 +253,7 @@ deleteAuthorRecord handle authorId = do
     <> convert authorId
     <> " from db."
 
+-- | Insert Author-User record
 insertAuthorUserRecord :: Monad m => Handle m -> AuthorId -> UserId -> m ()
 insertAuthorUserRecord handle authorId userId = do
   let logh = hLogger handle
@@ -246,6 +262,7 @@ insertAuthorUserRecord handle authorId userId = do
         [toSql authorId, toSql userId]
   Logger.logInfo logh "Creating dependency between Author and User."
 
+-- | Delete Author-User record
 deleteAuthorUserRecord :: Monad m => Handle m -> UserId -> m ()
 deleteAuthorUserRecord handle userId = do
   let logh = hLogger handle
@@ -254,12 +271,13 @@ deleteAuthorUserRecord handle userId = do
         [toSql userId]
   Logger.logInfo logh "Removing dependency between Author and User."
 
+-- | Create Author from [SqlValue]
 newAuthor :: Monad m => Handle m -> [SqlValue] -> m (Either Text Author)
 newAuthor handle [idAuthor, desc] = do
   runEitherT $ do
     let authorId = fromSql idAuthor
         descr = fromSql desc
-    userId <- EitherT $ getUserIdRecordByAuthorId handle authorId
+    userId <- EitherT $ getUserIdByAuthorId handle authorId
     user <- EitherT $ DBU.getUserRecordbyId handle userId
     return $ Author {
       author_user = user,

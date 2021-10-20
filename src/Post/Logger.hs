@@ -14,7 +14,45 @@ import Control.Monad (when, mzero)
 
 import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 
--- | Types
+-- | Logger Handle
+data Handle m = Handle {
+  log :: LogMessage -> Text -> m (),
+  hconfig :: Config
+}
+
+-- | Logger Config
+newtype Config = Config {
+  cVerbocity :: Maybe Level
+} deriving (Show, Generic, Eq)
+
+instance A.FromJSON Config where
+  parseJSON = A.withObject "General Config" $ \o ->
+    Config <$> o A..:? "verbocity"
+
+-- | create Handle IO
+withHandleIO :: Config -> (Handle IO -> IO a) -> IO a
+withHandleIO config f = f $ newHandleIO config
+
+newHandleIO :: Config -> Handle IO
+newHandleIO config = do
+  let globalLevel = fromMaybe Debug $ cVerbocity config
+  Handle {
+    hconfig = config,
+    log = \logMes str -> 
+      when (level logMes >= globalLevel) $ do
+        let levelMes = level logMes
+        currentTime <- getTime
+        putStrLn $ T.unpack (
+          (renderColor levelMes 
+            <> showt levelMes 
+            <> resetColor) 
+            <> " | " 
+            <> currentTime 
+            <> " | " 
+            <> str)
+  }
+
+-- | Logger Level
 data Level
   = Debug -- Debug messages
   | Info -- Info message
@@ -35,7 +73,7 @@ instance TextShow Level where
   showb Error = "[ERROR]"
 
 instance FromJSON Level where
-  parseJSON = A.withText "Config Logger" $ 
+  parseJSON = A.withText "Level Logger" $ 
     \case
       "debug" -> pure Debug
       "info" -> pure Info
@@ -43,52 +81,27 @@ instance FromJSON Level where
       "error" -> pure Error
       _ -> mzero
 
-newtype Config = Config {
-  cVerbocity :: Maybe Level
-} deriving (Show, Generic, Eq)
-
-instance A.FromJSON Config where
-  parseJSON = A.withObject "General Config" $ \o ->
-    Config <$> o A..:? "verbocity"
-
+-- | Logger messages
 newtype LogMessage = LogMessage { 
   level :: Level
 }
 
-data Handle m = Handle {
-  log :: LogMessage -> Text -> m (),
-  hconfig :: Config
-}
-
-withHandleIO :: Config -> (Handle IO -> IO a) -> IO a
-withHandleIO config f = f $ newHandleIO config
-
-{-- | create Handle IO --}
-newHandleIO :: Config -> Handle IO
-newHandleIO config = do
-  let globalLevel = fromMaybe Debug $ cVerbocity config
-  Handle {
-    hconfig = config,
-    log = \logMes str -> 
-      when (level logMes >= globalLevel) $ do
-        let levelMes = level logMes
-        currentTime <- getTime
-        putStrLn $ T.unpack ((renderColor levelMes <> showt levelMes <> resetColor) <> " | " <> currentTime <> " | " <> str)
-  }
-  
 logDebug, logInfo, logWarning, logError :: Handle m -> Text -> m ()
 logDebug = (`log` LogMessage {level = Debug})
 logInfo = (`log` LogMessage {level = Info})
 logWarning = (`log` LogMessage {level = Warning})
 logError = (`log` LogMessage {level = Error})
 
+-- | Set time for Logger messages
 getTime :: IO Text
 getTime = do 
-  T.pack . formatTime defaultTimeLocale (T.unpack defaultTimeFormat) <$> getZonedTime
+  T.pack . formatTime defaultTimeLocale (T.unpack defaultTimeFormat) 
+    <$> getZonedTime
 
 defaultTimeFormat :: Text
 defaultTimeFormat = "%_Y-%m-%d %T.%3q"
 
+-- | Set color for Logger messages
 resetColor :: Text
 resetColor = normalCS
 

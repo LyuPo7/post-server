@@ -17,6 +17,7 @@ import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
+-- | Create getCategories Response
 getCatsResp :: Monad m => Handle m -> Query -> m Response
 getCatsResp handle query = do
   let logh = hLogger handle
@@ -39,6 +40,7 @@ getCatsResp handle query = do
     where
       authParams = ["token"]
 
+-- | Create createCategory Response
 createCatResp :: Monad m => Handle m -> Query -> m Response
 createCatResp handle query = do
   let logh = hLogger handle
@@ -69,6 +71,7 @@ createCatResp handle query = do
       paramsReq = ["title"]
       paramsOpt = ["subcategory"]
 
+-- | Create removeCategory Response
 removeCatResp :: Monad m => Handle m -> Query -> m Response
 removeCatResp handle query = do
   let logh = hLogger handle
@@ -97,6 +100,7 @@ removeCatResp handle query = do
       authParams = ["token"]
       params = ["id"]
 
+-- | Create editCategory Response
 editCatResp :: Monad m => Handle m -> Query -> m Response
 editCatResp handle query = do
   let logh = hLogger handle

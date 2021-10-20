@@ -61,7 +61,7 @@ dbC = DBSpec.Config {
 serverC :: ServerConfig.Config
 serverC = ServerConfig.Config {
   ServerConfig.host = "localhost",
-  ServerConfig.port = "3000"
+  ServerConfig.port = 3000
 }
 
 postC :: PostConfig.Config

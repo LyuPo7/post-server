@@ -6,8 +6,8 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 import Data.Aeson.Types (ToJSON, FromJSON)
 
--- | DB Config
+-- | Server Config
 data Config = Config {
   host :: Text,
-  port :: Text
+  port :: Int
 } deriving (Show, Generic, Eq, FromJSON, ToJSON)

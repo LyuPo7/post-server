@@ -17,6 +17,7 @@ import qualified Post.Server.QueryParameters as QP
 import Post.Server.Objects (Permission(..))
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
+-- | Create getUsers Response
 getUsersResp :: Monad m => Handle m -> Query -> m Response
 getUsersResp handle query = do
   let logh = hLogger handle
@@ -39,6 +40,7 @@ getUsersResp handle query = do
     where
       authParams = ["token"]
 
+-- | Create createUser Response
 createUserResp :: Monad m => Handle m -> Query -> m Response
 createUserResp handle query = do
   let logh = hLogger handle
@@ -58,6 +60,7 @@ createUserResp handle query = do
     where
       params = ["first_name", "last_name", "login", "password"]
 
+-- | Create removeUser Response
 removeUserResp :: Monad m => Handle m -> Query -> m Response
 removeUserResp handle query = do
   let logh = hLogger handle
@@ -88,6 +91,7 @@ removeUserResp handle query = do
       authParams = ["token"]
       params = ["id"]
 
+-- | Create setUserPhoto Response
 setUserPhotoResp :: Monad m => Handle m -> Query -> m Response
 setUserPhotoResp handle query = do
   let logh = hLogger handle

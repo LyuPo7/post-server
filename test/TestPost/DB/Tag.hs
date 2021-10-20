@@ -159,8 +159,8 @@ spec_getAllTagRecords = describe "Testing getAllTagRecords" $ do
           msg = "No Tags!"
       tagsE `shouldBe` (Identity $ Left msg)
 
-spec_getTagRecordByTitle :: Spec
-spec_getTagRecordByTitle = describe "Testing getTagRecordByTitle" $ do
+spec_getTagIdByTitle :: Spec
+spec_getTagIdByTitle = describe "Testing getTagIdByTitle" $ do
     it "Should successfully return TagId for array of one element" $ do
       let tagId = 12 :: TagId
           tagTitle = "sport" :: Title
@@ -168,7 +168,7 @@ spec_getTagRecordByTitle = describe "Testing getTagRecordByTitle" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIdE = DBT.getTagRecordByTitle dbqh' tagTitle
+          tagIdE = DBT.getTagIdByTitle dbqh' tagTitle
       tagIdE `shouldBe` (Identity $ Right tagId)
     it "Should fail on array of many elements" $ do
       let tagId = 12 :: TagId
@@ -177,7 +177,7 @@ spec_getTagRecordByTitle = describe "Testing getTagRecordByTitle" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIdE = DBT.getTagRecordByTitle dbqh' tagTitle
+          tagIdE = DBT.getTagIdByTitle dbqh' tagTitle
           msg = "Violation of Unique record in db: \
                 \exist more than one record for \
                 \Tag with title: 'sport' in db!"
@@ -187,7 +187,7 @@ spec_getTagRecordByTitle = describe "Testing getTagRecordByTitle" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          tagIdE = DBT.getTagRecordByTitle dbqh' tagTitle
+          tagIdE = DBT.getTagIdByTitle dbqh' tagTitle
           msg = "No exists Tag with title: \
                  \'sport' in db!"
       tagIdE `shouldBe` (Identity $ Left msg)
