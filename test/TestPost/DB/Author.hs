@@ -115,10 +115,11 @@ spec_getLastAuthorRecord = describe "Testing getLastAuthorRecord" $ do
 spec_getAuthorRecords :: Spec
 spec_getAuthorRecords = describe "Testing getAuthorRecords" $ do
     it "Should fail on empty Author record" $ do
-      let dbqh' = H.dbqh {
+      let offset = 10
+          dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorsE = DBA.getAuthorRecords dbqh'
+          authorsE = DBA.getAuthorRecords dbqh' offset
           msg = "No Authors!"
       authorsE `shouldBe` (Identity $ Left msg)
 

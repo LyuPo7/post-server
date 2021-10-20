@@ -14,7 +14,7 @@ import qualified Post.DB.Category as DBC
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..))
+import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
 -- | Create getCategories Response
@@ -31,14 +31,24 @@ getCatsResp handle query = do
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      catsE <- DBC.getCats dbqh
-      case catsE of
+      catsOffsetE <- runEitherT $ do
+        reqParams <- EitherT $ QP.extractRequired logh query params
+        let [offsetText] = reqParams
+        offset <- EitherT $ Util.readEitherMa offsetText "offset"
+        cats <- EitherT $ DBC.getCats dbqh offset
+        return (cats, offset)
+      case catsOffsetE of
         Left msg -> return $ respError msg
-        Right cats -> do
+        Right (cats, offset) -> do
+          let response = defaultResponse {
+                response_cats = Just cats,
+                response_offset = offset
+              }
           Logger.logInfo logh "Categories were sent"
-          return $ respOk cats
+          return $ respOk response
     where
       authParams = ["token"]
+      params = ["offset"]
 
 -- | Create createCategory Response
 createCatResp :: Monad m => Handle m -> Query -> m Response

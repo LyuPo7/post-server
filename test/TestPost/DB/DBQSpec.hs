@@ -116,16 +116,76 @@ spec_queryFromWhereIn = describe "Testing queryFromWhereIn" $ do
       let check = "'colSelect'/values' can't be empty"
       query `shouldBe` (Left check)
 
-spec_queryFrom :: Spec
-spec_queryFrom = describe "Testing queryFrom" $ do
+spec_queryFromWhereInLimit :: Spec
+spec_queryFromWhereInLimit = describe "Testing queryFromWhereInLimit" $ do
     it "Should successfully create DbQuery for 1/1 columns" $ do
-      query <- DBQSpec.queryFrom tableUsers
+      let offset = 10
+          sqlList = map toSql ([4,11,20,50] :: [Integer])
+      query <- DBQSpec.queryFromWhereInLimit tableTags
+                [colTitleTag]
+                 colIdTag
+                 sqlList
+                 offset
+      let check = ("SELECT title \
+                   \FROM tags \
+                   \WHERE id \
+                   \IN (?,?,?,?) \
+                   \ORDER BY title \
+                   \LIMIT 50 \
+                   \OFFSET 10", sqlList)
+      query `shouldBe` (Right check)
+    it "Should successfully create DbQuery for many/1 columns" $ do
+      let offset = 10
+          sqlList = map toSql ([4,11,20,50] :: [Integer])
+      query <- DBQSpec.queryFromWhereInLimit tableTags
+                [colIdTag, colTitleTag]
+                 colIdTag
+                 sqlList
+                 offset
+      let check = ("SELECT id,title \
+                   \FROM tags \
+                   \WHERE id \
+                   \IN (?,?,?,?) \
+                   \ORDER BY id \
+                   \LIMIT 50 \
+                   \OFFSET 10", sqlList)
+      query `shouldBe` (Right check)
+    it "Should fail if 'SELECT' column is empty" $ do
+      let offset = 10
+          sqlList = map toSql ([4,11,20,50] :: [Integer])
+      query <- DBQSpec.queryFromWhereInLimit tableTags
+                []
+                colIdTag
+                sqlList
+                offset
+      let check = "'colSelect'/values' can't be empty"
+      query `shouldBe` (Left check)
+    it "Should fail if 'values' is empty" $ do
+      let offset = 10
+      query <- DBQSpec.queryFromWhereInLimit tableTags
+                [colIdTag]
+                 colIdTag
+                []
+                offset
+      let check = "'colSelect'/values' can't be empty"
+      query `shouldBe` (Left check)
+
+spec_queryFromOrderLimitOffset :: Spec
+spec_queryFromOrderLimitOffset = describe "Testing queryFrom" $ do
+    it "Should successfully create DbQuery for 1/1 columns" $ do
+      let offset = 10
+      query <- DBQSpec.queryFromOrderLimitOffset tableUsers
                 [colIdUser, colFNUser, colLNUser, colIsAdminUser]
-      let check = ("SELECT id,first_name,last_name,is_admin FROM users", [])
+                 offset
+      let check = ("SELECT id,first_name,last_name,is_admin \
+                   \FROM users \
+                   \ORDER BY id \
+                   \LIMIT 50 \
+                   \OFFSET 10", [])
       query `shouldBe` (Right check)
     it "Should fail if 'colSelect' is empty" $ do
-      query <- DBQSpec.queryFrom tableUsers
-                []
+      let offset = 10
+      query <- DBQSpec.queryFromOrderLimitOffset tableUsers [] offset
       let check = "'colSelect' can't be empty"
       query `shouldBe` (Left check)
 
@@ -571,40 +631,50 @@ spec_findInTags = describe "Testing findInTags" $ do
 spec_querySort :: Spec
 spec_querySort = describe "Testing querySort" $ do
     it "Should successfully create default Sort DBQuery" $ do
-      let args = []
+      let offset = 10
+          args = []
           ids = map toSql ([1,10,25] :: [Integer])
-          query = DBQSpec.querySort H.dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids offset
           check = ("SELECT id \
                    \FROM posts \
                    \WHERE id \
                    \IN (?,?,?) \
-                   \ORDER BY created_at", ids)
+                   \ORDER BY created_at \
+                   \LIMIT 50 \
+                   \OFFSET 10", ids)
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create default Sort DBQuery with 'order_by_date'" $ do
-      let args = [("order_by_date", Just "True")]
+      let offset = 10
+          args = [("order_by_date", Just "True")]
           ids = map toSql ([1,10,25] :: [Integer])
-          query = DBQSpec.querySort H.dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids offset
           check = ("SELECT id \
                   \FROM posts \
                   \WHERE id IN (?,?,?) \
-                  \ORDER BY created_at", ids)
+                  \ORDER BY created_at \
+                  \LIMIT 50 \
+                  \OFFSET 10", ids)
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create default Sort DBQuery with 'order_by_category'" $ do
-      let args = [("order_by_category", Just "True")]
+      let offset = 10
+          args = [("order_by_category", Just "True")]
           ids = map toSql ([1,10,25] :: [Integer])
-          query = DBQSpec.querySort H.dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids offset
           check = ("SELECT id \
                   \FROM post_category \
                   \JOIN categories \
                   \ON post_category.category_id=categories.id \
                   \WHERE post_id \
                   \IN (?,?,?) \
-                  \ORDER by title;", ids)
+                  \ORDER by title \
+                  \LIMIT 50 \
+                  \OFFSET 10", ids)
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create default Sort DBQuery with 'order_by_photos'" $ do
-      let args = [("order_by_photos", Just "True")]
+      let offset = 10
+          args = [("order_by_photos", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
-          query = DBQSpec.querySort H.dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids offset
           check = ("SELECT posts.id, COUNT(*) as photo_count \
                   \FROM posts \
                   \LEFT JOIN post_add_photo \
@@ -612,30 +682,37 @@ spec_querySort = describe "Testing querySort" $ do
                   \WHERE posts.id \
                   \IN (?,?,?,?,?) \
                   \GROUP BY posts.id \
-                  \ORDER BY photo_count DESC;", ids)
+                  \ORDER BY photo_count DESC \
+                  \LIMIT 50 \
+                  \OFFSET 10", ids)
       query `shouldBe` (Identity $ Right check)
     it "Should successfully create default Sort DBQuery with 'order_by_author'" $ do
-      let args = [("order_by_author", Just "True")]
+      let offset = 10
+          args = [("order_by_author", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
-          query = DBQSpec.querySort H.dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids offset
           check = ("SELECT id \
                   \FROM post_author \
                   \INNER JOIN author_user \
                   \ON post_author.author_id=author_user.author_id \
                   \INNER JOIN users ON author_user.user_id=users.id \
                   \WHERE id IN (?,?,?,?,?) \
-                  \ORDER BY last_name, first_name;", ids)
+                  \ORDER BY last_name, first_name \
+                  \LIMIT 50 \
+                  \OFFSET 10", ids)
       query `shouldBe` (Identity $ Right check)
     it "Should fail with unsupported key" $ do
-      let args = [("order_by_tag", Just "True")]
+      let offset = 10
+          args = [("order_by_tag", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
-          query = DBQSpec.querySort H.dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids offset
           check = "querySort function: Incorrect key: order_by_tag"
       query `shouldBe` (Identity $ Left check)
     it "Should fail with more than one key" $ do
-      let args = [("order_by_category", Just "True"),
+      let offset = 10
+          args = [("order_by_category", Just "True"),
                   ("order_by_author", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
-          query = DBQSpec.querySort H.dbqh args ids
+          query = DBQSpec.querySort H.dbqh args ids offset
           check = "querySort function: Too many elements in dictionary!"
       query `shouldBe` (Identity $ Left check)

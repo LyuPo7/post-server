@@ -166,12 +166,13 @@ getUserRecordbyId handle userId = do
       Logger.logError logh msg
       return $ Left msg
 
--- | Get all User records
-getUserRecords :: Monad m => Handle m -> m (Either Text [User])
-getUserRecords handle = do
+-- | Get User records with offset
+getUserRecords :: Monad m => Handle m -> Offset -> m (Either Text [User])
+getUserRecords handle offset = do
   let logh = hLogger handle
-  usersSQL <- selectFrom handle tableUsers
+  usersSQL <- selectFromOrderLimitOffset  handle tableUsers
               [colIdUser, colFNUser, colLNUser, colIsAdminUser]
+               offset
   case usersSQL of
     [] -> do
       Logger.logWarning logh "No exist Users in db!"

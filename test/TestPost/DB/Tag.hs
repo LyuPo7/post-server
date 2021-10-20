@@ -117,20 +117,22 @@ spec_getTagRecordsById = describe "Testing getTagRecordsById" $ do
 spec_getAllTagRecords :: Spec
 spec_getAllTagRecords = describe "Testing getAllTagRecords" $ do
     it "Should successfully return Tags for array of one element" $ do
-      let tagId = 1 :: TagId
+      let offset = 10
+          tagId = 1 :: TagId
           title = "sport" :: Title
           sqlTagA = [[toSql tagId, toSql title]]
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagsE = DBT.getAllTagRecords dbqh'
+          tagsE = DBT.getAllTagRecords dbqh' offset
           check = Tag {
             tag_title = title,
             tag_id = tagId
           }
       tagsE `shouldBe` (Identity $ Right [check])
     it "Should successfully return Tags for array of many elements" $ do
-      let tagId1 = 1 :: TagId
+      let offset = 10
+          tagId1 = 1 :: TagId
           tagId2 = 50 :: TagId
           title1 = "sport" :: Title
           title2 = "crossfit" :: Title
@@ -141,7 +143,7 @@ spec_getAllTagRecords = describe "Testing getAllTagRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagsE = DBT.getAllTagRecords dbqh'
+          tagsE = DBT.getAllTagRecords dbqh' offset
           tag1 = Tag {
             tag_title = title1,
             tag_id = tagId1
@@ -152,10 +154,11 @@ spec_getAllTagRecords = describe "Testing getAllTagRecords" $ do
           }
       tagsE `shouldBe` (Identity $ Right [tag1, tag2])
     it "Should fail on empty array" $ do
-      let dbqh' = H.dbqh {
+      let offset = 10
+          dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          tagsE = DBT.getAllTagRecords dbqh'
+          tagsE = DBT.getAllTagRecords dbqh' offset
           msg = "No Tags!"
       tagsE `shouldBe` (Identity $ Left msg)
 

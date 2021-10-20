@@ -103,11 +103,12 @@ getTagIdByTitle handle tagTitle = do
       return $ Left msg
 
 -- | Get all Tag records
-getAllTagRecords :: Monad m => Handle m -> m (Either Text [Tag])
-getAllTagRecords handle = do
+getAllTagRecords :: Monad m => Handle m -> Offset -> m (Either Text [Tag])
+getAllTagRecords handle offset = do
   let logh = hLogger handle
-  tagsSQL <- selectFrom handle tableTags
+  tagsSQL <- selectFromOrderLimitOffset  handle tableTags
              [colIdTag, colTitleTag]
+              offset
   case tagsSQL of
     [] -> do
       Logger.logWarning logh "No Tags in db!"

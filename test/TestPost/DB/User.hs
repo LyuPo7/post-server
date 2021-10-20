@@ -95,7 +95,8 @@ spec_getAuthorIdByUserId = describe "Testing getAuthorIdByUserId" $ do
 spec_getUserRecords :: Spec
 spec_getUserRecords = describe "Testing getUserRecords" $ do
     it "Should successfully return [User] for array of one element" $ do
-      let userId = 101 :: UserId
+      let offset = 10
+          userId = 101 :: UserId
           fn = "Ann" :: FirstName
           ln = "Bomnet" :: LastName
           ia = False
@@ -108,7 +109,7 @@ spec_getUserRecords = describe "Testing getUserRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          usersE = DBU.getUserRecords dbqh'
+          usersE = DBU.getUserRecords dbqh' offset
           check = User {
             user_firstName = fn,
             user_lastName = ln,
@@ -118,7 +119,8 @@ spec_getUserRecords = describe "Testing getUserRecords" $ do
           }
       usersE `shouldBe` (Identity $ Right [check])
     it "Should successfully return [User] for array of many elements" $ do
-      let userId1 = 101 :: UserId
+      let offset = 10
+          userId1 = 101 :: UserId
           fn1 = "Ann" :: FirstName
           ln1 = "Bomnet" :: LastName
           ia1 = False
@@ -142,7 +144,7 @@ spec_getUserRecords = describe "Testing getUserRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          usersE = DBU.getUserRecords dbqh'
+          usersE = DBU.getUserRecords dbqh' offset
           user1 = User {
             user_firstName = fn1,
             user_lastName = ln1,
@@ -159,10 +161,11 @@ spec_getUserRecords = describe "Testing getUserRecords" $ do
           }
       usersE `shouldBe` (Identity $ Right [user1, user2])
     it "Should fail on empty array" $ do
-      let dbqh' = H.dbqh {
+      let offset = 10
+          dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          usersE = DBU.getUserRecords dbqh'
+          usersE = DBU.getUserRecords dbqh' offset
           msg = "No users!"
       usersE `shouldBe` (Identity $ Left msg)
 

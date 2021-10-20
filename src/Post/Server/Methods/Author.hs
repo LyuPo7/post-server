@@ -15,7 +15,7 @@ import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..))
+import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
 -- | Create getAuthors Response
@@ -32,14 +32,24 @@ getAuthorsResp handle query = do
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      authorsE <- DBA.getAuthorRecords dbqh
-      case authorsE of 
+      authorsOffsetE <- runEitherT $ do
+        reqParams <- EitherT $ QP.extractRequired logh query params
+        let [offsetText] = reqParams
+        offset <- EitherT $ Util.readEitherMa offsetText "offset"
+        authors <- EitherT $ DBA.getAuthorRecords dbqh offset
+        return (authors, offset)
+      case authorsOffsetE of
         Left msg -> return $ respError msg
-        Right authors -> do
+        Right (authors, offset) -> do
+          let response = defaultResponse {
+                response_authors = Just authors,
+                response_offset = offset
+              }
           Logger.logInfo logh "Authors were sent"
-          return $ respOk authors
+          return $ respOk response
     where
       authParams = ["token"]
+      params = ["offset"]
 
 -- | Create createAuthor Response
 createAuthorResp :: Monad m => Handle m -> Query -> m Response

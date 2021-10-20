@@ -291,7 +291,8 @@ spec_checkIfChildCatIsValid = describe "Testing checkIfChildCatIsValid" $ do
 spec_getCats :: Spec
 spec_getCats = describe "Testing getCats" $ do
     it "Should successfully create [Category] of one Category record" $ do
-      let title = "crossfit" :: Title
+      let offset = 10
+          title = "crossfit" :: Title
           catId = 11 :: CategoryId
           sqlCatA = [[
             toSql catId,
@@ -306,10 +307,11 @@ spec_getCats = describe "Testing getCats" $ do
             category_title = title,
             category_subcategory = Nothing
           }
-          catsE = DBC.getCats dbqh'
+          catsE = DBC.getCats dbqh' offset
       catsE `shouldBe` (Identity $ Right [check])
     it "Should successfully create [Category] of many Category record" $ do
-      let title1 = "crossfit" :: Title
+      let offset = 10
+          title1 = "crossfit" :: Title
           catId1 = 11 :: CategoryId
           title2 = "sport" :: Title
           catId2 = 3 :: CategoryId
@@ -334,13 +336,14 @@ spec_getCats = describe "Testing getCats" $ do
             category_title = title2,
             category_subcategory = Nothing
           }
-          catsE = DBC.getCats dbqh'
+          catsE = DBC.getCats dbqh' offset
       catsE `shouldBe` (Identity $ Right [cat1, cat2])
     it "Should fail on empty Category record" $ do
-      let dbqh' = H.dbqh {
+      let offset = 10
+          dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          catE = DBC.getCats dbqh'
+          catE = DBC.getCats dbqh' offset
           msg = "No Categories!"
       catE `shouldBe` (Identity $ Left msg)
 

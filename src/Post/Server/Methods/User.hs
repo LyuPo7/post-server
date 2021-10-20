@@ -14,7 +14,7 @@ import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..))
+import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
 -- | Create getUsers Response
@@ -31,14 +31,24 @@ getUsersResp handle query = do
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      usersE <- DBU.getUserRecords dbqh
-      case usersE of
+      usersOffsetE <- runEitherT $ do
+        reqParams <- EitherT $ QP.extractRequired logh query params
+        let [offsetText] = reqParams
+        offset <- EitherT $ Util.readEitherMa offsetText "offset"
+        users <- EitherT $ DBU.getUserRecords dbqh offset
+        return (users, offset)
+      case usersOffsetE of
         Left msg -> return $ respError msg
-        Right users -> do
+        Right (users, offset) -> do
+          let response = defaultResponse {
+                response_users = Just users,
+                response_offset = offset
+              }
           Logger.logInfo logh "Users sent"
-          return $ respOk users
+          return $ respOk response
     where
       authParams = ["token"]
+      params = ["offset"]
 
 -- | Create createUser Response
 createUserResp :: Monad m => Handle m -> Query -> m Response

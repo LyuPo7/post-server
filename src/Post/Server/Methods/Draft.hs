@@ -17,7 +17,7 @@ import qualified Post.DB.Author as DBA
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..))
+import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
 -- | Create getDrafts Response
@@ -34,16 +34,26 @@ getDraftsResp handle query = do
   case authorIdE of
     Left _ -> return resp404
     Right authorId -> do
-      draftsE <- runEitherT $ do
+      draftsOffsetE <- runEitherT $ do
+        reqParams <- EitherT $ QP.extractRequired logh query params
+        let [offsetText] = reqParams
+        offset <- EitherT $ Util.readEitherMa offsetText "offset"
         postIds <- EitherT $ DBA.getPostIdsByAuthorId dbqh authorId
         draftIds <- EitherT $ DBP.getPostDraftIdsByPostIds dbqh postIds
-        EitherT $ DBD.getDraftRecords dbqh draftIds
-      case draftsE of
-        Right drafts -> do
-          Logger.logInfo logh "Drafts were sent"
-          return $ respOk drafts
+        drafts <- EitherT $ DBD.getDraftRecords dbqh draftIds offset
+        return (drafts, offset)
+      case draftsOffsetE of
         Left msg -> return $ respError msg
-  where authParams = ["token"]
+        Right (drafts, offset) -> do
+          let response = defaultResponse {
+                response_drafts = Just drafts,
+                response_offset = offset
+              }
+          Logger.logInfo logh "Drafts were sent"
+          return $ respOk response
+  where
+    authParams = ["token"]
+    params = ["offset"]
 
 -- | Create createDraft Response
 createDraftResp :: Monad m => Handle m -> Query -> m Response

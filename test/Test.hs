@@ -23,7 +23,8 @@ main = do
              [ 
                DBQSpec.spec_queryFromWhere,
                DBQSpec.spec_queryFromWhereIn,
-               DBQSpec.spec_queryFrom,
+               DBQSpec.spec_queryFromWhereInLimit,
+               DBQSpec.spec_queryFromOrderLimitOffset,
                DBQSpec.spec_queryFromOrderLimit,
                DBQSpec.spec_queryDeleteWhere,
                DBQSpec.spec_queryInsertIntoValues,

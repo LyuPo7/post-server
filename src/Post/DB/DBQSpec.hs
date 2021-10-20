@@ -10,14 +10,16 @@ import Data.List (intercalate, union)
 import Text.Read (readEither)
 import Control.Monad.Trans.Either
 import Control.Monad.Trans (lift)
+import Distribution.Simple.Utils (safeHead)
 import qualified Data.Text as T
 import qualified Control.Exception as Exc
 
 import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Logger as Logger
 import qualified Post.Exception as E
+import qualified Post.Settings as Settings
 import Post.DB.Data
-import Post.Server.Objects (Token, PostId)
+import Post.Server.Objects (Token, PostId, Offset)
 import Post.Server.Util (convert, sqlAtoText, sqlDAtoText)
 
 -- | DBQ Handle
@@ -64,8 +66,8 @@ queryFromWhere table colSelect colWhere values = do
       return $ Right (query, values)
 
 -- | SELECT FROM WHERE IN query
-selectFromWhereIn :: Monad m => Handle m ->
-                     Table -> [Column] -> Column -> [SqlValue] -> m [[SqlValue]]
+selectFromWhereIn :: Monad m => Handle m -> Table -> [Column] ->
+                     Column -> [SqlValue] -> m [[SqlValue]]
 selectFromWhereIn handle table colSelect colWhere values = do
   dbQuery <- queryFromWhereIn table colSelect colWhere values
   case dbQuery of
@@ -75,47 +77,84 @@ selectFromWhereIn handle table colSelect colWhere values = do
       <> show msg
 
 -- | Build SELECT FROM WHERE IN query
-queryFromWhereIn :: Monad m => Table ->
-                   [Column] -> Column -> [SqlValue] -> m (Either Text DbQuery)
+queryFromWhereIn :: Monad m => Table -> [Column] -> Column ->
+                   [SqlValue] -> m (Either Text DbQuery)
 queryFromWhereIn table colSelect colWhere values = do
-  let action | null colSelect || null values = do
-               let msg = "'colSelect'/values' can't be empty"
-               return $ Left msg
-             | otherwise = do
-               let tableName = table_name table
-                   nValues = length values
-                   selectName = T.intercalate "," $ map column_name colSelect
-                   whereName = column_name colWhere
-                   qString = T.intersperse ',' $ T.replicate nValues "?"
-                   query = "SELECT " <> selectName
-                       <> " FROM " <> tableName
-                       <> " WHERE " <> whereName
-                       <> " IN (" <> qString <> ")"
-               return $ Right (query, values)
-  action
+  case (safeHead colSelect, safeHead values) of
+    (Just _, Just _) -> do
+      let tableName = table_name table
+          nValues = length values
+          selectName = T.intercalate "," $ map column_name colSelect
+          whereName = column_name colWhere
+          qString = T.intersperse ',' $ T.replicate nValues "?"
+          query = "SELECT " <> selectName
+               <> " FROM " <> tableName
+               <> " WHERE " <> whereName
+               <> " IN (" <> qString <> ")"
+      return $ Right (query, values)
+    _ -> do
+      let msg = "'colSelect'/values' can't be empty"
+      return $ Left msg
+
+-- | SELECT FROM WHERE IN ORDER BY OFFSET LIMIT query
+selectFromWhereInLimit :: Monad m => Handle m -> Table -> [Column] ->
+                     Column -> [SqlValue] -> Offset -> m [[SqlValue]]
+selectFromWhereInLimit handle table colSelect colWhere values offset = do
+  dbQuery <- queryFromWhereInLimit table colSelect colWhere values offset
+  case dbQuery of
+    Right query -> makeDBRequest handle query
+    Left msg -> Exc.throw $ E.DbQueryError 
+      $ "Error: Error in selectFromWhereIn!\n"
+      <> show msg
+
+-- | Build SELECT FROM WHERE IN query
+queryFromWhereInLimit :: Monad m => Table -> [Column] -> Column ->
+                   [SqlValue] -> Offset -> m (Either Text DbQuery)
+queryFromWhereInLimit table colSelect colWhere values offset = do
+  case (safeHead colSelect, safeHead values) of
+    (Just firstCol, Just _) -> do
+      let tableName = table_name table
+          nValues = length values
+          selectName = T.intercalate "," $ map column_name colSelect
+          whereName = column_name colWhere
+          qString = T.intersperse ',' $ T.replicate nValues "?"
+          query = "SELECT " <> selectName
+               <> " FROM " <> tableName
+               <> " WHERE " <> whereName
+               <> " IN (" <> qString <> ")"
+               <> " ORDER BY " <> column_name firstCol
+               <> " LIMIT " <> convert Settings.pageLimit
+               <> " OFFSET " <> convert offset
+      return $ Right (query, values)
+    _ -> do
+      let msg = "'colSelect'/values' can't be empty"
+      return $ Left msg
 
 -- | SELECT FROM query
-selectFrom :: Monad m => Handle m -> Table -> [Column] -> m [[SqlValue]]
-selectFrom handle table colSelect = do
-  dbQuery <- queryFrom table colSelect
+selectFromOrderLimitOffset :: Monad m => Handle m -> Table -> [Column] -> Offset -> m [[SqlValue]]
+selectFromOrderLimitOffset handle table colSelect offset = do
+  dbQuery <- queryFromOrderLimitOffset table colSelect offset
   case dbQuery of
     Right query -> makeDBRequest handle query
     Left msg -> Exc.throw $ E.DbQueryError $ "Error: Error in selectFrom!\n"
       <> show msg
 
 -- | Build SELECT FROM query
-queryFrom :: Monad m => Table -> [Column] -> m (Either Text DbQuery)
-queryFrom table colSelect = do
-  let action | null colSelect = do
-               let msg = "'colSelect' can't be empty"
-               return $ Left msg
-             | otherwise = do
-               let tableName = table_name table
-                   selectName = T.intercalate "," $ map column_name colSelect
-                   query = "SELECT " <> selectName
-                       <> " FROM " <> tableName
-               return $ Right (query, [])
-  action
+queryFromOrderLimitOffset :: Monad m => Table -> [Column] -> Offset -> m (Either Text DbQuery)
+queryFromOrderLimitOffset table colSelect offset = do
+  case safeHead colSelect of
+    Nothing -> do
+      let msg = "'colSelect' can't be empty"
+      return $ Left msg
+    Just firstCol -> do
+      let tableName = table_name table
+          selectName = T.intercalate "," $ map column_name colSelect
+          query = "SELECT " <> selectName
+               <> " FROM " <> tableName
+               <> " ORDER BY " <> column_name firstCol
+               <> " LIMIT " <> convert Settings.pageLimit
+               <> " OFFSET " <> convert offset
+      return $ Right (query, [])
 
 -- | SELECT FROM ORDER LIMIT query
 selectFromOrderLimit :: Monad m => Handle m ->
@@ -705,10 +744,10 @@ findInTags handle _ = do
   return $ Left msg
 
 -- | Sort query
-sortQuery :: Monad m => Handle m -> [PostQuery] -> [SqlValue] -> m [PostId]
-sortQuery handle params ids = do
+sortQuery :: Monad m => Handle m -> [PostQuery] -> [SqlValue] -> Offset -> m [PostId]
+sortQuery handle params ids offset = do
   let orderParams = filter (\x -> fst x `elem` dbOrderParams) params
-  dbQuery <- querySort handle orderParams ids
+  dbQuery <- querySort handle orderParams ids offset
   case dbQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
@@ -718,8 +757,8 @@ sortQuery handle params ids = do
 
 -- | Build Sort query
 querySort :: Monad m => Handle m ->
-             [PostQuery] -> [SqlValue] -> m (Either Text DbQuery)
-querySort handle [] ids = do
+             [PostQuery] -> [SqlValue] -> Offset -> m (Either Text DbQuery)
+querySort handle [] ids offset = do
   let logh = hLogger handle
       nIds = length ids
       qString = T.intersperse ',' $ T.replicate nIds "?"
@@ -730,11 +769,13 @@ querySort handle [] ids = do
               \FROM " <> tPosts <> " \
               \WHERE " <> cIdP <> " \
               \IN (" <> qString <> ") \
-              \ORDER BY " <> createdAt
+              \ORDER BY " <> createdAt <> " \
+              \LIMIT " <> convert Settings.pageLimit <> " \
+              \OFFSET " <> convert offset
       msg = "Using default Order query: " <> query
   Logger.logDebug logh msg
   return $ Right (query, ids)
-querySort handle [(key, _)] ids = do
+querySort handle [(key, _)] ids offset = do
   let logh = hLogger handle
       nIds = length ids
       qString = T.intersperse ',' $ T.replicate nIds "?"
@@ -747,7 +788,9 @@ querySort handle [(key, _)] ids = do
                   \FROM " <> tPosts <> " \
                   \WHERE " <> cIdP <> " \
                   \IN (" <> qString <> ") \
-                  \ORDER BY " <> createdAt
+                  \ORDER BY " <> createdAt <> " \
+                  \LIMIT " <> convert Settings.pageLimit <> " \
+                  \OFFSET " <> convert offset
           msg = "Order query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, ids)
@@ -766,7 +809,9 @@ querySort handle [(key, _)] ids = do
                   \=" <> tC <> "." <> cIdC <> " \
                   \WHERE " <> cIdPPC <> " \
                   \IN (" <> qString <> ") \
-                  \ORDER by " <> cTitleP <> ";"
+                  \ORDER by " <> cTitleP <> " \
+                  \LIMIT " <> convert Settings.pageLimit <> " \
+                  \OFFSET " <> convert offset
           msg = "Order query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, ids)
@@ -783,7 +828,9 @@ querySort handle [(key, _)] ids = do
                   \WHERE " <> tP <> "." <> cIdP <> " \
                   \IN (" <> qString <> ") \
                   \GROUP BY " <> tP <> "." <> cIdP <> " \
-                  \ORDER BY photo_count DESC;"
+                  \ORDER BY photo_count DESC \
+                  \LIMIT " <> convert Settings.pageLimit <> " \
+                  \OFFSET " <> convert offset
           msg = "Order query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, ids)
@@ -806,7 +853,9 @@ querySort handle [(key, _)] ids = do
                   \INNER JOIN " <> tU <> " ON " <> tAU <> "." <> cIdUAU <> "\
                   \=" <> tU <> "." <> cIdU <> " \
                   \WHERE id IN (" <> qString <> ") \
-                  \ORDER BY " <> cLNU <> ", " <> cFNU <> ";"
+                  \ORDER BY " <> cLNU <> ", " <> cFNU <> " \
+                  \LIMIT " <> convert Settings.pageLimit <> " \
+                  \OFFSET " <> convert offset
           msg = "Order query: " <> query
       Logger.logDebug logh msg
       return $ Right (query, ids)
@@ -814,7 +863,7 @@ querySort handle [(key, _)] ids = do
       let msg = "querySort function: Incorrect key: " <> key
       Logger.logWarning logh msg
       return $ Left msg
-querySort handle _ _ = do
+querySort handle _ _ _ = do
   let logh = hLogger handle
       msg = "querySort function: Too many elements in dictionary!"
   Logger.logError logh msg

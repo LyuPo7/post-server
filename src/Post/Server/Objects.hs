@@ -27,6 +27,7 @@ type Title = Text
 type Link = Text
 type Admin = Text
 type Token = Text
+type Offset = Integer
 
 -- | Permission
 data Permission = AdminPerm -- All Admin permissions.
@@ -161,3 +162,33 @@ instance FromJSON Photo where
 instance ToJSON Photo where
   toJSON = genericToJSON defaultOptions {
     fieldLabelModifier = camelTo2 '_' . drop 6 }
+
+-- | PostServer Response
+data PostResponse = PostResponse {
+  response_posts :: Maybe [Post], -- Array of Posts.
+  response_users :: Maybe [User], -- Array of Users.
+  response_authors :: Maybe [Author], -- Array of Authors.
+  response_cats :: Maybe [Category], -- Array of Categories.
+  response_tags :: Maybe [Tag], -- Array of Tags.
+  response_drafts :: Maybe [Draft], -- Array of Drafts.
+  response_offset :: Offset -- Offset from First Record
+  } deriving (Show, Generic, Eq)
+
+instance FromJSON PostResponse where
+  parseJSON = genericParseJSON defaultOptions {
+    fieldLabelModifier = drop 9 }
+
+instance ToJSON PostResponse where
+  toJSON = genericToJSON defaultOptions {
+    fieldLabelModifier = drop 9 }
+
+defaultResponse :: PostResponse
+defaultResponse = PostResponse {
+  response_posts = Nothing,
+  response_users = Nothing,
+  response_authors = Nothing,
+  response_cats = Nothing,
+  response_tags = Nothing,
+  response_drafts = Nothing,
+  response_offset = 0
+}

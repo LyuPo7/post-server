@@ -117,7 +117,8 @@ spec_getLastDraftRecord = describe "Testing getLastDraftRecord" $ do
 spec_getDraftRecords :: Spec
 spec_getDraftRecords = describe "Testing getDraftRecords" $ do
     it "Should successfully return [Draft] for array of one element" $ do
-      let text = "draft text" :: Link
+      let offset = 10
+          text = "draft text" :: Link
           draftId = 11 :: DraftId
           postId = 15 :: PostId
           sqlDraftA = [[
@@ -128,7 +129,7 @@ spec_getDraftRecords = describe "Testing getDraftRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
-          draftsE = DBD.getDraftRecords dbqh' [draftId]
+          draftsE = DBD.getDraftRecords dbqh' [draftId] offset
           check = Draft {
             draft_id = draftId,
             draft_text = text,
@@ -136,7 +137,8 @@ spec_getDraftRecords = describe "Testing getDraftRecords" $ do
           }
       draftsE `shouldBe` (Identity $ Right [check])
     it "Should successfully return [Draft] for array of many elements" $ do
-      let text1 = "draft text" :: Text
+      let offset = 10
+          text1 = "draft text" :: Text
           draftId1 = 11 :: DraftId
           postId1 = 15 :: PostId
           text2 = "draft text new" :: Text
@@ -153,7 +155,7 @@ spec_getDraftRecords = describe "Testing getDraftRecords" $ do
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
-          draftsE = DBD.getDraftRecords dbqh' [draftId1, draftId2]
+          draftsE = DBD.getDraftRecords dbqh' [draftId1, draftId2] offset
           draft1 = Draft {
             draft_id = draftId1,
             draft_text = text1,
@@ -166,10 +168,11 @@ spec_getDraftRecords = describe "Testing getDraftRecords" $ do
           }
       draftsE `shouldBe` (Identity $ Right [draft1, draft2])
     it "Should fail on empty array" $ do
-      let draftId = 11 :: DraftId
+      let offset = 10
+          draftId = 11 :: DraftId
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          draftsE = DBD.getDraftRecords dbqh' [draftId]
+          draftsE = DBD.getDraftRecords dbqh' [draftId] offset
           msg = "No Drafts!"
       draftsE `shouldBe` (Identity $ Left msg)

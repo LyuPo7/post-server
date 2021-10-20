@@ -14,7 +14,7 @@ import qualified Post.DB.Post as DBP
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..))
+import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
 -- | Create getPosts Response
@@ -32,15 +32,24 @@ getPostsResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       dbQueryParams <- QP.createOptionalDict logh query paramsOpt
-      postsE <- runEitherT $ do
-        EitherT $ DBP.getPosts dbqh dbQueryParams
-      case postsE of
+      postsOffsetE <- runEitherT $ do
+        reqParams <- EitherT $ QP.extractRequired logh query params
+        let [offsetText] = reqParams
+        offset <- EitherT $ Util.readEitherMa offsetText "offset"
+        posts <- EitherT $ DBP.getPosts dbqh dbQueryParams offset
+        return (posts, offset)
+      case postsOffsetE of
         Left msg -> return $ respError msg
-        Right posts -> do
+        Right (posts, offset) -> do
+          let response = defaultResponse {
+                response_posts = Just posts,
+                response_offset = offset
+              }
           Logger.logInfo logh "Posts were sent"
-          return $ respOk posts
+          return $ respOk response
     where
       authParams = ["token"]
+      params = ["offset"]
       paramsOpt = [
         "created_at", 
         "created_at__lt", 

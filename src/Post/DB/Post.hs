@@ -48,8 +48,8 @@ createPost handle title text authorId catId tagIds = do
       return $ Left msg
 
 -- | Get all Post records corresponding [PostQuery]
-getPosts :: Monad m => Handle m -> [PostQuery] -> m (Either Text [Post])
-getPosts handle postQuery = do
+getPosts :: Monad m => Handle m -> [PostQuery] -> Offset -> m (Either Text [Post])
+getPosts handle postQuery offset = do
   let logh = hLogger handle
   -- Request to DB table posts
   idAllPosts <- searchPost handle postQuery
@@ -71,7 +71,7 @@ getPosts handle postQuery = do
       return $ Left "No Posts!"
     correctIds -> do
       Logger.logInfo logh "Sorting Posts from db!"
-      postsSql <- sortQuery handle postQuery $ map toSql correctIds
+      postsSql <- sortQuery handle postQuery (map toSql correctIds) offset
       case postsSql of
         [] -> do
           Logger.logWarning logh "No Posts in db!"

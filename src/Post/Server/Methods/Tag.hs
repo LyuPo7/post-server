@@ -13,7 +13,8 @@ import qualified Post.Logger as Logger
 import qualified Post.DB.Tag as DBT
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..))
+import qualified Post.Server.Util as Util
+import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
 import Post.Server.Responses (respOk, respError, respSucc, resp404)
 
 -- | Create getTags Response
@@ -30,15 +31,24 @@ getTagsResp handle query = do
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      tagsE <- DBT.getAllTagRecords dbqh
-      case tagsE of
+      tagsOffsetE <- runEitherT $ do
+        reqParams <- EitherT $ QP.extractRequired logh query params
+        let [offsetText] = reqParams
+        offset <- EitherT $ Util.readEitherMa offsetText "offset"
+        tags <- EitherT $ DBT.getAllTagRecords dbqh offset
+        return (tags, offset)
+      case tagsOffsetE of
         Left msg -> return $ respError msg
-        Right tags -> do
-          let msg = "Tags sent"
-          Logger.logInfo logh msg
-          return $ respOk tags
+        Right (tags, offset) -> do
+          let response = defaultResponse {
+                response_tags = Just tags,
+                response_offset = offset
+              }
+          Logger.logInfo logh "Tags sent"
+          return $ respOk response
     where
       authParams = ["token"]
+      params = ["offset"]
 
 -- | Create createTag Response
 createTagResp :: Monad m => Handle m -> Query -> m Response

@@ -111,11 +111,12 @@ getCatId handle title = do
       return $ Left msg
 
 -- | Get all Category records
-getCats :: Monad m => Handle m -> m (Either Text [Category])
-getCats handle = do
+getCats :: Monad m => Handle m -> Offset -> m (Either Text [Category])
+getCats handle offset = do
   let logh = hLogger handle
-  catsSQL <- selectFrom handle tableCats
+  catsSQL <- selectFromOrderLimitOffset  handle tableCats
               [colIdCat, colTitleCat, colSubCatCat]
+               offset
   case catsSQL of
     [] -> do
       Logger.logWarning logh "No Categories in db!"

@@ -66,13 +66,15 @@ publishDraft handle postId = do
       return $ Right draftId
 
 -- | Get all Draft records corresponding [DraftId] if exist
-getDraftRecords :: Monad m => Handle m -> [DraftId] -> m (Either Text [Draft])
-getDraftRecords handle draftIds = do
+getDraftRecords :: Monad m => Handle m -> 
+                  [DraftId] -> Offset -> m (Either Text [Draft])
+getDraftRecords handle draftIds offset = do
   let logh = hLogger handle
-  draftsSql <- selectFromWhereIn handle tableDrafts
+  draftsSql <- selectFromWhereInLimit handle tableDrafts
                 [colIdDraft, colTextDraft, colIdPostDraft]
                  colIdDraft
-                 $ map toSql draftIds
+                 (map toSql draftIds)
+                 offset
   case draftsSql of
     [] -> do
       Logger.logWarning logh "No Drafts in db!"

@@ -165,11 +165,12 @@ getAuthorIdByUserId handle userId = do
       return $ Left msg
 
 -- | Get all Author records if exist
-getAuthorRecords :: Monad m => Handle m -> m (Either Text [Author])
-getAuthorRecords handle = do
+getAuthorRecords :: Monad m => Handle m -> Offset -> m (Either Text [Author])
+getAuthorRecords handle offset = do
   let logh = hLogger handle
-  authorsSQL <- selectFrom handle tableAuthors
+  authorsSQL <- selectFromOrderLimitOffset  handle tableAuthors
                  [colIdAuthor, colDescAuthor]
+                  offset
   case authorsSQL of
     [] -> do
       Logger.logWarning logh "No Authors in db!"
