@@ -3,7 +3,6 @@
 <p>The REST-API is an HTTP-based interface. The response contains a JSON object</p>
 
 <h3>Project Description:</h3>
-    <p>Post-Server</p>
     <ul>
         <li>Using <b>Warp</b> as Web-server;</li>
         <li>Using <b>PostgreSQL</b> as BD;</li>
@@ -56,11 +55,40 @@
            <ul><b>$ stack exec post-server-exe</b>
            </ul>
        </li>
-       <li><h4>for more information see asciinema below:</h4></p>
+       <li><h4>For more information see asciinema below:</h4></p>
             <a href="https://asciinema.org/a/443725" target="_blank"><img src="https://asciinema.org/a/443725.svg" /></a></b>:</h4>
            <ul><b>$ stack exec post-server-exe</b>
            </ul>
        </li>
     </ol>
     <p>
-<h3>Project pattern</h3>
+<h3>Making requests</h3>
+<p>All supported requests contain 'data/curl/'</p>
+<ul>
+        <li>All supported requests contain in 'data/curl/'</li>
+            <ul>
+                <li><b>Every directory contains executables .sh scripts for supported requests</li>
+                <li><b>For use .sh scripts for supported requests</li>
+            </ul>
+        <li>Supported requests</li>
+            <ul>
+                <li><b>Account</b>:</li>
+                    <ul>
+                        <li><b>login</b>:</li>
+                            <ul>
+                                <li>Use this method to get new token for User with login</li>
+                                <li><b>Script: 'data/curl/account/login.sh'</b>:</li>
+                                <li><b>Usage: './login.sh [flags]'</b>:</li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-k</b> User password;</li>
+                                        <li><b>-k</b> User login;</li>
+                                    </ul>
+                                <li><b>Response: JSON TextResponse object</b>:</li>
+                            </ul>
+                   </ul>
+            </ul>
+        </li>
+    </ul>
