@@ -56,7 +56,11 @@
            <ul><b>$ stack exec post-server-exe</b>
            </ul>
        </li>
+       <li><h4>for more information see asciinema below:</h4></p>
+            <a href="https://asciinema.org/a/443725" target="_blank"><img src="https://asciinema.org/a/443725.svg" /></a></b>:</h4>
+           <ul><b>$ stack exec post-server-exe</b>
+           </ul>
+       </li>
     </ol>
-    <p>for more information see asciinema below:</p>
-    <a href="https://asciinema.org/a/443725" target="_blank"><img src="https://asciinema.org/a/443725.svg" /></a>
+    <p>
 <h3>Project pattern</h3>
