@@ -63,12 +63,11 @@
     </ol>
     <p>
 <h3>Making requests</h3>
-<p>All supported requests contain 'data/curl/'</p>
 <ul>
         <li>All supported requests contain in 'data/curl/'</li>
             <ul>
-                <li><b>Every directory contains executables .sh scripts for supported requests</li>
-                <li><b>For use .sh scripts for supported requests</li>
+                <li>Every directory contains executables .sh scripts for supported requests</li>
+                <li><For use .sh scripts for supported requests</li>
             </ul>
         <li>Supported requests</li>
             <ul>
