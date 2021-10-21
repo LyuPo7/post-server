@@ -24,7 +24,7 @@
  
 <h3>How to use?</h3>
     <ol>
-        <li> <h4>Setup data/config.json</h4>
+        <li> <h4>Setup 'data/config.json'</h4> (for example see config-json-file: 'data/config_example.json')
             <ul>
                  <li><b>"logger_settings"</b></li>
                     <ul>
@@ -57,4 +57,6 @@
            </ul>
        </li>
     </ol>
+    <p>for more information see asciinema below:</p>
+    [![asciicast](https://asciinema.org/a/MuzI8zjv0LCMDdi681kbCia1G.svg)](https://asciinema.org/a/MuzI8zjv0LCMDdi681kbCia1G)
 <h3>Project pattern</h3>
