@@ -67,7 +67,7 @@
         <li>All supported requests contain in 'data/curl/'</li>
             <ul>
                 <li>Every directory contains executables .sh scripts for supported requests</li>
-                <li><For use .sh scripts for supported requests</li>
+                <li>For use .sh scripts for supported requests</li>
             </ul>
         <li>Supported requests</li>
             <ul>
