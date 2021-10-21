@@ -87,8 +87,8 @@
                                     </ul>
                                 <li><b>Response</b>:
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
-                                        <li><b>Fail</b>: JSON <b>UserResponse</b> object with Text error;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object;</li>
+                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with Text error;</li>
                                     </ul>
                                 </li>
                             </ul>
@@ -111,10 +111,10 @@
                                         <li><b>-t</b> User's token;</li>
                                         <li><b>-o</b> Offset from the first record;</li>
                                     </ul>
-                                <li><b>Response</b>:
+                                <li><b>Response:</b>:
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
-                                        <li><b>Fail</b>: JSON <b>UserResponse</b> object with Text error;</li>
+                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with Text error;</li>
                                     </ul>
                                 </li>
                             </ul>
@@ -133,10 +133,60 @@
                                         <li><b>-k</b> User's password;</li>
                                         <li><b>-n</b> User's login;</li>
                                     </ul>
-                                <li><b>Response</b>:
+                                <li><b>Response:</b>:
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
-                                        <li><b>Fail</b>: JSON <b>UserResponse</b> object with Text error;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with Text error;</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>setUserPhoto</b>:
+                            <ul>
+                                <li>Use this method to set <b>Photo</b> for <b>User</b>;</li>
+                                <li>This method is available only for <b>User</b>-account owner;</li>
+                                <li><b>Script: 'data/curl/user/setUserPhoto.sh'</b>:</li>
+                                <li><b>Usage: './setUserPhoto.sh [flags]'</b>:</li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token;</li>
+                                        <li><b>-l</b> Path to photo</li>
+                                    </ul>
+                                <li><b>Response:</b>:
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b>: JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>removeUser</b>:
+                            <ul>
+                                <li>Use this method to remove <b>User</b>;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/user/removeUser.sh'</b>:</li>
+                                <li><b>Usage: './removeUser.sh [flags]'</b>:</li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token;</li>
+                                        <li><b>-i</b> User's id (to remove)</li>
+                                    </ul>
+                                <li><b>Response:</b>:
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b>: JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
                                     </ul>
                                 </li>
                             </ul>
