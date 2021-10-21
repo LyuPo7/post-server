@@ -76,8 +76,8 @@
                         <li><b>login</b>:
                             <ul>
                                 <li>Use this method to get new <b>Token</b> for <b>User</b> by login;</li>
-                                <li><b>Script: 'data/curl/account/login.sh'</b>:</li>
-                                <li><b>Usage: './login.sh [flags]'</b>:</li>
+                                <li><b>Script: 'data/curl/account/login.sh'</b></li>
+                                <li><b>Usage: './login.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -103,15 +103,15 @@
                                 <li>This method is available for all registered Users;</li>
                                 <li>In one request You may recieve maximum 50 records</li>
                                 <li>For recieve more than 50 records You'll need to use several requests with different offset</li>
-                                <li><b>Script: 'data/curl/user/getUsers.sh'</b>:</li>
-                                <li><b>Usage: './getUsers.sh [flags]'</b>:</li>
+                                <li><b>Script: 'data/curl/user/getUsers.sh'</b></li>
+                                <li><b>Usage: './getUsers.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
                                         <li><b>-t</b> User's token;</li>
                                         <li><b>-o</b> Offset from the first record;</li>
                                     </ul>
-                                <li><b>Response:</b>:
+                                <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
                                         <li><b>Fail</b>: JSON <b>TextResponse</b> object with Text error;</li>
@@ -123,8 +123,8 @@
                             <ul>
                                 <li>Use this method to register new <b>User</b>;</li>
                                 <li>This method is available for all;</li>
-                                <li><b>Script: 'data/curl/user/createUser.sh'</b>:</li>
-                                <li><b>Usage: './createUser.sh [flags]'</b>:</li>
+                                <li><b>Script: 'data/curl/user/createUser.sh'</b></li>
+                                <li><b>Usage: './createUser.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -133,7 +133,7 @@
                                         <li><b>-k</b> User's password;</li>
                                         <li><b>-n</b> User's login;</li>
                                     </ul>
-                                <li><b>Response:</b>:
+                                <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
                                         <li><b>Fail</b>: JSON <b>TextResponse</b> object with Text error;</li>
@@ -145,21 +145,21 @@
                             <ul>
                                 <li>Use this method to set <b>Photo</b> for <b>User</b>;</li>
                                 <li>This method is available only for <b>User</b>-account owner;</li>
-                                <li><b>Script: 'data/curl/user/setUserPhoto.sh'</b>:</li>
-                                <li><b>Usage: './setUserPhoto.sh [flags]'</b>:</li>
+                                <li><b>Script: 'data/curl/user/setUserPhoto.sh'</b></li>
+                                <li><b>Usage: './setUserPhoto.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
                                         <li><b>-t</b> User's token;</li>
                                         <li><b>-l</b> Path to photo</li>
                                     </ul>
-                                <li><b>Response:</b>:
+                                <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
                                                  <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b>: JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -170,21 +170,21 @@
                             <ul>
                                 <li>Use this method to remove <b>User</b>;</li>
                                 <li>This method is available only for admins;</li>
-                                <li><b>Script: 'data/curl/user/removeUser.sh'</b>:</li>
-                                <li><b>Usage: './removeUser.sh [flags]'</b>:</li>
+                                <li><b>Script: 'data/curl/user/removeUser.sh'</b></li>
+                                <li><b>Usage: './removeUser.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
                                         <li><b>-t</b> User's token;</li>
                                         <li><b>-i</b> User's id (to remove)</li>
                                     </ul>
-                                <li><b>Response:</b>:
+                                <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
                                                  <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b>: JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
