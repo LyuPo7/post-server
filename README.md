@@ -125,8 +125,8 @@
                                     </ul>
                                 <li><b>Response</b>:
                                     <ul> 
-                                        <li><b>Success</b> JSON UserResponse object;</li>
-                                        <li><b>Fail</b> JSON UserResponse object with Text error;</li>
+                                        <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
+                                        <li><b>Fail</b>: JSON <b>UserResponse</b> object with Text error;</li>
                                     </ul>
                                 </li>
                             </ul>
