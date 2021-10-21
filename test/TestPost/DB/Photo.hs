@@ -63,7 +63,7 @@ spec_getLastPhotoRecord = describe "Testing getLastPhotoRecord" $ do
             DBQSpec.makeDBRequest = \_ -> return sqlPhotoA
           }
           photoIdE = DBPh.getLastPhotoRecord dbqh'
-          msg = "Incorrect Photo record in db!"
+          msg = "Incorrect Photo record!"
       photoIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let dbqh' = H.dbqh {
@@ -106,8 +106,7 @@ spec_getPhotoRecordById = describe "Testing getPhotoRecordById" $ do
           }
           photoE = DBPh.getPhotoRecordById dbqh' photoId
           msg = "Violation of Unique record in db: \
-                \exist more than one record for Photo with Id: \
-                \11 in db!"
+                \exist more than one record for Photo with Id: 11"
       photoE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let photoId = 101 :: PhotoId
@@ -115,7 +114,7 @@ spec_getPhotoRecordById = describe "Testing getPhotoRecordById" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           user = DBPh.getPhotoRecordById dbqh' photoId
-          msg = "No exists Photo with id: 101 in db!"
+          msg = "No exists Photo with id: 101"
       user `shouldBe` (Identity $ Left msg)
 
 spec_getPhotoIdByName :: Spec
@@ -143,7 +142,7 @@ spec_getPhotoIdByName = describe "Testing getPhotoIdByName" $ do
           photoIdE = DBPh.getPhotoIdByName dbqh' photoLink
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Photo: \
-                \'image/new-11.png' in db!"
+                \'image/new-11.png'"
       photoIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let photoLink = "image/new-11.png" :: Link
@@ -152,5 +151,5 @@ spec_getPhotoIdByName = describe "Testing getPhotoIdByName" $ do
           }
           photoIdE = DBPh.getPhotoIdByName dbqh' photoLink
           msg = "No exists Photo: \
-                \'image/new-11.png' in db!"
+                \'image/new-11.png'"
       photoIdE `shouldBe` (Identity $ Left msg)

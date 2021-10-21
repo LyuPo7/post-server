@@ -3,32 +3,33 @@
 helpFunction()
 {
    echo ""
-   echo "Usage: $0 -h host -p port -t token -o order -f find_in_title -e find_in_text -a find -c category_id -n [tag_id] -i tag__in -k tag__all -l author -q created_at -g created_at__gt -j created_at__gt"
-   echo -e "\t-h Host name"
+   echo "Usage: $0 -y host -p port -t token -s order -f find_in_title -e find_in_text -a find -c category_id -n [tag_id] -i tag__in -k tag__all -l author -q created_at -g created_at__gt -j created_at__gt -o offset"
+   echo -e "\t-y Host name"
    echo -e "\t-p Port number"
    echo -e "\t-t User's token"
-   echo -e "\t-o Order: one of ['order_by_date', 'order_by_author', 'order_by_category', 'order_by_photo']"
+   echo -e "\t-s Order: one of ['order_by_date', 'order_by_author', 'order_by_category', 'order_by_photo']"
    echo -e "\t-f Find string for search in Post's Title"
    echo -e "\t-e Find string for search in Post's Text"
    echo -e "\t-a Find string for search in (Post's Title and Post's Text) & (Author's First name and Author's Last name) & (Category's Title) & (Tag's Title)"
    echo -e "\t-c Search Posts with exact Category's Id"
-   echo -e "\t-c Search Posts with exact Tag's Id [tag_id] (lenght [tag_id] == 1)"
+   echo -e "\t-n Search Posts with exact Tag's Id [tag_id] (lenght [tag_id] == 1)"
    echo -e "\t-i Search Posts with Tag's Id in [tag_id] - tag__in"
    echo -e "\t-k Search Posts with All Tag's Id in [tag_id] - tag__all"
    echo -e "\t-l Search Posts by Author name"
    echo -e "\t-q Search Posts by date of creation - 'created_at'"
    echo -e "\t-g Search Posts created later than specified date - 'created_at__gt'"
    echo -e "\t-j Search Posts created earlier than specified date - 'created_at__lt'"
+   echo -e "\t-o Offset"
    exit 1 # Exit script after printing help
 }
 
-while getopts "h:p:t:o:f:e:a:c:n:i:k:l:q:g:j:" opt
+while getopts "y:p:t:s:f:e:a:c:n:i:k:l:q:g:j:o:" opt
 do
    case "$opt" in
-      h ) host="$OPTARG" ;;
+      y ) host="$OPTARG" ;;
       p ) port="$OPTARG" ;;
       t ) token="$OPTARG" ;;
-      o ) order="$OPTARG" ;;
+      s ) order="$OPTARG" ;;
       f ) findInTitle="$OPTARG" ;;
       e ) findInText="$OPTARG" ;;
       a ) find="$OPTARG" ;;
@@ -40,6 +41,7 @@ do
       q ) createdAt="$OPTARG" ;;
       g ) createdAtGT="$OPTARG" ;;
       j ) createdAtLT="$OPTARG" ;;
+      o ) offset="$OPTARG" ;;
       ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
    esac
 done
@@ -107,6 +109,11 @@ fi
 if [ -z "${createdAtLT+x}" ]
 then opt="$opt"
 else opt="$opt&created_at__lt=$createdAtLT"
+fi
+
+if [ -z "${offset+x}" ]
+then opt="$opt"
+else opt="$opt&offset=$offset"
 fi
 
 url=http://$host:$port/getPosts?$opt

@@ -95,7 +95,6 @@ getAuthorRecord handle authorId = do
     [] -> do
       let msg = "No exists Author with id: "
             <> convert authorId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     [author] -> do
@@ -105,7 +104,6 @@ getAuthorRecord handle authorId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Author with Id: "
                   <> convert authorId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -122,7 +120,6 @@ getUserIdByAuthorId handle authorId = do
     [] -> do
       let msg = "No User corresponding to Author with id: "
             <> convert authorId
-            <> " in db!"
       Logger.logError logh msg
       return $ Left msg
     [[idUser]] -> do
@@ -134,7 +131,6 @@ getUserIdByAuthorId handle authorId = do
       let msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for Author with Id: "
                   <> convert authorId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -150,7 +146,6 @@ getAuthorIdByUserId handle userId = do
     [] -> do
       let msg = "No exists Author corresponding to User with id: "
             <> convert userId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     [[authorId]] -> do
@@ -160,7 +155,6 @@ getAuthorIdByUserId handle userId = do
       let msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for User with Id: "
                   <> convert userId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -189,7 +183,7 @@ getLastAuthorRecord handle = do
                    colIdAuthor 1
   case idAuthorSql of
     [] -> do
-      let msg = "No exist Authors in db!"
+      let msg = "No exist Authors!"
       Logger.logWarning logh msg
       return $ Left msg
     [[idAuthor]] -> do
@@ -198,7 +192,7 @@ getLastAuthorRecord handle = do
         <> convert authorId
       return $ Right authorId
     _ -> do
-      let msg = "Incorrect Author record in db!"
+      let msg = "Incorrect Author record!"
       Logger.logWarning logh msg
       return $ Left msg
     
@@ -214,7 +208,6 @@ getPostIdsByAuthorId handle authorId = do
     [] -> do
       let msg = "No Posts corresponding to Author with id: "
             <> convert authorId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     _ -> do

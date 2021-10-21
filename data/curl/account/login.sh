@@ -3,18 +3,18 @@
 helpFunction()
 {
    echo ""
-   echo "Usage: $0 -h host -p port -k password -n login"
-   echo -e "\t-h Host name"
+   echo "Usage: $0 -y host -p port -k password -n login"
+   echo -e "\t-y Host name"
    echo -e "\t-p Port number"
    echo -e "\t-k User's password"
    echo -e "\t-n User's login"
    exit 1 # Exit script after printing help
 }
 
-while getopts "h:p:k:n:" opt
+while getopts "y:p:k:n:" opt
 do
    case "$opt" in
-      h ) host="$OPTARG" ;;
+      y ) host="$OPTARG" ;;
       p ) port="$OPTARG" ;;
       k ) pass="$OPTARG" ;;
       n ) login="$OPTARG" ;;

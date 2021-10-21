@@ -26,7 +26,7 @@ createTag handle tagTitle = do
     Right _ -> do
       let msg = "Tag with title: '"
             <> tagTitle
-            <> "' already exists in db."
+            <> "' already exists!"
       Logger.logWarning logh msg 
       return $ Left msg
 
@@ -59,7 +59,7 @@ editTag handle oldTitle newTitle = do
     Right _ -> do
       let msg = "Tag with title: '"
             <> newTitle
-            <> "' already exists in db!"
+            <> "' already exists!"
       Logger.logWarning logh msg
       return $ Left msg
     Left _ -> runEitherT $ do
@@ -86,7 +86,7 @@ getTagIdByTitle handle tagTitle = do
     [] -> do
       let msg = "No exists Tag with title: '"
            <> tagTitle
-           <> "' in db!"
+           <> "'!"
       Logger.logWarning logh msg 
       return $ Left msg
     [[idTag]] -> do
@@ -98,7 +98,7 @@ getTagIdByTitle handle tagTitle = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Tag with title: '"
                   <> tagTitle
-                  <> "' in db!"
+                  <> "'!"
       Logger.logWarning logh msg 
       return $ Left msg
 
@@ -130,7 +130,6 @@ getTagRecordsById handle tagId = do
     [] -> do
       let msg = "No Tag with id in: "
             <> convert tagId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     [tag] -> do
@@ -140,7 +139,6 @@ getTagRecordsById handle tagId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Tag with Id: "
                   <> convert tagId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -156,7 +154,6 @@ getTagPostRecords handle tagId = do
     [] -> do
       let msg = "No Posts corresponding to Tag with id: "
             <> convert tagId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     postIds -> do

@@ -31,7 +31,7 @@ getToken handle login password = do
     Right _ -> do
       newUserToken <- createToken handle
       _ <- updateTokenRecord handle login newUserToken
-      Logger.logWarning logh $ "User with login: '"
+      Logger.logInfo logh $ "User with login: '"
         <> login
         <> "' entered."
       return $ Right newUserToken
@@ -182,6 +182,6 @@ updateTokenRecord handle login userToken = do
         [colLoginUser]
         [toSql userToken]
         [toSql login]
-  Logger.logInfo logh $ "Updating Token for User with login: "
+  Logger.logInfo logh $ "Updating Token for User with login: '"
     <> login
-    <> " in db."
+    <> "' in db."

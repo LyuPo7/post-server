@@ -15,8 +15,8 @@ import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
-import Post.Server.Responses (respOk, respError, respSucc, resp404)
+import Post.Server.Objects (Permission(..), AuthorResponse(..), TextResponse(..))
+import Post.Server.Responses (respOk, respError, resp404)
 
 -- | Create getAuthors Response
 getAuthorsResp :: Monad m => Handle m -> Query -> m Response
@@ -32,19 +32,15 @@ getAuthorsResp handle query = do
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      authorsOffsetE <- runEitherT $ do
+      authorsRespE <- runEitherT $ do
         reqParams <- EitherT $ QP.extractRequired logh query params
         let [offsetText] = reqParams
         offset <- EitherT $ Util.readEitherMa offsetText "offset"
         authors <- EitherT $ DBA.getAuthorRecords dbqh offset
-        return (authors, offset)
-      case authorsOffsetE of
-        Left msg -> return $ respError msg
-        Right (authors, offset) -> do
-          let response = defaultResponse {
-                response_authors = Just authors,
-                response_offset = offset
-              }
+        return $ AuthorResponse authors offset
+      case authorsRespE of
+        Left msg -> return $ respError $ TextResponse msg
+        Right response -> do
           Logger.logInfo logh "Authors were sent"
           return $ respOk response
     where
@@ -75,8 +71,8 @@ createAuthorResp handle query = do
         Right _ -> do
           let msg = "Author was created"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["id", "description"]
@@ -107,8 +103,8 @@ removeAuthorResp handle query = do
           _ <- DBA.removeAuthorUserDep dbqh userId
           let msg = "Author was removed"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["id"]
@@ -137,8 +133,8 @@ editAuthorResp handle query = do
         Right _ -> do
           let msg = "Author was edited"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["id", "description"]

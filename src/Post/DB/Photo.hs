@@ -28,7 +28,7 @@ savePhoto handle path = do
     Right _ -> do
       let msg = "Photo: '"
             <> pathToPhoto
-            <> "' already exists in db!"
+            <> "' already exists!"
       return $ Left msg
 
 -- | Save Photo if doesn't exist Photo with the same name
@@ -42,21 +42,19 @@ getPhotoIdByName handle pathToPhoto = do
   case idPhotoSql of
     [] -> do
       let msg = "No exists Photo: '"
-            <> pathToPhoto
-            <> "' in db!"
+            <> pathToPhoto <> "'"
       Logger.logInfo logh msg
       return $ Left msg
     [[idPhoto]] -> do
       let msg = "Photo: '"
             <> pathToPhoto
-            <> "' exists in db!"
+            <> "' already exists!"
       Logger.logInfo logh msg
       return $ Right $ fromSql idPhoto
     _ -> do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Photo: '"
-                  <> pathToPhoto
-                  <> "' in db!"
+                  <> pathToPhoto <> "'"
       Logger.logError logh msg
       return $ Left msg
 
@@ -71,8 +69,7 @@ getPhotoRecordById handle photoId = do
   case photoSql of
     [] -> do
       let msg = "No exists Photo with id: "
-            <> convert photoId
-            <> " in db!" 
+            <> convert photoId 
       Logger.logWarning logh msg
       return $ Left msg
     [idLinks] -> do
@@ -84,7 +81,6 @@ getPhotoRecordById handle photoId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Photo with Id: "
                   <> convert photoId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -106,7 +102,7 @@ getLastPhotoRecord handle = do
         <> convert photoId
       return $ Right photoId
     _ -> do
-      let msg = "Incorrect Photo record in db!"
+      let msg = "Incorrect Photo record!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -119,7 +115,7 @@ insertPhotoRecord handle pathToPhoto = do
         [toSql pathToPhoto]
   Logger.logInfo logh $ "Inserting photo: '"
     <> pathToPhoto
-    <> "' in db!"
+    <> "' !"
 
 -- | Create Photo from [SqlValue]
 newPhoto :: Monad m => Handle m -> [SqlValue] -> m (Either Text Photo)

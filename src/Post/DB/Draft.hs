@@ -101,7 +101,7 @@ getLastDraftRecord handle = do
         <> convert draftId
       return $ Right draftId
     _ -> do
-      let msg = "Incorrect Draft record in db!"
+      let msg = "Incorrect Draft record!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -156,7 +156,6 @@ getDraftText handle draftId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Draft with Id: "
                   <> convert draftId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 

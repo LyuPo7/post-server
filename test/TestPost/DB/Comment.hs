@@ -63,14 +63,14 @@ spec_getLastCommentRecord = describe "Testing getLastCommentRecord" $ do
             DBQSpec.makeDBRequest = \_ -> return sqlComA
           }
           comIdE = DBCo.getLastCommentRecord dbqh'
-          msg = "Incorrect Comment record in db!"
+          msg = "Incorrect Comment record!"
       comIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
           comIdE = DBCo.getLastCommentRecord dbqh'
-          msg = "No exist Comments in db!"
+          msg = "No exist Comments!"
       comIdE `shouldBe` (Identity $ Left msg)
 
 spec_getCommentRecord :: Spec
@@ -104,8 +104,7 @@ spec_getCommentRecord = describe "Testing getCommentRecord" $ do
           }
           comE = DBCo.getCommentRecord dbqh' comId
           msg = "Violation of Unique record in db: \
-                \exist more than one record for Comment with Id: \
-                \11 in db!" 
+                \exist more than one record for Comment with Id: 11" 
       comE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let comId = 11 :: CommentId
@@ -113,5 +112,5 @@ spec_getCommentRecord = describe "Testing getCommentRecord" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           comE = DBCo.getCommentRecord dbqh' comId
-          msg = "No exists Comment with id: 11 in db!"
+          msg = "No exists Comment with id: 11"
       comE `shouldBe` (Identity $ Left msg)

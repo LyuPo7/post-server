@@ -15,8 +15,8 @@ import qualified Post.DB.Comment as DBCo
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..))
-import Post.Server.Responses (respError, respSucc, resp404)
+import Post.Server.Objects (Permission(..), TextResponse(..))
+import Post.Server.Responses (respError, respOk, resp404)
 
 -- | Create createComment Response
 createCommentResp :: Monad m => Handle m -> Query -> m Response
@@ -44,8 +44,8 @@ createCommentResp handle query = do
         Right _ -> do
           let msg = "Comment was created"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["post_id", "text"]

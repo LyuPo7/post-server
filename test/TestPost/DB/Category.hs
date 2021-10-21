@@ -222,7 +222,7 @@ spec_getCatPostIdsByCatId = describe "Testing getCatPostIdsByCatId" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           postIdsE = DBC.getCatPostIdsByCatId dbqh' catId
-          msg = "No Posts corresponding to Category with id: 11 in db!"
+          msg = "No Posts corresponding to Category with id: 11"
       postIdsE `shouldBe` (Identity $ Left msg)
 
 spec_getCatRecordByCatId:: Spec
@@ -251,7 +251,7 @@ spec_getCatRecordByCatId = describe "Testing getCatRecordByCatId" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           catE = DBC.getCatRecordByCatId dbqh' catId
-          msg = "No Category with id: 11 in db!"
+          msg = "No Category with id: 11"
       catE `shouldBe` (Identity $ Left msg)
     it "Should fail on array on array with many elements" $ do
       let title1 = "crossfit" :: Title
@@ -271,7 +271,7 @@ spec_getCatRecordByCatId = describe "Testing getCatRecordByCatId" $ do
           catE = DBC.getCatRecordByCatId dbqh' catId
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Category \
-                \with Id: 11 in db!"
+                \with Id: 11"
       catE `shouldBe` (Identity $ Left msg)
 
 spec_checkIfChildCatIsValid :: Spec
@@ -372,7 +372,7 @@ spec_getCatId = describe "Testing getCatId" $ do
           photoIdE = DBC.getCatId dbqh' title
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Category with title: \
-                \'crossfit' in db!"
+                \'crossfit'!"
       photoIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let title = "crossfit" :: Title
@@ -381,5 +381,5 @@ spec_getCatId = describe "Testing getCatId" $ do
           }
           photoIdE = DBC.getCatId dbqh' title
           msg = "No exists Category with title: \
-                \'crossfit' in db!"
+                \'crossfit'!"
       photoIdE `shouldBe` (Identity $ Left msg)

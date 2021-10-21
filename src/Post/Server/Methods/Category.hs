@@ -14,8 +14,8 @@ import qualified Post.DB.Category as DBC
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
-import Post.Server.Responses (respOk, respError, respSucc, resp404)
+import Post.Server.Objects (Permission(..), CatResponse(..), TextResponse(..))
+import Post.Server.Responses (respOk, respError, respOk, resp404)
 
 -- | Create getCategories Response
 getCatsResp :: Monad m => Handle m -> Query -> m Response
@@ -31,19 +31,15 @@ getCatsResp handle query = do
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      catsOffsetE <- runEitherT $ do
+      catsRespE <- runEitherT $ do
         reqParams <- EitherT $ QP.extractRequired logh query params
         let [offsetText] = reqParams
         offset <- EitherT $ Util.readEitherMa offsetText "offset"
         cats <- EitherT $ DBC.getCats dbqh offset
-        return (cats, offset)
-      case catsOffsetE of
-        Left msg -> return $ respError msg
-        Right (cats, offset) -> do
-          let response = defaultResponse {
-                response_cats = Just cats,
-                response_offset = offset
-              }
+        return $ CatResponse cats offset
+      case catsRespE of
+        Left msg -> return $ respError $ TextResponse msg
+        Right response -> do
           Logger.logInfo logh "Categories were sent"
           return $ respOk response
     where
@@ -74,8 +70,8 @@ createCatResp handle query = do
         Right _ -> do
           let msg = "Category was created"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       paramsReq = ["title"]
@@ -104,8 +100,8 @@ removeCatResp handle query = do
         Right _ -> do
           let msg = "Category was removed"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["id"]
@@ -125,19 +121,19 @@ editCatResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       optParams <- QP.extractOptional logh query paramsOpt
-      let [subNew] = optParams
+      let [newTitleM, subNewM] = optParams
       catIdE <- runEitherT $ do
         reqParams <- EitherT $ QP.extractRequired logh query paramsReq
-        let [idUser, newTitle] = reqParams
-        userId <- EitherT $ Util.readEitherMa idUser "user_id"
-        EitherT $ DBC.editCat dbqh userId newTitle subNew
+        let [idCat] = reqParams
+        catId <- EitherT $ Util.readEitherMa idCat "category_id"
+        EitherT $ DBC.editCat dbqh catId newTitleM subNewM
       case catIdE of
-        Left msg -> return $ respError msg
+        Left msg -> return $ respError $ TextResponse msg
         Right _ -> do
           let msg = "Category was edited"
           Logger.logInfo logh msg
-          return $ respSucc msg
+          return $ respOk $ TextResponse msg
     where
       authParams = ["token"]
-      paramsReq = ["id", "title"]
-      paramsOpt = ["subcategory"]
+      paramsReq = ["id"]
+      paramsOpt = ["title", "subcategory"]

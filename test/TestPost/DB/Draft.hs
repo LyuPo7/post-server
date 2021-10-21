@@ -73,8 +73,7 @@ spec_getDraftText = describe "Testing getDraftText" $ do
           }
           draftTextE = DBD.getDraftText dbqh' photoId
           msg = "Violation of Unique record in db: \
-                \exist more than one record for Draft with Id: \
-                \11 in db!"
+                \exist more than one record for Draft with Id: 11"
       draftTextE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let draftId = 101 :: DraftId
@@ -104,14 +103,14 @@ spec_getLastDraftRecord = describe "Testing getLastDraftRecord" $ do
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
           draftIdE = DBD.getLastDraftRecord dbqh'
-          msg = "Incorrect Draft record in db!"
+          msg = "Incorrect Draft record!"
       draftIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
           draftIdE = DBD.getLastDraftRecord dbqh'
-          msg = "No exist Drafts in db!"
+          msg = "No exist Drafts!"
       draftIdE `shouldBe` (Identity $ Left msg)
 
 spec_getDraftRecords :: Spec

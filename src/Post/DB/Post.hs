@@ -43,7 +43,7 @@ createPost handle title text authorId catId tagIds = do
     Right _ -> do
       let msg = "Post with title: '"
             <> title
-            <> "' already exists in db."
+            <> "' already exists."
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -186,7 +186,7 @@ createPostDraftDep handle postId draftId = do
     Right _ -> do
       let msg = "Draft for Post with id: "
             <> convert postId
-            <> " already exists in db!"
+            <> " already exists!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -251,7 +251,6 @@ getPostRecord handle postId = do
     [] -> do
       let msg = "No exists Post with id: "
             <> convert postId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     [post] -> do
@@ -261,7 +260,6 @@ getPostRecord handle postId = do
       let msg = "Violation of Unique Post record in db: \
                 \exist more than one record for Post with Id: "
                   <> convert postId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -274,7 +272,7 @@ getLastPostRecord handle = do
                  colIdPost 1
   case idPostSql of
     [] -> do
-      let msg = "No exist Posts in db!"
+      let msg = "No exist Posts!"
       Logger.logWarning logh msg
       return $ Left msg
     [[idPost]] -> do
@@ -283,7 +281,7 @@ getLastPostRecord handle = do
         <> convert postId
       return $ Right postId
     _ -> do
-      let msg = "Incorrect Post record in db!"
+      let msg = "Incorrect Post record!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -299,7 +297,7 @@ getPostIdByTitle handle title = do
     [] -> do
       let msg = "No exists Post with title: '"
             <> title
-            <> "' in db!"
+            <> "'!"
       Logger.logError logh msg
       return $ Left msg
     [[idPost]] -> do
@@ -311,7 +309,7 @@ getPostIdByTitle handle title = do
       let msg = "Violation of Unique record Post in db: \
                 \exist more than one record for Post with title: '"
                   <> title
-                  <> "' in db!"
+                  <> "'!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -327,7 +325,6 @@ getPostAuthorIdbyPostId handle postId = do
     [] -> do
       let msg = "No exists Author corresponding to Post with id: "
             <> convert postId
-            <> " in db!"
       Logger.logInfo logh msg
       return $ Left msg
     [[authorId]] -> do
@@ -340,7 +337,6 @@ getPostAuthorIdbyPostId handle postId = do
       let msg = "Violation of Unique record Post-Author in db: \
                 \exist more than one record for Post with Id: "
                   <> convert postId
-                  <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     
@@ -357,7 +353,6 @@ getPostCategoryIdByPostId handle postId = do
     [] -> do
       let msg = "No exists Category corresponding to Post with id: "
             <> convert postId
-            <> " in db!"
       Logger.logInfo logh msg
       return $ Left msg
     [[catId]] -> do
@@ -370,7 +365,6 @@ getPostCategoryIdByPostId handle postId = do
       let msg = "Violation of Unique record Post-Category in db: \
                 \exist more than one record for Post with Id: "
                   <> convert postId
-                  <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -386,7 +380,6 @@ getPostTagIdsByPostId handle postId = do
     [] -> do
       let msg = "No exist Tags corresponding to Post with id: "
             <> convert postId
-            <> " in db!"
       Logger.logInfo logh msg
       return $ Left msg
     tagIds -> do
@@ -408,7 +401,6 @@ getPostMainPhotoIdByPostId handle postId = do
     [] -> do
       let msg = "No exists Main Photo for Post with id: "
             <> convert postId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     [[photoId]] -> do
@@ -419,7 +411,6 @@ getPostMainPhotoIdByPostId handle postId = do
       let msg = "Violation of Unique record Post-MainPhoto in db: \
                 \exist more than one record for Post with Id: "
                   <> convert postId
-                  <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -435,7 +426,6 @@ getPostAddPhotoIdsByPostId handle postId = do
     [] -> do
       let msg = "No exist Add Photos for Post with id: "
             <> convert postId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     ids -> do
@@ -458,7 +448,6 @@ getPostDraftIdByPostId handle postId = do
     [] -> do
       let msg = "No exists Draft corresponding to Post with id: "
             <> convert postId
-            <> " in db!"
       Logger.logError logh msg
       return $ Left msg
     [[draftId]] -> do 
@@ -468,7 +457,6 @@ getPostDraftIdByPostId handle postId = do
       let msg = "Violation of Unique record Post-Draft in db: \
                 \exist more than one record for Post with Id: "
                   <> convert postId
-                  <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -485,7 +473,6 @@ getPostDraftIdsByPostIds handle postIds = do
     [] -> do
       let msg = "No exists Drafts corresponding to Posts with id: "
             <> T.intercalate "," (map convert postIds)
-            <> " in db!"
       Logger.logError logh msg
       return $ Left msg
     draftIds -> do 
@@ -506,7 +493,6 @@ getPostCommentRecords handle postId = do
     [] -> do
       let msg = "No exist Comments for Post with id: "
             <> convert postId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     ids -> do

@@ -74,7 +74,7 @@ spec_getAuthorIdByUserId = describe "Testing getAuthorIdByUserId" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           authorIdE = DBU.getAuthorIdByUserId dbqh' userId
-          msg = "No exists Author corresponding to User with id: 100 in db!"
+          msg = "No exists Author corresponding to User with id: 100"
       authorIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on array of many elements" $ do
       let userId = 100 :: UserId
@@ -89,7 +89,7 @@ spec_getAuthorIdByUserId = describe "Testing getAuthorIdByUserId" $ do
           authorIdE = DBU.getAuthorIdByUserId dbqh' userId
           msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for User with Id: \
-                \100 in db!"
+                \100"
       authorIdE `shouldBe` (Identity $ Left msg)
 
 spec_getUserRecords :: Spec
@@ -220,8 +220,7 @@ spec_getUserRecordbyId = describe "Testing getUserRecordbyId" $ do
           }
           usersE = DBU.getUserRecordbyId dbqh' userId
           msg = "Violation of Unique record in db: \
-                \exist more than one record for User with Id: \
-                \101 in db!"
+                \exist more than one record for User with Id: 101"
       usersE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let userId = 101 :: UserId
@@ -229,7 +228,7 @@ spec_getUserRecordbyId = describe "Testing getUserRecordbyId" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           usersE = DBU.getUserRecordbyId dbqh' userId
-          msg = "No exists User with id: 101 in db!"
+          msg = "No exists User with id: 101"
       usersE `shouldBe` (Identity $ Left msg)
 
 spec_getUserIdByLogin :: Spec
@@ -259,7 +258,7 @@ spec_getUserIdByLogin = describe "Testing getUserIdByLogin" $ do
           userIdE = DBU.getUserIdByLogin dbqh' login
           msg = "Violation of Unique record in db: \
                 \exist more than one record for User with login: \
-                \'22ann22' in db!"
+                \'22ann22'!"
       userIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let login = "22ann22" :: Login
@@ -267,5 +266,5 @@ spec_getUserIdByLogin = describe "Testing getUserIdByLogin" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           userIdE = DBU.getUserIdByLogin dbqh' login
-          msg = "No exists User with login: '22ann22' in db!"
+          msg = "No exists User with login: '22ann22'!"
       userIdE `shouldBe` (Identity $ Left msg)

@@ -14,8 +14,8 @@ import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
-import Post.Server.Responses (respOk, respError, respSucc, resp404)
+import Post.Server.Objects (Permission(..), UserResponse(..), TextResponse(..))
+import Post.Server.Responses (respOk, respError, resp404)
 
 -- | Create getUsers Response
 getUsersResp :: Monad m => Handle m -> Query -> m Response
@@ -31,19 +31,15 @@ getUsersResp handle query = do
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      usersOffsetE <- runEitherT $ do
+      usersRespE <- runEitherT $ do
         reqParams <- EitherT $ QP.extractRequired logh query params
         let [offsetText] = reqParams
         offset <- EitherT $ Util.readEitherMa offsetText "offset"
         users <- EitherT $ DBU.getUserRecords dbqh offset
-        return (users, offset)
-      case usersOffsetE of
-        Left msg -> return $ respError msg
-        Right (users, offset) -> do
-          let response = defaultResponse {
-                response_users = Just users,
-                response_offset = offset
-              }
+        return $ UserResponse users offset
+      case usersRespE of
+        Left msg -> return $ respError $ TextResponse msg
+        Right response -> do
           Logger.logInfo logh "Users sent"
           return $ respOk response
     where
@@ -65,8 +61,8 @@ createUserResp handle query = do
     Right login -> do
       let msg = "User: '" <> login <> "' registred"
       Logger.logInfo logh msg
-      return $ respSucc msg
-    Left msg -> return $ respError msg
+      return $ respOk $ TextResponse msg
+    Left msg -> return $ respError $ TextResponse msg
     where
       params = ["first_name", "last_name", "login", "password"]
 
@@ -95,8 +91,8 @@ removeUserResp handle query = do
           _ <- DBU.removeUserPhotoDeps dbqh userId
           let msg = "User removed"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["id"]
@@ -125,8 +121,8 @@ setUserPhotoResp handle query = do
         Right _ -> do
           let msg = "User Photo was loaded"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["path"]

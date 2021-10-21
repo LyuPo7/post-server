@@ -3,18 +3,18 @@
 helpFunction()
 {
    echo ""
-   echo "Usage: $0 -h host -p port -t token -i post_id"
-   echo -e "\t-h Host name"
+   echo "Usage: $0 -y host -p port -t token -i post_id"
+   echo -e "\t-y Host name"
    echo -e "\t-p Port number"
    echo -e "\t-t User's token"
    echo -e "\t-i post_id"
    exit 1 # Exit script after printing help
 }
 
-while getopts "h:p:t:b:i:" opt
+while getopts "y:p:t:b:i:" opt
 do
    case "$opt" in
-      h ) host="$OPTARG" ;;
+      y ) host="$OPTARG" ;;
       p ) port="$OPTARG" ;;
       t ) token="$OPTARG" ;;
       i ) postId="$OPTARG" ;;

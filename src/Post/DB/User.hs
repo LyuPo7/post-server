@@ -54,7 +54,7 @@ createUser handle firstName lastName login password = do
     Right _ -> do
       let msg = "User with login: '"
             <> login
-            <> "' already exists in db."
+            <> "' already exists."
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -122,7 +122,7 @@ getUserIdByLogin handle login = do
     [] -> do
       let msg = "No exists User with login: '"
             <> login
-            <> "' in db!"
+            <> "'!"
       Logger.logInfo logh msg
       return $ Left msg
     [[idUser]] -> do
@@ -134,7 +134,7 @@ getUserIdByLogin handle login = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for User with login: '"
                   <> login
-                  <> "' in db!"
+                  <> "'!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -149,8 +149,7 @@ getUserRecordbyId handle userId = do
   case usersSql of
     [] -> do
       let msg = "No exists User with id: "
-            <> convert userId 
-            <> " in db!"
+            <> convert userId
       Logger.logWarning logh msg 
       return $ Left msg
     [user] -> do
@@ -162,7 +161,6 @@ getUserRecordbyId handle userId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for User with Id: "
                   <> convert userId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -194,7 +192,6 @@ getUserPhotoRecord handle userId = do
     [] -> do
       let msg = "No exists Photo for User with id: "
             <> convert userId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     [[photoId]] -> do
@@ -206,7 +203,6 @@ getUserPhotoRecord handle userId = do
       let msg = "Violation of Unique record User-Photo in db: \
                 \exist more than one record for User with Id: "
                   <> convert userId
-                  <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
 
@@ -222,7 +218,6 @@ getAuthorIdByUserId handle userId = do
     [] -> do
       let msg = "No exists Author corresponding to User with id: " 
             <> convert userId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     [[authorId]] -> do
@@ -232,7 +227,6 @@ getAuthorIdByUserId handle userId = do
       let msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for User with Id: "
                   <> convert userId
-                  <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     

@@ -27,7 +27,7 @@ createCat handle title subcat = do
     Right _ -> do
       let msg = "Category with title: '"
             <> title 
-            <> "' already exists in db!"
+            <> "' already exists!"
       Logger.logInfo logh msg
       return $ Left msg
 
@@ -41,28 +41,49 @@ insertCat handle title subcat = do
 
 -- | Edit Category record if exists
 editCat :: Monad m => Handle m -> 
-           CategoryId -> Title -> Maybe Title -> m (Either Text CategoryId)
+           CategoryId -> Maybe Title -> Maybe Title -> m (Either Text ())
 editCat handle catId newTitle newSub = runEitherT $ do
   _ <- EitherT $ getCatRecordByCatId handle catId
-  EitherT $ updateCat handle catId newTitle newSub
+  _ <- EitherT $ updateCatTitle handle catId newTitle
+  EitherT $ updateCatSubCategory handle catId newSub
+
+-- | Update Category Title if title doesn't exist
+updateCatTitle :: Monad m => Handle m ->
+             CategoryId -> Maybe Title -> m (Either Text ())
+updateCatTitle handle catId newTitleM = do
+  let logh = hLogger handle
+  case newTitleM of
+    Nothing -> do
+      let msg = "No new title for Category in request!"
+      Logger.logWarning logh msg
+      return $ Right ()
+    Just newTitle -> do
+      catIdNewE <- getCatId handle newTitle
+      case catIdNewE of
+        Right _ -> do
+          let msg = "Category with title: '"
+                <> newTitle
+                <> "' already exists!"
+          Logger.logError logh msg
+          return $ Left msg
+        Left _ -> runEitherT $ do
+          lift $ updateCatTitleRecord handle catId newTitle
 
 -- | Update Category records if exists
-updateCat :: Monad m => Handle m ->
-             CategoryId -> Title -> Maybe Title -> m (Either Text CategoryId)
-updateCat handle catId newTitle newSub = do
+updateCatSubCategory :: Monad m => Handle m ->
+             CategoryId -> Maybe Title -> m (Either Text ())
+updateCatSubCategory handle catId subTitleM = do
   let logh = hLogger handle
-  catIdNewE <- getCatId handle newTitle
-  case catIdNewE of
-    Right _ -> do
-      let msg = "Category with title: '"
-            <> newTitle
-            <> "' already exists in db!"
-      Logger.logError logh msg
-      return $ Left msg
-    Left _ -> do
-      case newSub of
-        Nothing -> updateCatWOSubRecord handle catId newTitle
-        Just subTitle -> updateCatWSub handle catId newTitle subTitle
+  case subTitleM of
+    Nothing -> do
+      let msg = "No SubCategory title for Category in request!"
+      Logger.logWarning logh msg
+      return $ Right ()
+    Just subTitle -> runEitherT $ do
+      cat <- EitherT $ getCatRecordByCatId handle catId
+      _ <- EitherT $ checkIfChildCatIsValid handle (category_title cat) subTitle
+      catSubId <- EitherT $ getCatId handle subTitle
+      lift $ updateCatSubRecord handle catId catSubId
 
 -- | Insert Category with SubCategory
 insertCatWSub :: Monad m => Handle m -> Title -> Title -> m (Either Text Title)
@@ -71,16 +92,6 @@ insertCatWSub handle title subTitle = runEitherT $ do
   subCatId <- EitherT $ getCatId handle subTitle
   lift $ insertCatWSubRecord handle title subCatId
   return title
-
-{-- | Update Category with SubCategory 
-        if Category with subTitle doesn't exist --}
-updateCatWSub :: Monad m => Handle m ->
-                 CategoryId -> Title -> Title -> m (Either Text CategoryId)
-updateCatWSub handle catId newTitle subTitle = runEitherT $ do
-  _ <- EitherT $ checkIfChildCatIsValid handle newTitle subTitle
-  subCatId <- EitherT $ getCatId handle subTitle
-  lift $ updateCatWSubRecord handle catId subCatId newTitle
-  return catId
 
 -- | Get CategoryId by title if exists
 getCatId :: Monad m => Handle m -> Title -> m (Either Text CategoryId)
@@ -94,7 +105,7 @@ getCatId handle title = do
     [] -> do
       let msg = "No exists Category with title: '"
             <> title
-            <> "' in db!"
+            <> "'!"
       Logger.logWarning logh msg
       return $ Left msg
     [[catId]] -> do
@@ -106,7 +117,7 @@ getCatId handle title = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Category with title: '"
                   <> title
-                  <> "' in db!"
+                  <> "'!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -151,7 +162,6 @@ getCatRecordByCatId handle catId = do
     [] -> do
       let msg = "No Category with id: "
             <> convert catId
-            <> " in db!"
       Logger.logError logh msg
       return $ Left msg
     [cat] -> getSub handle cat
@@ -159,7 +169,6 @@ getCatRecordByCatId handle catId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Category with Id: "
                   <> convert catId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -210,7 +219,6 @@ getCatPostIdsByCatId handle catId = do
     [] -> do
       let msg = "No Posts corresponding to Category with id: "
             <> convert catId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     postIds -> do
@@ -260,33 +268,30 @@ insertCatWOSubRecord handle title = do
   return $ Right title
 
 -- | Update Category record with SubCategory
-updateCatWSubRecord :: Monad m => Handle m ->
-                       CategoryId -> CategoryId -> Title -> m ()
-updateCatWSubRecord handle catId subId newTitle = do
-  let logh = hLogger handle
-  _ <- updateSetWhere handle tableCats
-        [colTitleCat, colSubCatCat]
-        [colIdCat]
-        [toSql newTitle, toSql subId]
-        [toSql catId]
-  Logger.logInfo logh $ "Updating Category with id: "
-    <> convert catId
-    <> " in db."
-
--- | Update Category record without SubCategory
-updateCatWOSubRecord :: Monad m => Handle m ->
-                        CategoryId -> Title -> m (Either Text CategoryId)
-updateCatWOSubRecord handle catId newTitle = do
+updateCatTitleRecord :: Monad m => Handle m ->
+                       CategoryId -> Title -> m ()
+updateCatTitleRecord handle catId newTitle = do
   let logh = hLogger handle
   _ <- updateSetWhere handle tableCats
         [colTitleCat]
         [colIdCat]
         [toSql newTitle]
         [toSql catId]
-  Logger.logInfo logh $ "Updating Category with id: "
+  Logger.logInfo logh $ "Updating Category title with id: "
     <> convert catId
-    <> " in db."
-  return $ Right catId
+
+-- | Update Category record with SubCategory
+updateCatSubRecord :: Monad m => Handle m ->
+                       CategoryId -> CategoryId -> m ()
+updateCatSubRecord handle catId subId = do
+  let logh = hLogger handle
+  _ <- updateSetWhere handle tableCats
+        [colSubCatCat]
+        [colIdCat]
+        [toSql subId]
+        [toSql catId]
+  Logger.logInfo logh $ "Updating Category SubCategory with id: "
+    <> convert catId
 
 -- | Delete Category record
 deleteCatRecord :: Monad m => Handle m -> CategoryId -> m ()

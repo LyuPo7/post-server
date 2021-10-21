@@ -36,7 +36,6 @@ getCommentRecord handle commentId = do
     [] -> do
       let msg = "No exists Comment with id: "
             <> convert commentId
-            <> " in db!"
       Logger.logWarning logh msg
       return $ Left msg
     [idTexts] -> do
@@ -48,7 +47,6 @@ getCommentRecord handle commentId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Comment with Id: "
                   <> convert commentId
-                  <> " in db!"
       Logger.logError logh msg
       return $ Left msg
 
@@ -61,7 +59,7 @@ getLastCommentRecord handle = do
                 colIdCom 1
   case idComSql of
     [] -> do
-      let msg = "No exist Comments in db!"
+      let msg = "No exist Comments!"
       Logger.logWarning logh msg
       return $ Left msg
     [[idCom]] -> do
@@ -70,7 +68,7 @@ getLastCommentRecord handle = do
         <> convert comId
       return $ Right comId
     _ -> do
-      let msg = "Incorrect Comment record in db!"
+      let msg = "Incorrect Comment record!"
       Logger.logError logh msg
       return $ Left msg
 

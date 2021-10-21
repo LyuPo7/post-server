@@ -14,8 +14,8 @@ import qualified Post.DB.Post as DBP
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
-import Post.Server.Responses (respOk, respError, respSucc, resp404)
+import Post.Server.Objects (Permission(..), PostResponse(..), TextResponse(..))
+import Post.Server.Responses (respOk, respError, resp404)
 
 -- | Create getPosts Response
 getPostsResp :: Monad m => Handle m -> Query -> m Response
@@ -32,19 +32,15 @@ getPostsResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       dbQueryParams <- QP.createOptionalDict logh query paramsOpt
-      postsOffsetE <- runEitherT $ do
+      postsRespE <- runEitherT $ do
         reqParams <- EitherT $ QP.extractRequired logh query params
         let [offsetText] = reqParams
         offset <- EitherT $ Util.readEitherMa offsetText "offset"
         posts <- EitherT $ DBP.getPosts dbqh dbQueryParams offset
-        return (posts, offset)
-      case postsOffsetE of
-        Left msg -> return $ respError msg
-        Right (posts, offset) -> do
-          let response = defaultResponse {
-                response_posts = Just posts,
-                response_offset = offset
-              }
+        return $ PostResponse posts offset
+      case postsRespE of
+        Left msg -> return $ respError $ TextResponse msg
+        Right response -> do
           Logger.logInfo logh "Posts were sent"
           return $ respOk response
     where
@@ -93,8 +89,8 @@ createPostResp handle query = do
         Right _ -> do
           let msg = "Post was created"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       paramsReq = ["title", "text", "category_id", "tag_ids"]
@@ -122,8 +118,8 @@ removePostResp handle query = do
         Right _ -> do
           let msg = "Post was removed"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       paramsReq = ["post_id"]
@@ -155,11 +151,11 @@ setPostMainPhotoResp handle query = do
           _ <- DBP.setPostMainPhoto dbqh postId path
           let msg = "Post Main Photo was uploaded"
           Logger.logInfo logh msg
-          return $ respSucc msg
+          return $ respOk $ TextResponse msg
         Right _ -> do
           Logger.logError logh "This Author isn't Author of this Post!"
-          return $ respError "You aren't Author of this Post!"
-        Left msg -> return $ respError msg
+          return $ respError $ TextResponse "You aren't Author of this Post!"
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       paramsReq = ["post_id", "path"]
@@ -191,11 +187,11 @@ setPostAddPhotoResp handle query = do
           _ <- DBP.setPostAddPhoto dbqh postId path
           let msg = "Post Additional Photo was uploaded"
           Logger.logInfo logh msg
-          return $ respSucc msg
+          return $ respOk $ TextResponse msg
         Right _ -> do
           Logger.logError logh "This Author isn't Author of this Post!"
-          return $ respError "You aren't Author of this Post!"
-        Left msg -> return $ respError msg
+          return $ respError $ TextResponse "You aren't Author of this Post!"
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       paramsReq = ["post_id", "path"]

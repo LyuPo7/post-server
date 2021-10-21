@@ -74,7 +74,7 @@ spec_getTagPostRecords = describe "Testing getTagPostRecords" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           tagIdsE = DBT.getTagPostRecords dbqh' tagId
-          msg = "No Posts corresponding to Tag with id: 100 in db!"
+          msg = "No Posts corresponding to Tag with id: 100"
       tagIdsE `shouldBe` (Identity $ Left msg)
 
 spec_getTagRecordsById :: Spec
@@ -102,8 +102,7 @@ spec_getTagRecordsById = describe "Testing getTagRecordsById" $ do
           }
           tagE = DBT.getTagRecordsById dbqh' tagId
           msg = "Violation of Unique record in db: \
-                \exist more than one record for Tag with Id: \
-                \1 in db!"
+                \exist more than one record for Tag with Id: 1"
       tagE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let tagId = 1 :: TagId
@@ -111,7 +110,7 @@ spec_getTagRecordsById = describe "Testing getTagRecordsById" $ do
             DBQSpec.makeDBRequest = \_ -> return []
           }
           tagE = DBT.getTagRecordsById dbqh' tagId
-          msg = "No Tag with id in: 1 in db!"
+          msg = "No Tag with id in: 1"
       tagE `shouldBe` (Identity $ Left msg)
 
 spec_getAllTagRecords :: Spec
@@ -183,7 +182,7 @@ spec_getTagIdByTitle = describe "Testing getTagIdByTitle" $ do
           tagIdE = DBT.getTagIdByTitle dbqh' tagTitle
           msg = "Violation of Unique record in db: \
                 \exist more than one record for \
-                \Tag with title: 'sport' in db!"
+                \Tag with title: 'sport'!"
       tagIdE `shouldBe` (Identity $ Left msg)
     it "Should fail on empty array" $ do
       let tagTitle = "sport" :: Title
@@ -192,5 +191,5 @@ spec_getTagIdByTitle = describe "Testing getTagIdByTitle" $ do
           }
           tagIdE = DBT.getTagIdByTitle dbqh' tagTitle
           msg = "No exists Tag with title: \
-                 \'sport' in db!"
+                 \'sport'!"
       tagIdE `shouldBe` (Identity $ Left msg)

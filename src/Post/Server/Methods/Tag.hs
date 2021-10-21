@@ -14,8 +14,8 @@ import qualified Post.DB.Tag as DBT
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.QueryParameters as QP
 import qualified Post.Server.Util as Util
-import Post.Server.Objects (Permission(..), PostResponse(..), defaultResponse)
-import Post.Server.Responses (respOk, respError, respSucc, resp404)
+import Post.Server.Objects (Permission(..), TagResponse(..), TextResponse(..))
+import Post.Server.Responses (respOk, respError, resp404)
 
 -- | Create getTags Response
 getTagsResp :: Monad m => Handle m -> Query -> m Response
@@ -31,19 +31,15 @@ getTagsResp handle query = do
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      tagsOffsetE <- runEitherT $ do
+      tagsRespE <- runEitherT $ do
         reqParams <- EitherT $ QP.extractRequired logh query params
         let [offsetText] = reqParams
         offset <- EitherT $ Util.readEitherMa offsetText "offset"
         tags <- EitherT $ DBT.getAllTagRecords dbqh offset
-        return (tags, offset)
-      case tagsOffsetE of
-        Left msg -> return $ respError msg
-        Right (tags, offset) -> do
-          let response = defaultResponse {
-                response_tags = Just tags,
-                response_offset = offset
-              }
+        return $ TagResponse tags offset
+      case tagsRespE of
+        Left msg -> return $ respError $ TextResponse msg
+        Right response-> do
           Logger.logInfo logh "Tags sent"
           return $ respOk response
     where
@@ -72,8 +68,8 @@ createTagResp handle query = do
         Right _ -> do
           let msg = "Tag created"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["title"]
@@ -101,11 +97,11 @@ removeTagResp handle query = do
           _ <- DBT.removeTagPostsDeps dbqh tagId
           let msg = "Tag removed"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
-      params = ["title", "token"]
+      params = ["title"]
 
 -- | Create editTag Response
 editTagResp :: Monad m => Handle m -> Query -> m Response
@@ -129,8 +125,8 @@ editTagResp handle query = do
         Right _ -> do
           let msg = "Tag edited"
           Logger.logInfo logh msg
-          return $ respSucc msg
-        Left msg -> return $ respError msg
+          return $ respOk $ TextResponse msg
+        Left msg -> return $ respError $ TextResponse msg
     where
       authParams = ["token"]
       params = ["old_title", "new_title"]

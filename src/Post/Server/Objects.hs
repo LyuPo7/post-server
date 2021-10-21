@@ -157,21 +157,16 @@ data Photo = Photo {
 
 instance FromJSON Photo where
   parseJSON = genericParseJSON defaultOptions {
-    fieldLabelModifier = camelTo2 '_' . drop 6 }
+    fieldLabelModifier = drop 6 }
 
 instance ToJSON Photo where
   toJSON = genericToJSON defaultOptions {
-    fieldLabelModifier = camelTo2 '_' . drop 6 }
+    fieldLabelModifier = drop 6 }
 
 -- | PostServer Response
 data PostResponse = PostResponse {
-  response_posts :: Maybe [Post], -- Array of Posts.
-  response_users :: Maybe [User], -- Array of Users.
-  response_authors :: Maybe [Author], -- Array of Authors.
-  response_cats :: Maybe [Category], -- Array of Categories.
-  response_tags :: Maybe [Tag], -- Array of Tags.
-  response_drafts :: Maybe [Draft], -- Array of Drafts.
-  response_offset :: Offset -- Offset from First Record
+  respPost_posts :: [Post], -- Array of Posts.
+  respPost_offset :: Offset -- Offset from First Record
   } deriving (Show, Generic, Eq)
 
 instance FromJSON PostResponse where
@@ -182,13 +177,85 @@ instance ToJSON PostResponse where
   toJSON = genericToJSON defaultOptions {
     fieldLabelModifier = drop 9 }
 
-defaultResponse :: PostResponse
-defaultResponse = PostResponse {
-  response_posts = Nothing,
-  response_users = Nothing,
-  response_authors = Nothing,
-  response_cats = Nothing,
-  response_tags = Nothing,
-  response_drafts = Nothing,
-  response_offset = 0
-}
+-- | UserResponse Response
+data UserResponse = UserResponse {
+  respUser_users :: [User], -- Array of Users.
+  respUser_offset :: Offset -- Offset from First Record
+  } deriving (Show, Generic, Eq)
+
+instance FromJSON UserResponse where
+  parseJSON = genericParseJSON defaultOptions {
+    fieldLabelModifier = drop 9 }
+
+instance ToJSON UserResponse where
+  toJSON = genericToJSON defaultOptions {
+    fieldLabelModifier = drop 9 }
+
+-- | TagResponse Response
+data TagResponse = TagResponse {
+  respTag_tags :: [Tag], -- Array of Tags.
+  respTag_offset :: Offset -- Offset from First Record
+  } deriving (Show, Generic, Eq)
+
+instance FromJSON TagResponse where
+  parseJSON = genericParseJSON defaultOptions {
+    fieldLabelModifier = drop 8 }
+
+instance ToJSON TagResponse where
+  toJSON = genericToJSON defaultOptions {
+    fieldLabelModifier = drop 8 }
+
+-- | CatResponse Response
+data CatResponse = CatResponse {
+  respCat_cats :: [Category], -- Array of Categories.
+  respCat_offset :: Offset -- Offset from First Record
+  } deriving (Show, Generic, Eq)
+
+instance FromJSON CatResponse where
+  parseJSON = genericParseJSON defaultOptions {
+    fieldLabelModifier = drop 8 }
+
+instance ToJSON CatResponse where
+  toJSON = genericToJSON defaultOptions {
+    fieldLabelModifier = drop 8 }
+
+-- | DraftResponse Response
+data DraftResponse = DraftResponse {
+  respDraft_drafts :: [Draft], -- Array of Drafts.
+  respDraft_offset :: Offset -- Offset from First Record
+  } deriving (Show, Generic, Eq)
+
+instance FromJSON DraftResponse where
+  parseJSON = genericParseJSON defaultOptions {
+    fieldLabelModifier = drop 10 }
+
+instance ToJSON DraftResponse where
+  toJSON = genericToJSON defaultOptions {
+    fieldLabelModifier = drop 10 }
+
+-- | AuthorResponse Response
+data AuthorResponse = AuthorResponse {
+  respAuthor_authors :: [Author], -- Array of Authors.
+  respAuthor_offset :: Offset -- Offset from First Record
+  } deriving (Show, Generic, Eq)
+
+instance FromJSON AuthorResponse where
+  parseJSON = genericParseJSON defaultOptions {
+    fieldLabelModifier = drop 11 }
+
+instance ToJSON AuthorResponse where
+  toJSON = genericToJSON defaultOptions {
+    fieldLabelModifier = drop 11 }
+
+-- | TextResponse Response
+data TextResponse = TextResponse {
+  respText_message :: Text -- Text Message.
+  } deriving (Show, Generic, Eq)
+
+instance FromJSON TextResponse where
+  parseJSON = genericParseJSON defaultOptions {
+    fieldLabelModifier = drop 9 }
+
+instance ToJSON TextResponse where
+  toJSON = genericToJSON defaultOptions {
+    fieldLabelModifier = drop 9 }
