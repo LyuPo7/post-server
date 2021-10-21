@@ -71,11 +71,11 @@
             </ul>
         <li>Supported requests</li>
             <ul>
-                <li><b>Account</b>:</li>
+                <li><b>Account</b>:
                     <ul>
                         <li><b>login</b>:</li>
                             <ul>
-                                <li>Use this method to get new token for User with login</li>
+                                <li>Use this method to get new <b>Token</b> for <b>User</b> by login;</li>
                                 <li><b>Script: 'data/curl/account/login.sh'</b>:</li>
                                 <li><b>Usage: './login.sh [flags]'</b>:</li>
                                     <ul> 
@@ -85,9 +85,10 @@
                                         <li><b>-k</b> User password;</li>
                                         <li><b>-k</b> User login;</li>
                                     </ul>
-                                <li><b>Response: JSON TextResponse object</b>:</li>
+                                <li><b>Response</b>: JSON TextResponse object;</li>
                             </ul>
                    </ul>
+                </li>
             </ul>
         </li>
     </ul>
