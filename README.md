@@ -85,7 +85,12 @@
                                         <li><b>-k</b> User password;</li>
                                         <li><b>-k</b> User login;</li>
                                     </ul>
-                                <li><b>Response</b>: JSON TextResponse object;</li>
+                                <li><b>Response</b>:
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
+                                        <li><b>Fail</b>: JSON <b>UserResponse</b> object with Text error;</li>
+                                    </ul>
+                                </li>
                             </ul>
                         </li>
                    </ul>
@@ -106,7 +111,12 @@
                                         <li><b>-t</b> User's token;</li>
                                         <li><b>-o</b> Offset from the first record;</li>
                                     </ul>
-                                <li><b>Response</b>: JSON UserResponse object;</li>
+                                <li><b>Response</b>:
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
+                                        <li><b>Fail</b>: JSON <b>UserResponse</b> object with Text error;</li>
+                                    </ul>
+                                </li>
                             </ul>
                         </li>
                         <li><b>createUser</b>:
