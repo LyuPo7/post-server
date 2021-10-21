@@ -58,5 +58,5 @@
        </li>
     </ol>
     <p>for more information see asciinema below:</p>
-    [![asciicast](https://asciinema.org/a/MuzI8zjv0LCMDdi681kbCia1G.svg)](https://asciinema.org/a/MuzI8zjv0LCMDdi681kbCia1G)
+    <a href="https://asciinema.org/a/443725" target="_blank"><img src="https://asciinema.org/a/443725.svg" /></a>
 <h3>Project pattern</h3>
