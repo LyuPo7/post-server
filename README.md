@@ -73,7 +73,7 @@
             <ul>
                 <li><b>Account</b>:
                     <ul>
-                        <li><b>login</b>:</li>
+                        <li><b>login</b>:
                             <ul>
                                 <li>Use this method to get new <b>Token</b> for <b>User</b> by login;</li>
                                 <li><b>Script: 'data/curl/account/login.sh'</b>:</li>
@@ -87,6 +87,50 @@
                                     </ul>
                                 <li><b>Response</b>: JSON TextResponse object;</li>
                             </ul>
+                        </li>
+                   </ul>
+                </li>
+                <li><b>User</b>:
+                    <ul>
+                        <li><b>getUsers</b>:
+                            <ul>
+                                <li>Use this method to get all <b>User</b> records;</li>
+                                <li>This method is available for all registered Users;</li>
+                                <li>In one request You may recieve maximum 50 records</li>
+                                <li>For recieve more than 50 records You'll need to use several requests with different offset</li>
+                                <li><b>Script: 'data/curl/user/getUsers.sh'</b>:</li>
+                                <li><b>Usage: './getUsers.sh [flags]'</b>:</li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token;</li>
+                                        <li><b>-o</b> Offset from the first record;</li>
+                                    </ul>
+                                <li><b>Response</b>: JSON UserResponse object;</li>
+                            </ul>
+                        </li>
+                        <li><b>createUser</b>:
+                            <ul>
+                                <li>Use this method to register new <b>User</b>;</li>
+                                <li>This method is available for all;</li>
+                                <li><b>Script: 'data/curl/user/createUser.sh'</b>:</li>
+                                <li><b>Usage: './createUser.sh [flags]'</b>:</li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-f</b> User's first name;</li>
+                                        <li><b>-l</b> User's last name;</li>
+                                        <li><b>-k</b> User's password;</li>
+                                        <li><b>-n</b> User's login;</li>
+                                    </ul>
+                                <li><b>Response</b>:
+                                    <ul> 
+                                        <li><b>Success</b> JSON UserResponse object;</li>
+                                        <li><b>Fail</b> JSON UserResponse object with Text error;</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
                    </ul>
                 </li>
             </ul>
