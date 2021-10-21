@@ -22,19 +22,9 @@
     <p>You may clone GitHub repository</p>
         <p><b>git clone https://github.com/LyuPo7/post-server.git</b></p>
  
-<h3>Set up</h3>
+<h3>How to use?</h3>
     <ol>
         <li> <h4>Setup data/config.json</h4>
-             <ul>
-                 <li><b>"api_settings"</b></li>
-                    <ul>
-                        <li><b>"bot_api":</b> must be one of ["vk", "telegram"];</li>
-                        <li><b>"bot_token":</b> token for vk/telegram bot;</li>
-                        <li><b>"bot_initial_reply_number":</b> will be used as initial reply number for any new chat;</li>
-                        <li><b>"bot_question":</b> quetion in reply to /repeat command;</li>
-                        <li><b>"bot_description":</b> message in reply to /help command;</li> 
-                    </ul>
-             </ul>
             <ul>
                  <li><b>"logger_settings"</b></li>
                     <ul>
@@ -57,6 +47,14 @@
                         <li><b>"port":</b> [Optional]-[String] Server port;</li>
                     </ul>
              </ul>
+       </li>
+       <li><h4>Build project using <b>stack</b>:</h4>
+           <ul><b>$ stack build</b>
+           </ul>
+       </li>
+       <li><h4>Run project using <b>stack</b>:</h4>
+           <ul><b>$ stack exec post-server-exe</b>
+           </ul>
        </li>
     </ol>
 <h3>Project pattern</h3>
