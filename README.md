@@ -1456,15 +1456,41 @@
                                 <li>This method is available only for <b>Author-Post</b> owner;</li>
                                 <li>In one request You may recieve maximum 50 records;</li>
                                 <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
-                                <li><b>Script: 'data/curl/tag/getDrafts.sh'</b></li>
-                                <li><b>Usage: '$ ./getDrafts.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> <b>User's</b> token (must has Author Read Permissions);</li>
-                                        <li><b>-o</b> Offset from the first record;</li>
-                                    </ul>
+                                <li><b>Request: http://HOST:PORT/getDrafts?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Read Author Permissions;</td>
+                                            </tr>
+                                            <tr>
+                                                <td>offset</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td>Offset from first <b>Draft's</b> record (ordered by <b>Draft's</b> id). Must be >=0</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/tag/getDrafts.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/tag/'</i>): '$ ./getDrafts.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-t</b> <b>User's</b> token (must has Author Read Permissions);</li>
+                                                <li><b>-o</b> Offset from the first record;</li>
+                                            </ul>
+                                        </li>
+                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>DraftResponse</b> object;</li>
