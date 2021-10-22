@@ -193,25 +193,25 @@
                                                 <td>first_name</td>
                                                 <td>String</td>
                                                 <td>Yes</td>
-                                                <td><b>User's first name</td>
+                                                <td><b>User's</b> first name</td>
                                             </tr>
                                             <tr>
                                                 <td>last_name</td>
                                                 <td>String</td>
                                                 <td>Yes</td>
-                                                <td><b>User's last name</td>
+                                                <td><b>User's</b> last name</td>
                                             </tr>
                                             <tr>
                                                 <td>login</td>
                                                 <td>String</td>
                                                 <td>Yes</td>
-                                                <td><b>User's login</td>
+                                                <td><b>User's</b> login</td>
                                             </tr>
                                             <tr>
                                                 <td>password</td>
                                                 <td>String</td>
                                                 <td>Yes</td>
-                                                <td><b>User's password</td>
+                                                <td><b>User's</b> password</td>
                                             </tr>
                                     </table> 
                                 <li><b>Curl:</b>
