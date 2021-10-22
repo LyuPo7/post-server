@@ -418,6 +418,115 @@
                         </li>
                    </ul>
                 </li>
+                <li><b>Tag</b>:
+                    <ul>
+                        <li><b>getTags</b>:
+                            <ul>
+                                <li>Use this method to get all <b>Tag</b> records;</li>
+                                <li>This method is available for all registered Users</li>
+                                <li>In one request You may recieve maximum 50 records;</li>
+                                <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
+                                <li><b>Script: 'data/curl/tag/getTags.sh'</b></li>
+                                <li><b>Usage: '$ ./getTags.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token;</li>
+                                        <li><b>-o</b> Offset from the first record;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TagResponse</b> object;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>createTag</b>:
+                            <ul>
+                                <li>Use this method to create new <b>Tag</b>;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/tag/createTag.sh'</b></li>
+                                <li><b>Usage: '$ ./createTag.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-n</b> Tag's title;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>editTag</b>:
+                            <ul>
+                                <li>Use this method to edit <b>Tag's</b> title;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/category/editTag.sh'</b></li>
+                                <li><b>Usage: '$ ./editTag.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-n</b> New Tag's title;</li>
+                                        <li><b>-o</b> Old Tag's title;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>removeTag</b>:
+                            <ul>
+                                <li>Use this method to remove <b>Tag</b>. If <b>Tag</b> is used for <b>Posts</b> it'll be remove from all <b>Posts</b> records;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/tag/removeTag.sh'</b></li>
+                                <li><b>Usage: '$ ./removeTag.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-n</b> Tag's title;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                   </ul>
+                </li>
             </ul>
         </li>
     </ul>

@@ -7,7 +7,7 @@ helpFunction()
    echo -e "\t-y Host name"
    echo -e "\t-p Port number"
    echo -e "\t-t User's token"
-   echo -e "\n-n Tag's title"
+   echo -e "\t-n Tag's title"
    exit 1 # Exit script after printing help
 }
 
