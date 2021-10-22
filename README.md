@@ -260,7 +260,7 @@
                                                 <td>path</td>
                                                 <td>String</td>
                                                 <td>Yes</td>
-                                                <td><b>Local path to photo</td>
+                                                <td>Local path to photo</td>
                                             </tr>
                                     </table> 
                                 <li><b>Curl:</b>
