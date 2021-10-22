@@ -948,7 +948,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
-                                                <li><b>-t</b> User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
+                                                <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-n</b> New <b>Tag's</b> title;</li>
                                                 <li><b>-o</b> Old <b>Tag's</b> title;</li>
                                             </ul>
@@ -972,14 +972,40 @@
                             <ul>
                                 <li>Use this method to remove <b>Tag</b>. If <b>Tag</b> is used for <b>Posts</b> it'll be remove from all <b>Posts</b> records;</li>
                                 <li>This method is available only for admins;</li>
-                                <li><b>Script: 'data/curl/tag/removeTag.sh'</b></li>
-                                <li><b>Usage: '$ ./removeTag.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
-                                        <li><b>-n</b> Tag's title;</li>
+                                <li><b>Request: http://HOST:PORT/removeTag?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</td>
+                                            </tr>
+                                            <tr>
+                                                <td>title</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>Tag's</b> title</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/tag/removeTag.sh'</i></b></li>
+                                        <li><b>Usage: '$ ./removeTag.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</li>
+                                                <li><b>-n</b> <b>Tag's</b> title;</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
