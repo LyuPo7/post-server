@@ -81,7 +81,7 @@
                         <li><b>login</b>:
                             <ul>
                                 <li>Use this method to get new <b>Token</b> for <b>User</b> by login;</li>
-                                <li><b>Request: <i>http://$host:$port/publishDraft?PARAMETERS</i></b></li>
+                                <li><b>Request: http://HOST:PORT/publishDraft?PARAMETERS</b></li>
                                      <table>
                                             <tr>
                                                 <th><b>Parameter</b></th>
@@ -104,8 +104,8 @@
                                     </table> 
                                 <li><b>Curl:</b>
                                     <ul>
-                                        <li><b>Script: <i>'data/curl/account/login.sh'</i></b></li>
-                                        <li><b>Usage: <i>'$ ./login.sh [flags]'</i></b>
+                                        <li><b>Script location: <i>'data/curl/account/login.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/account/'</i>): <i>'$ ./login.sh [flags]'</i></b>
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
