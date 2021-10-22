@@ -577,15 +577,41 @@
                                 <li>This method is available for all registered Users</li>
                                 <li>In one request You may recieve maximum 50 records;</li>
                                 <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
-                                <li><b>Script: 'data/curl/category/getCategories.sh'</b></li>
-                                <li><b>Usage: '$ ./getCategories.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token;</li>
-                                        <li><b>-o</b> Offset from the first record;</li>
+                                <li><b>Request: http://HOST:PORT/getCategories?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request</td>
+                                            </tr>
+                                            <tr>
+                                                <td>offset</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td>Offset from first <b>Category's</b> record (ordered by <b>Category's</b> id). Must be >=0</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/category/getCategories.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/category/'</i>): '$ ./getCategories.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request;</li>
+                                                <li><b>-o</b> Offset from first <b>Category's</b> record (ordered by <b>Category's</b> id);</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>CategoryResponse</b> object;</li>
