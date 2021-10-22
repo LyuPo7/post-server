@@ -63,7 +63,7 @@
     <p>
 <h3>Making requests</h3>
 <ul>
-        <li>All supported requests contain in 'data/curl/'</li>
+        <li>All supported requests contain in <i>'data/curl/'</i></li>
             <ul>
                 <li>Every directory contains executables .sh scripts for supported requests;</li>
                 <li>For use .sh scripts for supported requests;</li>
