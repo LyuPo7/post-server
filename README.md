@@ -1340,16 +1340,48 @@
                             <ul>
                                 <li>Use this method to add Additional <b>Photo</b> for <b>Post</b>;</li>
                                 <li>This method is available only for <b>Author-Post</b> owner;</li>
-                                <li><b>Script: 'data/curl/post/setAddMainPhoto.sh'</b></li>
-                                <li><b>Usage: '$ ./setAddMainPhoto.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> <b>User's</b> token;</li>
-                                        <li><b>-i</b> <b>Post's</b> id</li>
-                                        <li><b>-l</b> Path to photo</li>
+                                <li><b>Request: http://HOST:PORT/setAddMainPhoto?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. For successful request token must belong to <b>User</b> who is the <b>Author</b> of this <b>Post</b></td>
+                                            </tr>
+                                            <tr>
+                                                <td>id</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td><b>Post's</b> id</td>
+                                            </tr>
+                                            <tr>
+                                                <td>path</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td>Local path to photo</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/post/setAddMainPhoto.sh'</b></li>
+                                        <li><b>Usage: '$ ./setAddMainPhoto.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-t</b> <b>User's</b> token;</li>
+                                                <li><b>-i</b> <b>Post's</b> id</li>
+                                                <li><b>-l</b> Path to photo</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
