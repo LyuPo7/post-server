@@ -134,15 +134,38 @@
                                 <li>This method is available for all registered Users;</li>
                                 <li>In one request You may recieve maximum 50 records;</li>
                                 <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
-                                <li><b>Script: 'data/curl/user/getUsers.sh'</b></li>
-                                <li><b>Usage: '$ ./getUsers.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token;</li>
-                                        <li><b>-o</b> Offset from the first record;</li>
-                                    </ul>
+                                <li><b>Request: http://HOST:PORT/publishDraft?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token</td>
+                                            </tr>
+                                            <tr>
+                                                <td>offset</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td><b>Offset from first <b>User's</b> record (ordered by <b>User's</b> id). Must be >=0</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/user/getUsers.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/user/'</i>): '$ ./getUsers.sh [flags]'</b></li>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-t</b> <b>User's</b> token;</li>
+                                                <li><b>-o</b> Offset from the first record;</li>
+                                            </ul>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
