@@ -108,6 +108,7 @@
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
                                         <li><b>-t</b> User's token;</li>
                                         <li><b>-o</b> Offset from the first record;</li>
                                     </ul>
@@ -128,6 +129,7 @@
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
                                         <li><b>-f</b> User's first name;</li>
                                         <li><b>-l</b> User's last name;</li>
                                         <li><b>-k</b> User's password;</li>
@@ -150,6 +152,7 @@
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
                                         <li><b>-t</b> User's token;</li>
                                         <li><b>-l</b> Path to photo</li>
                                     </ul>
@@ -175,8 +178,119 @@
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
                                         <li><b>-t</b> User's token;</li>
                                         <li><b>-i</b> User's id (to remove)</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                   </ul>
+                </li>
+                <li><b>Author</b>:
+                    <ul>
+                        <li><b>getAuthors</b>:
+                            <ul>
+                                <li>Use this method to get all <b>Author</b> records;</li>
+                                <li>This method is available only for admins;</li>
+                                <li>In one request You may recieve maximum 50 records</li>
+                                <li>For recieve more than 50 records You'll need to use several requests with different offset</li>
+                                <li><b>Script: 'data/curl/author/getAuthors.sh'</b></li>
+                                <li><b>Usage: './getAuthors.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-o</b> Offset from the first record;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>AuthorResponse</b> object;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>createAuthor</b>:
+                            <ul>
+                                <li>Use this method to create new <b>Author</b> of already existed <b>User</b>;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/author/createAuthor.sh'</b></li>
+                                <li><b>Usage: './createAuthor.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> User's id;</li>
+                                        <li><b>-d</b> Author's description;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>editAuthor</b>:
+                            <ul>
+                                <li>Use this method to edit <b>Author's</b> description;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/author/editAuthor.sh'</b></li>
+                                <li><b>Usage: './editAuthor.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> User's id (corresponding to proper Author);</li>
+                                        <li><b>-d</b> New Author's description;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>removeAuthor</b>:
+                            <ul>
+                                <li>Use this method to remove <b>Author</b>. If <b>Author</b> has <b>Posts</b> it's imposible to remove his record. Firstly You'll need to remove all his <b>Posts</b>;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/authors/removeAuthor.sh'</b></li>
+                                <li><b>Usage: './removeAuthor.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> User's id (corresponding to proper Author);</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
