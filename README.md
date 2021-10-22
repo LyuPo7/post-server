@@ -1369,7 +1369,7 @@
                                     </table> 
                                 <li><b>Curl:</b>
                                     <ul>
-                                        <li><b>Script location: <i>'data/curl/post/setAddMainPhoto.sh'</b></li>
+                                        <li><b>Script location: <i>'data/curl/post/setAddMainPhoto.sh'</i></b></li>
                                         <li><b>Usage (from <i>'data/curl/post/'</i>): '$ ./setAddMainPhoto.sh [flags]'</b>
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
