@@ -404,15 +404,46 @@
                             <ul>
                                 <li>Use this method to create new <b>Author</b> of already existed <b>User</b>;</li>
                                 <li>This method is available only for admins;</li>
-                                <li><b>Script: 'data/curl/author/createAuthor.sh'</b></li>
-                                <li><b>Usage: '$ ./createAuthor.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
-                                        <li><b>-i</b> User's id;</li>
-                                        <li><b>-d</b> Author's description;</li>
+                                <li><b>Request: http://HOST:PORT/createAuthor?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</td>
+                                            </tr>
+                                            <tr>
+                                                <td>id</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> id (for <b>Author</b> creation)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>description</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>Author's</b> description</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/author/createAuthor.sh'<i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/author/'<i>): '$ ./createAuthor.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
+                                                <li><b>-i</b> <b>User's</b> id (for <b>Author</b> creation);</li>
+                                                <li><b>-d</b> <b>Author's</b> description;</li>
+                                            </ul>
+                                        </li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
