@@ -119,7 +119,7 @@
                                 <li><b>Response</b>:
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object;</li>
-                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with Text error;</li>
+                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with text error;</li>
                                     </ul>
                                 </li>
                             </ul>
@@ -172,7 +172,7 @@
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>UserResponse</b> object;</li>
-                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with Text error;</li>
+                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with text error;</li>
                                     </ul>
                                 </li>
                             </ul>
@@ -232,8 +232,8 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
-                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with Text error;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
+                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object with text error;</li>
                                     </ul>
                                 </li>
                             </ul>
@@ -271,7 +271,7 @@
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
                                                 <li><b>-p</b> Port server number;</li>
-                                                <li><b>-t</b> User's token;</li>
+                                                <li><b>-t</b> <b>User's</b> token;</li>
                                                 <li><b>-l</b> Path to photo;</li>
                                             </ul>
                                         </li>
@@ -279,11 +279,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -331,11 +331,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -392,8 +392,8 @@
                                         <li><b>Success</b>: JSON <b>AuthorResponse</b> object;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -447,11 +447,11 @@
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -505,11 +505,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -556,11 +556,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -617,8 +617,8 @@
                                         <li><b>Success</b>: JSON <b>CategoryResponse</b> object;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -673,11 +673,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -738,11 +738,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -789,11 +789,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -850,8 +850,8 @@
                                         <li><b>Success</b>: JSON <b>TagResponse</b> object;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -899,11 +899,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -957,11 +957,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1008,11 +1008,11 @@
                                 </li>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1030,58 +1030,174 @@
                                         <li>Ordering by:
                                             <ul> 
                                                 <li>Date of <b>Post</b> creation;</li>
-                                                <li><b>Author</b> of <b>Post</b> ('<b>order_by_author</b>');</li>
-                                                <li><b>Category's</b> title ('<b>order_by_category</b>');</li>
-                                                <li>Number of <b>Post's</b> photos ('<b>order_by_photo</b>');</li>
+                                                <li><b>Author</b> of <b>Post</b>;</li>
+                                                <li><b>Category's</b> title;</li>
+                                                <li>Number of photos in <b>Post</b>;</li>
                                             </ul>
                                         </li>
                                         <li>Search only in <b>Post's</b> text;</li>
                                         <li>Search only in <b>Post's</b> title;</li>
-                                        <li>Search in <b>Post's</b> title/<b>Post's</b> text/<b>Author's</b> First name and      <b>Author's</b> Last name/<b>Category's</b> Title<b>Tag's</b> Title;
+                                        <li>Search in <b>Post's</b> title/<b>Post's</b> text/<b>Author's</b> First name and      <b>Author's</b> Last name/<b>Category's</b> title <b>Tag's</b> title;
                                         </li>
                                         <li>Search with exact <b>Category's</b> id;</li>
                                         <li>Search with exact <b>Tag's</b> id;</li>
-                                        <li>Search Posts with <b>Tag's</b> Id ONE of [tag_id];</li>
-                                        <li>Search Posts with <b>Tag's</b> Id ALL in [tag_id];</li>
-                                        <li>Search Posts by <b>Author</b> name (must contain 'first_name' and 'last_name' separated by whitespace.");
+                                        <li>Search <b>Posts</b> with <b>Tag's</b> Id ONE of [tag_id];</li>
+                                        <li>Search <b>Posts</b> with <b>Tag's</b> Id ALL in [tag_id];</li>
+                                        <li>Search <b>Posts</b> by <b>Author</b> name (must contain 'first_name' and 'last_name' separated by whitespace.");
                                         </li>
-                                        <li>Search Posts with exact date of creation ('created_at');</li>
-                                        <li>Search Posts created later than specified date - 'created_at__gt';</li>
-                                        <li>Search Posts created earlier than specified date - 'created_at__lt';</li>
+                                        <li>Search <b>Posts</b> with exact date of creation;</li>
+                                        <li>Search <b>Posts</b> created later than specified date;</li>
+                                        <li>Search <b>Posts</b> created earlier than specified date;</li>
                                     </ul>
                                 </li>
                                 <li>This method is available for all registered <b>Users</b>;</li>
                                 <li>In one request You may recieve maximum 50 records;</li>
                                 <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
-                                <li><b>Script: 'data/curl/posts/getPosts.sh'</b></li>
-                                <li><b>Usage: '$ ./getPosts.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token;</li>
-                                        <li><b>-o</b> Offset from the first record;</li>
-                                        <li><b>[-s]</b> Order: key one of ['order_by_date', 'order_by_author', 'order_by_category', 'order_by_photo'] - formated like "key=true";</li>
-                                        <li><b>[-f]</b> Find string for search in Post's Title (Sting may use wildcards - for more info see Appendix A);</li>
-                                        <li><b>[-e]</b> Find string for search in Post's Text (Sting may use wildcards - for more info see Appendix A);</li>
-                                        <li><b>[-a]</b> Find string for search in (Post's Title and Post's Text) & (Author's First name and Author's Last name) & (Category's Title) & (Tag's Title) - the result is union of all searches (Sting may use wildcards - for more info see Appendix A);</li>
-                                        <li><b>[-c]</b> Search with exact <b>Category's</b> id;</li>
-                                        <li><b>[-n]</b> Search Posts with exact <b>Tag's</b> Id [tag_id] (lenght [tag_id] == 1);</li>
-                                        <li><b>[-i]</b> Search Posts with <b>Tag's</b> Id ONE of [tag_id];</li>
-                                        <li><b>[-k]</b> Search Posts with <b>Tag's</b> Id ALL in [tag_id];</li>
-                                        <li><b>[-l]</b> Search Posts by <b>Author</b> name (must contain 'first_name' and 'last_name' separated by whitespace.");
+                                <li><b>Request: http://HOST:PORT/getPosts?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request</td>
+                                            </tr>
+                                            <tr>
+                                                <td>offset</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td>Offset from first <b>Post's</b> record corresponding to request options (ordered by <b>Post's</b> id). Must be >=0</td>
+                                            </tr>
+                                            <tr>
+                                                <td>order_by_date</td>
+                                                <td>-</td>
+                                                <td>Optional</td>
+                                                <td>Using by <i>default</i>. Activate order by date of <b>Post</b> creation. For activate use in query string: "order_by_date=true"</td>
+                                            </tr>
+                                            <tr>
+                                                <td>order_by_author</td>
+                                                <td>-</td>
+                                                <td>Optional</td>
+                                                <td>Activate order by <b>Author</b> of <b>Post</b>. For activate use in query string: "order_by_author=true" (by <i>default</i> using 'order_by_date')</td>
+                                            </tr>
+                                            <tr>
+                                                <td>order_by_category</td>
+                                                <td>-</td>
+                                                <td>Optional</td>
+                                                <td>Activate order by <b>Category's</b> title. For activate use in query string: "order_by_category=true" (by <i>default</i> using 'order_by_date')</td>
+                                            </tr>
+                                            <tr>
+                                                <td>order_by_photo</td>
+                                                <td>-</td>
+                                                <td>Optional</td>
+                                                <td>Activate order by number of photos in <b>Post</b>. For activate use in query string: "order_by_photo=true" (by <i>default</i> using 'order_by_date')</td>
+                                            </tr>
+                                            <tr>
+                                                <td>find_in_title</td>
+                                                <td>String with wildcards</td>
+                                                <td>Optional</td>
+                                                <td>Find string for search in <b>Post's</b> title (Sting may use wildcards - for more info see Appendix A)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>find_in_text</td>
+                                                <td>String with wildcards</td>
+                                                <td>Optional</td>
+                                                <td>Find string for search in <b>Post's</b> text (Sting may use wildcards - for more info see Appendix A)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>find</td>
+                                                <td>String with wildcards</td>
+                                                <td>Optional</td>
+                                                <td>Find string for search in <b>(Post's</b> title and <b>Post's</b> text) & (Author's First name and <b>Author's</b> Last name) & (<b>Category's</b> title) & (<b>Tag's</b> title) - the result is union of all searches (Sting may use wildcards - for more info see Appendix A)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>category</td>
+                                                <td>Integer</td>
+                                                <td>Optional</td>
+                                                <td>Search <b>Posts</b> with exact <b>Category's</b> id</td>
+                                            </tr>
+                                            <tr>
+                                                <td>tag</td>
+                                                <td>[Integer]</td>
+                                                <td>Optional</td>
+                                                <td>Search <b>Posts</b> with exact <b>Tag's</b> id. Formed like singleton [tag_id]</td>
+                                            </tr>
+                                            <tr>
+                                                <td>tag__in</td>
+                                                <td>[Integer]</td>
+                                                <td>Optional</td>
+                                                <td>Search <b>Posts</b> with <b>Tag's</b> Id ONE of [tag_id]</td>
+                                            </tr>
+                                            <tr>
+                                                <td>tag__all</td>
+                                                <td>[Integer]</td>
+                                                <td>Optional</td>
+                                                <td>Search <b>Posts</b> with <b>Tag's</b> Id ALL in [tag_id]</td>
+                                            </tr>
+                                            <tr>
+                                                <td>author</td>
+                                                <td>String</td>
+                                                <td>Optional</td>
+                                                <td>Search <b>Posts</b> by <b>Author</b> name (must contain 'first_name' and 'last_name' separated by whitespace.")</td>
+                                            </tr>
+                                            <tr>
+                                                <td>created_at</td>
+                                                <td>String</td>
+                                                <td>Optional</td>
+                                                <td>Search <b>Posts</b> with exact date of creation (formated like "DD.MM.YY")</td>
+                                            </tr>
+                                            <tr>
+                                                <td>created_at__gt</td>
+                                                <td>String</td>
+                                                <td>Optional</td>
+                                                <td>Search <b>Posts</b> created later than specified date (formated like "DD.MM.YY")</td>
+                                            </tr>
+                                            <tr>
+                                                <td>created_at__lt</td>
+                                                <td>String</td>
+                                                <td>Optional</td>
+                                                <td>Search <b>Posts</b> created earlier than specified date (formated like "DD.MM.YY")</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/posts/getPosts.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/posts/'</i>): '$ ./getPosts.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-t</b> <b>User's</b> token;</li>
+                                                <li><b>-o</b> Offset from the first record;</li>
+                                                <li><b>[-s]</b> Order: key one of ['order_by_date', 'order_by_author', 'order_by_category', 'order_by_photo'] - formated like "key=true";</li>
+                                                <li><b>[-f]</b> Find string for search in <b>Post's</b> title (Sting may use wildcards - for more info see Appendix A);</li>
+                                                <li><b>[-e]</b> Find string for search in <b>Post's</b> text (Sting may use wildcards - for more info see Appendix A);</li>
+                                                <li><b>[-a]</b> Find string for search in <b>(Post's</b> title and <b>Post's</b> text) & (Author's First name and <b>Author's</b> Last name) & (<b>Category's</b> title) & (<b>Tag's</b> title) - the result is union of all searches (Sting may use wildcards - for more info see Appendix A);</li>
+                                                <li><b>[-c]</b> Search with exact <b>Category's</b> id;</li>
+                                                <li><b>[-n]</b> Search <b>Posts</b> with exact <b>Tag's</b> Id [tag_id] (lenght [tag_id] == 1);</li>
+                                                <li><b>[-i]</b> Search <b>Posts</b> with <b>Tag's</b> Id ONE of [tag_id];</li>
+                                                <li><b>[-k]</b> Search <b>Posts</b> with <b>Tag's</b> Id ALL in [tag_id];</li>
+                                                <li><b>[-l]</b> Search <b>Posts</b> by <b>Author</b> name (must contain 'first_name' and 'last_name' separated by whitespace.");
+                                                </li>
+                                                <li><b>[-q]</b> Search <b>Posts</b> with exact date of creation;</li>
+                                                <li><b>[-g]</b> Search <b>Posts</b> created later than specified date;</li>
+                                                <li><b>[-j]</b> Search <b>Posts</b> created earlier than specified date;</li>
+                                            </ul>
                                         </li>
-                                        <li><b>[-q]</b> Search Posts with exact date of creation ('created_at');</li>
-                                        <li><b>[-g]</b> Search Posts created later than specified date - 'created_at__gt';</li>
-                                        <li><b>[-j]</b> Search Posts created earlier than specified date - 'created_at__lt';</li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>PostResponse</b> object;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1098,19 +1214,19 @@
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
                                         <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token (must has Author Write Permissions);</li>
-                                        <li><b>-n</b> Post's title;</li>
-                                        <li><b>-b</b> Post's text;</li>
+                                        <li><b>-t</b> <b>User's</b> token (must has Author Write Permissions);</li>
+                                        <li><b>-n</b> <b>Post's</b> title;</li>
+                                        <li><b>-b</b> <b>Post's</b> text;</li>
                                         <li><b>-c</b> Category's id;</li>
                                         <li><b>-m</b> Tag's ids;</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1127,17 +1243,17 @@
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
                                         <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token;</li>
-                                        <li><b>-i</b> Post's id</li>
+                                        <li><b>-t</b> <b>User's</b> token;</li>
+                                        <li><b>-i</b> <b>Post's</b> id</li>
                                         <li><b>-l</b> Path to photo</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1154,17 +1270,17 @@
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
                                         <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token;</li>
-                                        <li><b>-i</b> Post's id</li>
+                                        <li><b>-t</b> <b>User's</b> token;</li>
+                                        <li><b>-i</b> <b>Post's</b> id</li>
                                         <li><b>-l</b> Path to photo</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1180,16 +1296,16 @@
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
-                                        <li><b>-i</b> Post's id;</li>
+                                        <li><b>-t</b> <b>User's</b> token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> <b>Post's</b> id;</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1212,7 +1328,7 @@
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
                                         <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token (must has Author Read Permissions);</li>
+                                        <li><b>-t</b> <b>User's</b> token (must has Author Read Permissions);</li>
                                         <li><b>-o</b> Offset from the first record;</li>
                                     </ul>
                                 <li><b>Response:</b>
@@ -1220,8 +1336,8 @@
                                         <li><b>Success</b>: JSON <b>DraftResponse</b> object;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1238,17 +1354,17 @@
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
                                         <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> User's token (must has Author Read Permissions);</li>
+                                        <li><b>-t</b> <b>User's</b> token (must has Author Read Permissions);</li>
                                         <li><b>-b</b> Draft's text;</li>
-                                        <li><b>-i</b> Post's id;</li>
+                                        <li><b>-i</b> <b>Post's</b> id;</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                             <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1264,17 +1380,17 @@
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> User's token (must has Author Read Permissions);</li>
+                                        <li><b>-t</b> <b>User's</b> token (must has Author Read Permissions);</li>
                                         <li><b>-b</b> New Draft's text;</li>
-                                        <li><b>-i</b> Post's id;</li>
+                                        <li><b>-i</b> <b>Post's</b> id;</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1290,16 +1406,16 @@
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
-                                        <li><b>-i</b> Post's id (corresponding to proper Draft);</li>
+                                        <li><b>-t</b> <b>User's</b> token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> <b>Post's</b> id (corresponding to proper Draft);</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
@@ -1315,16 +1431,16 @@
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
-                                        <li><b>-i</b> Post's id (corresponding to proper Draft);</li>
+                                        <li><b>-t</b> <b>User's</b> token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> <b>Post's</b> id (corresponding to proper Draft);</li>
                                     </ul>
                                 <li><b>Response:</b>
                                     <ul> 
-                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
                                         <li><b>Fail</b>:
                                              <ul> 
-                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
-                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                                 <li><b>If <b>User's</b> token includes required permissions:</b> JSON <b>TextResponse</b> object with text success;</li>
+                                                 <li><b>If <b>User's</b> token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with text error;</li>
                                              </ul>
                                         </li>
                                     </ul>
