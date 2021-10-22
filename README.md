@@ -102,7 +102,7 @@
                                 <li>Use this method to get all <b>User</b> records;</li>
                                 <li>This method is available for all registered Users;</li>
                                 <li>In one request You may recieve maximum 50 records</li>
-                                <li>For recieve more than 50 records You'll need to use several requests with different offset</li>
+                                <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
                                 <li><b>Script: 'data/curl/user/getUsers.sh'</b></li>
                                 <li><b>Usage: './getUsers.sh [flags]'</b></li>
                                     <ul> 
@@ -203,8 +203,8 @@
                             <ul>
                                 <li>Use this method to get all <b>Author</b> records;</li>
                                 <li>This method is available only for admins;</li>
-                                <li>In one request You may recieve maximum 50 records</li>
-                                <li>For recieve more than 50 records You'll need to use several requests with different offset</li>
+                                <li>In one request You may recieve maximum 50 records;</li>
+                                <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
                                 <li><b>Script: 'data/curl/author/getAuthors.sh'</b></li>
                                 <li><b>Usage: './getAuthors.sh [flags]'</b></li>
                                     <ul> 
