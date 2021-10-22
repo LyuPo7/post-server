@@ -7,8 +7,8 @@ helpFunction()
    echo -e "\t-y Host name"
    echo -e "\t-p Port number"
    echo -e "\t-t User's token"
-   echo -e "\t-b Post's text"
-   echo -e "\t-i post_id"
+   echo -e "\t-b Draft's text"
+   echo -e "\t-i Post's id"
    exit 1 # Exit script after printing help
 }
 

@@ -527,6 +527,318 @@
                         </li>
                    </ul>
                 </li>
+                <li><b>Post</b>:
+                    <ul>
+                        <li><b>getPosts</b>:
+                            <ul>
+                                <li>Use this method to get all <b>Posts</b> records. This method supports:
+                                    <ul> 
+                                        <li>Ordering by:
+                                            <ul> 
+                                                <li>Date of <b>Post</b> creation;</li>
+                                                <li><b>Author</b> of <b>Post</b> ('<b>order_by_author</b>');</li>
+                                                <li><b>Category's</b> title ('<b>order_by_category</b>');</li>
+                                                <li><b>Number of <b>Post's</b> photos ('<b>order_by_photo</b>');</li>
+                                            </ul>
+                                        </li>
+                                        <li>Search only in <b>Post's</b> text;</li>
+                                        <li>Search only in <b>Post's</b> title;</li>
+                                        <li>Search in <b>Post's</b> title/<b>Post's</b> text/<b>Author's</b> First name and      <b>Author's</b> Last name/<b>Category's</b> Title<b>Tag's</b> Title;
+                                        </li>
+                                        <li>Search with exact <b>Category's</b> id;</li>
+                                        <li>Search with exact <b>Tag's</b> id;</li>
+                                        <li>Search Posts with <b>Tag's</b> Id ONE of [tag_id];</li>
+                                        <li>Search Posts with <b>Tag's</b> Id ALL in [tag_id];</li>
+                                        <li>Search Posts by <b>Author</b> name (must contain 'first_name' and 'last_name' separated by whitespace.");
+                                        </li>
+                                        <li>Search Posts with exact date of creation ('created_at');</li>
+                                        <li>Search Posts created later than specified date - 'created_at__gt';</li>
+                                        <li>Search Posts created earlier than specified date - 'created_at__lt';</li>
+                                    </ul>
+                                </li>
+                                <li>This method is available for all registered Users</li>
+                                <li>In one request You may recieve maximum 50 records;</li>
+                                <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
+                                <li><b>Script: 'data/curl/posts/getPosts.sh'</b></li>
+                                <li><b>Usage: '$ ./getPosts.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token;</li>
+                                        <li><b>-o</b> Offset from the first record;</li>
+                                        <li><b>[-s]</b> Order: key one of ['order_by_date', 'order_by_author', 'order_by_category', 'order_by_photo'] - formated like "key=true";</li>
+                                        <li><b>[-f]</b> Find string for search in Post's Title (Sting may use wildcards - for more info see Appendix A);</li>
+                                        <li><b>[-e]</b> Find string for search in Post's Text (Sting may use wildcards - for more info see Appendix A);</li>
+                                        <li><b>[-a]</b> Find string for search in (Post's Title and Post's Text) & (Author's First name and Author's Last name) & (Category's Title) & (Tag's Title) - the result is union of all searches (Sting may use wildcards - for more info see Appendix A);</li>
+                                        <li><b>[-c]</b> Search with exact <b>Category's</b> id;</li>
+                                        <li><b>[-n]</b> Search Posts with exact <b>Tag's</b> Id [tag_id] (lenght [tag_id] == 1);</li>
+                                        <li><b>[-i]</b> Search Posts with <b>Tag's</b> Id ONE of [tag_id];</li>
+                                        <li><b>[-k]</b> Search Posts with <b>Tag's</b> Id ALL in [tag_id];</li>
+                                        <li><b>[-l]</b> Search Posts by <b>Author</b> name (must contain 'first_name' and 'last_name' separated by whitespace.");
+                                        </li>
+                                        <li><b>[-q]</b> Search Posts with exact date of creation ('created_at');</li>
+                                        <li><b>[-g]</b> Search Posts created later than specified date - 'created_at__gt';</li>
+                                        <li><b>[-j]</b> Search Posts created earlier than specified date - 'created_at__lt';</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>PostResponse</b> object;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>createPost</b>:
+                            <ul>
+                                <li>Use this method to create new <b>Post</b>;</li>
+                                <li>This method is available only for <b>Authors</b>;</li>
+                                <li><b>Script: 'data/curl/post/createPost.sh'</b></li>
+                                <li><b>Usage: '$ ./createTag.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token (must has Author Write Permissions);</li>
+                                        <li><b>-n</b> Post's title;</li>
+                                        <li><b>-b</b> Post's text;</li>
+                                        <li><b>-c</b> Category's id;</li>
+                                        <li><b>-m</b> Tag's ids;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>setPostMainPhoto</b>:
+                            <ul>
+                                <li>Use this method to set Main <b>Photo</b> for <b>Post</b>. If <b>Post</b> already has Main Photo, Main Photo will be updated;</li>
+                                <li>This method is available only for <b>Author-Post</b> owner;</li>
+                                <li><b>Script: 'data/curl/post/setPostMainPhoto.sh'</b></li>
+                                <li><b>Usage: '$ ./setPostMainPhoto.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token;</li>
+                                        <li><b>-i</b> Post's id</li>
+                                        <li><b>-l</b> Path to photo</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>setAddMainPhoto</b>:
+                            <ul>
+                                <li>Use this method to add Additional <b>Photo</b> for <b>Post</b>;</li>
+                                <li>This method is available only for <b>Author-Post</b> owner;</li>
+                                <li><b>Script: 'data/curl/post/setAddMainPhoto.sh'</b></li>
+                                <li><b>Usage: '$ ./setAddMainPhoto.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token;</li>
+                                        <li><b>-i</b> Post's id</li>
+                                        <li><b>-l</b> Path to photo</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>removePost</b>:
+                            <ul>
+                                <li>Use this method to remove <b>Post</b>;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/post/removePost.sh'</b></li>
+                                <li><b>Usage: '$ ./removePost.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> Post's id;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                   </ul>
+                </li>
+                <li><b>Draft</b>:
+                    <ul>
+                        <li><b>getDrafts</b>:
+                            <ul>
+                                <li>Use this method to get all <b>Draft</b> records of <b>Author</b>;</li>
+                                <li>This method is available only for <b>Author-Post</b> owner;</li>
+                                <li>In one request You may recieve maximum 50 records;</li>
+                                <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
+                                <li><b>Script: 'data/curl/tag/getDrafts.sh'</b></li>
+                                <li><b>Usage: '$ ./getDrafts.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token (must has Author Read Permissions);</li>
+                                        <li><b>-o</b> Offset from the first record;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>DraftResponse</b> object;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>createDraft</b>:
+                            <ul>
+                                <li>Use this method to create <b>Draft</b> of <b>Post</b>;</li>
+                                <li>This method is available only for <b>Author-Post</b> owner;</li>
+                                <li><b>Script: 'data/curl/draft/createDraft.sh'</b></li>
+                                <li><b>Usage: '$ ./createDraft.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token (must has Author Read Permissions);</li>
+                                        <li><b>-b</b> Draft's text;</li>
+                                        <li><b>-i</b> Post's id;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>editDraft</b>:
+                            <ul>
+                                <li>Use this method to edit <b>Draft's</b> text;</li>
+                                <li>This method is available only for <b>Author-Post</b> owner;</li>
+                                <li><b>Script: 'data/curl/drafts/editDraft.sh'</b></li>
+                                <li><b>Usage: '$ ./editDraft.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Author Read Permissions);</li>
+                                        <li><b>-b</b> New Draft's text;</li>
+                                        <li><b>-i</b> Post's id;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>publishDraft</b>:
+                            <ul>
+                                <li>Use this method to publish text of <b>Draft</b> (Change corresponding <b>Post's</b> text to <b>Draft's</b> text);</li>
+                                <li>This method is available only for <b>Author-Post</b> owner;</li>
+                                <li><b>Script: 'data/curl/draft/publishDraft.sh'</b></li>
+                                <li><b>Usage: '$ ./publishDraft.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> Post's id (corresponding to proper Draft);</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>removeDraft</b>:
+                            <ul>
+                                <li>Use this method to remove <b>Draft</b>;</li>
+                                <li>This method is available only for <b>Author-Post</b> owner;</li>
+                                <li><b>Script: 'data/curl/draft/removeDraft.sh'</b></li>
+                                <li><b>Usage: '$ ./removeDraft.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> Post's id (corresponding to proper Draft);</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                   </ul>
+                </li>
             </ul>
         </li>
     </ul>
