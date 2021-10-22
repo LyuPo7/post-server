@@ -538,7 +538,7 @@
                                                 <li>Date of <b>Post</b> creation;</li>
                                                 <li><b>Author</b> of <b>Post</b> ('<b>order_by_author</b>');</li>
                                                 <li><b>Category's</b> title ('<b>order_by_category</b>');</li>
-                                                <li><b>Number of <b>Post's</b> photos ('<b>order_by_photo</b>');</li>
+                                                <li>Number of <b>Post's</b> photos ('<b>order_by_photo</b>');</li>
                                             </ul>
                                         </li>
                                         <li>Search only in <b>Post's</b> text;</li>
