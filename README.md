@@ -6,12 +6,12 @@
     <ul>
         <li>Using <b>Warp</b> as Web-server;</li>
         <li>Using <b>PostgreSQL</b> as BD;</li>
-        <li>The response contains a <b>JSON</b> object</li>
+        <li>The response contains a <b>JSON</b> object;</li>
         <li>Supports 4 levels of logging:
             <ul>
                 <li><b>error</b>-level: show only error messages;</li>
                 <li><b>warning</b>-level: show only error and warning messages;</li>
-                <li><b>info</b>-level(default): show info messages for every step of downloading page including error and warning messages;</li>
+                <li><b>info</b>-level(default): show info, error and warning messages;</li>
                 <li><b>debug</b>-level: show even more details than info-level;</li>
             </ul>
         </li>
@@ -54,10 +54,9 @@
        <li><h4>Run project using <b>stack</b>:</h4>
            <ul><b>$ stack exec post-server-exe</b>
            </ul>
-       </li>
-       <li><h4>For more information see asciinema below:</h4></p>
-            <a href="https://asciinema.org/a/443725" target="_blank"><img src="https://asciinema.org/a/443725.svg" /></a></b>:</h4>
-           <ul><b>$ stack exec post-server-exe</b>
+               <p>For more information see asciinema below:
+                  <a href="https://asciinema.org/a/443725" target="_blank"><img src="https://asciinema.org/a/443725.svg" /></a></b>
+               </p>
            </ul>
        </li>
     </ol>
