@@ -433,8 +433,8 @@
                                     </table> 
                                 <li><b>Curl:</b>
                                     <ul>
-                                        <li><b>Script location: <i>'data/curl/author/createAuthor.sh'<i></b></li>
-                                        <li><b>Usage (from <i>'data/curl/author/'<i>): '$ ./createAuthor.sh [flags]'</b>
+                                        <li><b>Script location: <i>'data/curl/author/createAuthor.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/author/'</i>): '$ ./createAuthor.sh [flags]'</b>
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
