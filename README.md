@@ -892,7 +892,7 @@
                                                 <li><b>-y</b> Host server name;</li>
                                                 <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
-                                                <li><b>-n</b> <b>Tag's<b> title;</li>
+                                                <li><b>-n</b> <b>Tag's</b> title;</li>
                                             </ul>
                                         </li>
                                     </ul>
