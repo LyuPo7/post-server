@@ -629,7 +629,7 @@
                             <ul>
                                 <li>Use this method to create new <b>Category</b>. <b>Category's</b> title and <b>SubCategory's</b> title can't be the same;</li>
                                 <li>This method is available only for admins;</li>
-                                <li><b>Request: http://HOST:PORT/getCategories?PARAMETERS</b></li>
+                                <li><b>Request: http://HOST:PORT/createCategory?PARAMETERS</b></li>
                                      <table>
                                             <tr>
                                                 <th><b>Parameter</b></th>
@@ -647,7 +647,7 @@
                                                 <td>title</td>
                                                 <td>String</td>
                                                 <td>Yes</td>
-                                                <td>Offset from first <b>Category's</b> record (ordered by <b>Category's</b> id). Must be >=0</td>
+                                                <td><b>Category's</b> title</td>
                                             </tr>
                                             <tr>
                                                 <td>subcategory</td>
@@ -686,18 +686,56 @@
                         </li>
                         <li><b>editCategory</b>:
                             <ul>
-                                <li>Use this method to edit <b>Category's</b> title, <b>Category's</b> subCategory or both. Category's title and SubCategory's title can't be the same. The subCategory title using for request already must exists. You can't use for <b>Category</b> title title what already exists;</li>
+                                <li>Use this method to edit <b>Category's</b> title, <b>Category's</b> subCategory or both. <b>Category's</b> title and <b>SubCategory's</b> title can't be the same. The <b>SubCategory's</b> title using for request already must exists. You can't use for <b>Category</b> title, title what already exists;</li>
                                 <li>This method is available only for admins;</li>
-                                <li><b>Script: 'data/curl/category/editCategory.sh'</b></li>
-                                <li><b>Usage: '$ ./editCategory.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
-                                        <li><b>-i</b> Category's title;</li>
-                                        <li><b>[-s]</b> SubCategory's title (if You want to change/set SubCategory of Category);</li>
-                                        <li><b>[-s]</b> Category's title (if You want to change Category's title);</li>
+                                <li><b>Request: http://HOST:PORT/editCategory?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</td>
+                                            </tr>
+                                            <tr>
+                                                <td>id</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td><b>Category's</b> id</td>
+                                            </tr>
+                                            <tr>
+                                                <td>title</td>
+                                                <td>String</td>
+                                                <td>Optional</td>
+                                                <td>New <b>Category's</b> title (if You want to change <b>Category's</b> title)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>subcategory</td>
+                                                <td>String</td>
+                                                <td>Optional</td>
+                                                <td><b>SubCategory's</b> title (if You want to change/set SubCategory of <b>Category</b>)</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/category/editCategory.sh'</i></b></li>
+                                        <li><b>Usage: '$ ./editCategory.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
+                                                <li><b>-i</b> <b>Category's</b> id;</li>
+                                                <li><b>[-s]</b> <b>SubCategory's</b> title (if You want to change/set SubCategory of <b>Category</b>);</li>
+                                                <li><b>[-s]</b> New <b>Category's</b> title (if You want to change <b>Category's</b> title);</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
