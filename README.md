@@ -66,8 +66,8 @@
 <ul>
         <li>All supported requests contain in 'data/curl/'</li>
             <ul>
-                <li>Every directory contains executables .sh scripts for supported requests</li>
-                <li>For use .sh scripts for supported requests</li>
+                <li>Every directory contains executables .sh scripts for supported requests;</li>
+                <li>For use .sh scripts for supported requests;</li>
             </ul>
         <li>Supported requests</li>
             <ul>
@@ -77,7 +77,7 @@
                             <ul>
                                 <li>Use this method to get new <b>Token</b> for <b>User</b> by login;</li>
                                 <li><b>Script: 'data/curl/account/login.sh'</b></li>
-                                <li><b>Usage: './login.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./login.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -101,10 +101,10 @@
                             <ul>
                                 <li>Use this method to get all <b>User</b> records;</li>
                                 <li>This method is available for all registered Users;</li>
-                                <li>In one request You may recieve maximum 50 records</li>
+                                <li>In one request You may recieve maximum 50 records;</li>
                                 <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
                                 <li><b>Script: 'data/curl/user/getUsers.sh'</b></li>
-                                <li><b>Usage: './getUsers.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./getUsers.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -125,7 +125,7 @@
                                 <li>Use this method to register new <b>User</b>;</li>
                                 <li>This method is available for all;</li>
                                 <li><b>Script: 'data/curl/user/createUser.sh'</b></li>
-                                <li><b>Usage: './createUser.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./createUser.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -148,7 +148,7 @@
                                 <li>Use this method to set <b>Photo</b> for <b>User</b>;</li>
                                 <li>This method is available only for <b>User</b>-account owner;</li>
                                 <li><b>Script: 'data/curl/user/setUserPhoto.sh'</b></li>
-                                <li><b>Usage: './setUserPhoto.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./setUserPhoto.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -174,7 +174,7 @@
                                 <li>Use this method to remove <b>User</b>;</li>
                                 <li>This method is available only for admins;</li>
                                 <li><b>Script: 'data/curl/user/removeUser.sh'</b></li>
-                                <li><b>Usage: './removeUser.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./removeUser.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -206,7 +206,7 @@
                                 <li>In one request You may recieve maximum 50 records;</li>
                                 <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
                                 <li><b>Script: 'data/curl/author/getAuthors.sh'</b></li>
-                                <li><b>Usage: './getAuthors.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./getAuthors.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -232,7 +232,7 @@
                                 <li>Use this method to create new <b>Author</b> of already existed <b>User</b>;</li>
                                 <li>This method is available only for admins;</li>
                                 <li><b>Script: 'data/curl/author/createAuthor.sh'</b></li>
-                                <li><b>Usage: './createAuthor.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./createAuthor.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -259,7 +259,7 @@
                                 <li>Use this method to edit <b>Author's</b> description;</li>
                                 <li>This method is available only for admins;</li>
                                 <li><b>Script: 'data/curl/author/editAuthor.sh'</b></li>
-                                <li><b>Usage: './editAuthor.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./editAuthor.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -285,7 +285,7 @@
                                 <li>Use this method to remove <b>Author</b>. If <b>Author</b> has <b>Posts</b> it's imposible to remove his record. Firstly You'll need to remove all his <b>Posts</b>;</li>
                                 <li>This method is available only for admins;</li>
                                 <li><b>Script: 'data/curl/authors/removeAuthor.sh'</b></li>
-                                <li><b>Usage: './removeAuthor.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./removeAuthor.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -316,7 +316,7 @@
                                 <li>In one request You may recieve maximum 50 records;</li>
                                 <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
                                 <li><b>Script: 'data/curl/category/getCategories.sh'</b></li>
-                                <li><b>Usage: './getCategories.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./getCategories.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -342,7 +342,7 @@
                                 <li>Use this method to create new <b>Category</b>. Category's title and SubCategory's title can't be the same;</li>
                                 <li>This method is available only for admins;</li>
                                 <li><b>Script: 'data/curl/category/createCategory.sh'</b></li>
-                                <li><b>Usage: './createCategory.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./createCategory.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -369,7 +369,7 @@
                                 <li>Use this method to edit <b>Category's</b> title, <b>Category's</b> subCategory or both. Category's title and SubCategory's title can't be the same. The subCategory title using for request already must exists. You can't use for <b>Category</b> title title what already exists;</li>
                                 <li>This method is available only for admins;</li>
                                 <li><b>Script: 'data/curl/category/editCategory.sh'</b></li>
-                                <li><b>Usage: './editCategory.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./editCategory.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
@@ -396,7 +396,7 @@
                                 <li>Use this method to remove <b>Category</b>. If <b>Category</b> is used for <b>Posts</b> it's imposible to remove his record. Firstly You'll need to remove all <b>Posts</b> which included thic <b>Category</b>;</li>
                                 <li>This method is available only for admins;</li>
                                 <li><b>Script: 'data/curl/category/removeCategory.sh'</b></li>
-                                <li><b>Usage: './removeCategory.sh [flags]'</b></li>
+                                <li><b>Usage: '$ ./removeCategory.sh [flags]'</b></li>
                                     <ul> 
                                         <li><b>-h</b> Print help message and exit;</li>
                                         <li><b>-y</b> Host server name;</li>
