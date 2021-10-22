@@ -462,7 +462,7 @@
                             <ul>
                                 <li>Use this method to edit <b>Author's</b> description;</li>
                                 <li>This method is available only for admins;</li>
-                                <li><b>Request: http://HOST:PORT/createAuthor?PARAMETERS</b></li>
+                                <li><b>Request: http://HOST:PORT/editAuthor?PARAMETERS</b></li>
                                      <table>
                                             <tr>
                                                 <th><b>Parameter</b></th>
@@ -480,7 +480,7 @@
                                                 <td>id</td>
                                                 <td>Integer</td>
                                                 <td>Yes</td>
-                                                <td><b>User's</b> id (corresponding proper <b>Author</b>)</td>
+                                                <td><b>User's</b> id (corresponding to proper <b>Author</b>)</td>
                                             </tr>
                                             <tr>
                                                 <td>description</td>
@@ -520,14 +520,40 @@
                             <ul>
                                 <li>Use this method to remove <b>Author</b>. If <b>Author</b> has <b>Posts</b> it's imposible to remove his record. Firstly You'll need to remove all his <b>Posts</b>;</li>
                                 <li>This method is available only for admins;</li>
-                                <li><b>Script: 'data/curl/authors/removeAuthor.sh'</b></li>
-                                <li><b>Usage: '$ ./removeAuthor.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
-                                        <li><b>-i</b> User's id (corresponding to proper Author);</li>
+                                <li><b>Request: http://HOST:PORT/removeAuthor?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</td>
+                                            </tr>
+                                            <tr>
+                                                <td>id</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> id (corresponding to proper <b>Author</b>)</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/authors/removeAuthor.sh'</i></b></li>
+                                        <li><b>Usage: '$ ./removeAuthor.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
+                                                <li><b>-i</b> <b>User's</b> id (corresponding to proper Author);</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
