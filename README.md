@@ -307,6 +307,117 @@
                         </li>
                    </ul>
                 </li>
+                <li><b>Category</b>:
+                    <ul>
+                        <li><b>getCategories</b>:
+                            <ul>
+                                <li>Use this method to get all <b>Category</b> records;</li>
+                                <li>This method is available for all registered Users</li>
+                                <li>In one request You may recieve maximum 50 records;</li>
+                                <li>For recieve more than 50 records You'll need to use several requests with different offset;</li>
+                                <li><b>Script: 'data/curl/category/getCategories.sh'</b></li>
+                                <li><b>Usage: './getCategories.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token;</li>
+                                        <li><b>-o</b> Offset from the first record;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>CategoryResponse</b> object;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>createCategory</b>:
+                            <ul>
+                                <li>Use this method to create new <b>Category</b>. Category's title and SubCategory's title can't be the same;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/category/createCategory.sh'</b></li>
+                                <li><b>Usage: './createCategory.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-p</b> Port server number;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> Category's title;</li>
+                                        <li><b>[-s]</b> SubCategory's title (if Category expects to have one);</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                            <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>editCategory</b>:
+                            <ul>
+                                <li>Use this method to edit <b>Category's</b> title, <b>Category's</b> subCategory or both. Category's title and SubCategory's title can't be the same. The subCategory title using for request already must exists. You can't use for <b>Category</b> title title what already exists;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/category/editCategory.sh'</b></li>
+                                <li><b>Usage: './editCategory.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> Category's title;</li>
+                                        <li><b>[-s]</b> SubCategory's title (if You want to change/set SubCategory of Category);</li>
+                                        <li><b>[-s]</b> Category's title (if You want to change Category's title);</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><b>removeCategory</b>:
+                            <ul>
+                                <li>Use this method to remove <b>Category</b>. If <b>Category</b> is used for <b>Posts</b> it's imposible to remove his record. Firstly You'll need to remove all <b>Posts</b> which included thic <b>Category</b>;</li>
+                                <li>This method is available only for admins;</li>
+                                <li><b>Script: 'data/curl/category/removeCategory.sh'</b></li>
+                                <li><b>Usage: './removeCategory.sh [flags]'</b></li>
+                                    <ul> 
+                                        <li><b>-h</b> Print help message and exit;</li>
+                                        <li><b>-y</b> Host server name;</li>
+                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
+                                        <li><b>-i</b> Category's id;</li>
+                                    </ul>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
+                                        <li><b>Fail</b>:
+                                             <ul> 
+                                                 <li><b>If User's token includes required permissions:</b> JSON <b>TextResponse</b> object with Text success;</li>
+                                                 <li><b>If User's token doesn't includes required permissions:</b> JSON <b>TextResponse</b> object with Text error;</li>
+                                             </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                   </ul>
+                </li>
             </ul>
         </li>
     </ul>
