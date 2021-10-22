@@ -265,7 +265,7 @@
                                     </table> 
                                 <li><b>Curl:</b>
                                     <ul>
-                                        <li><b>Script location: <i>'data/curl/user/setUserPhoto.sh'</b></li>
+                                        <li><b>Script location: <i>'data/curl/user/setUserPhoto.sh'</i></b></li>
                                         <li><b>Usage (from <i>'data/curl/user/'</i>): '$ ./setUserPhoto.sh [flags]'</b>
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
