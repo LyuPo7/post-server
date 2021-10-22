@@ -306,7 +306,7 @@
                                                 <td>token</td>
                                                 <td>String</td>
                                                 <td>Yes</td>
-                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request must has Admin Permissions</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</td>
                                             </tr>
                                             <tr>
                                                 <td>id</td>
