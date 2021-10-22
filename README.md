@@ -152,7 +152,7 @@
                                                 <td>offset</td>
                                                 <td>Integer</td>
                                                 <td>Yes</td>
-                                                <td><b>Offset from first <b>User's</b> record (ordered by <b>User's</b> id). Must be >=0</td>
+                                                <td>Offset from first <b>User's</b> record (ordered by <b>User's</b> id). Must be >=0</td>
                                             </tr>
                                     </table> 
                                 <li><b>Curl:</b>
