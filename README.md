@@ -65,25 +65,57 @@
 <ul>
         <li>All supported requests contain in <i>'data/curl/'</i></li>
             <ul>
-                <li>Every directory contains executables .sh scripts for supported requests;</li>
-                <li>For use .sh scripts for supported requests;</li>
+                <li>Every directory contains executables <i>.sh</i> scripts for supported requests;</li>
+                <li>For unicode symbols in requests using <i>.sh</i> scripts use folowing:
+                    <ul>
+                        <li>Whitespace: <b>%20</b></li>
+                        <li>Left square parenthesis "[": <b>%5B</b></li>
+                        <li>Right square parenthesis "[": <b>%5D</b></li>
+                    </ul>
+                </li>
             </ul>
-        <li>Supported requests</li>
+        <li>Supported requests:</li>
             <ul>
                 <li><b>Account</b>:
                     <ul>
                         <li><b>login</b>:
                             <ul>
                                 <li>Use this method to get new <b>Token</b> for <b>User</b> by login;</li>
-                                <li><b>Script: 'data/curl/account/login.sh'</b></li>
-                                <li><b>Usage: '$ ./login.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-p</b> Port server number;</li>
-                                        <li><b>-k</b> User password;</li>
-                                        <li><b>-k</b> User login;</li>
+                                <li><b>Request: <i>http://$host:$port/publishDraft?PARAMETERS</i></b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>password</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> password</td>
+                                            </tr>
+                                            <tr>
+                                                <td>login</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> login</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script: <i>'data/curl/account/login.sh'</i></b></li>
+                                        <li><b>Usage: <i>'$ ./login.sh [flags]'</i></b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-k</b> User password;</li>
+                                                <li><b>-k</b> User login;</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response</b>:
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object;</li>
