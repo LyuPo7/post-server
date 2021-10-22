@@ -914,15 +914,47 @@
                             <ul>
                                 <li>Use this method to edit <b>Tag's</b> title;</li>
                                 <li>This method is available only for admins;</li>
-                                <li><b>Script: 'data/curl/category/editTag.sh'</b></li>
-                                <li><b>Usage: '$ ./editTag.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> User's token (must has Admin Permissions);</li>
-                                        <li><b>-n</b> New Tag's title;</li>
-                                        <li><b>-o</b> Old Tag's title;</li>
+                                <li><b>Request: http://HOST:PORT/editTag?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</td>
+                                            </tr>
+                                            <tr>
+                                                <td>new_title</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td>New <b>Tag's</b> title</td>
+                                            </tr>
+                                            <tr>
+                                                <td>old_title</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td>Old <b>Tag's</b> title</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/tag/editTag.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/tag/'</i>): '$ ./editTag.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-t</b> User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
+                                                <li><b>-n</b> New <b>Tag's</b> title;</li>
+                                                <li><b>-o</b> Old <b>Tag's</b> title;</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with Text success;</li>
