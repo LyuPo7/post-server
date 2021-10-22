@@ -1141,7 +1141,7 @@
                                             </tr>
                                             <tr>
                                                 <td>author</td>
-                                                <td>String</td>
+                                                <td>String with wildcards</td>
                                                 <td>Optional</td>
                                                 <td>Search <b>Posts</b> by <b>Author</b> name (must contain 'first_name' and 'last_name' separated by whitespace.")</td>
                                             </tr>
@@ -1208,18 +1208,62 @@
                             <ul>
                                 <li>Use this method to create new <b>Post</b>;</li>
                                 <li>This method is available only for <b>Authors</b>;</li>
-                                <li><b>Script: 'data/curl/post/createPost.sh'</b></li>
-                                <li><b>Usage: '$ ./createTag.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-p</b> Port server number;</li>
-                                        <li><b>-t</b> <b>User's</b> token (must has Author Write Permissions);</li>
-                                        <li><b>-n</b> <b>Post's</b> title;</li>
-                                        <li><b>-b</b> <b>Post's</b> text;</li>
-                                        <li><b>-c</b> Category's id;</li>
-                                        <li><b>-m</b> Tag's ids;</li>
+                                <li><b>Request: http://HOST:PORT/createTag?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</td>
+                                            </tr>
+                                            <tr>
+                                                <td>title</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>Post's</b> title</td>
+                                            </tr>
+                                            <tr>
+                                                <td>text</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>Post's</b> text</td>
+                                            </tr>
+                                            <tr>
+                                                <td>category_id</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td><b>Category's</b> id</td>
+                                            </tr>
+                                            <tr>
+                                                <td>tag_ids</td>
+                                                <td>[Integer]</td>
+                                                <td>Yes</td>
+                                                <td><b>Array of Tag's</b> id</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/post/createPost.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/post/'</i>): '$ ./createTag.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
+                                                <li><b>-n</b> <b>Post's</b> title;</li>
+                                                <li><b>-b</b> <b>Post's</b> text;</li>
+                                                <li><b>-c</b> <b>Category's</b> id;</li>
+                                                <li><b>-m</b> <b>Tag's</b> ids;</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
