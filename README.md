@@ -1725,6 +1725,61 @@
                         </li>
                    </ul>
                 </li>
+                <li><b>Comment</b>:
+                    <ul>
+                        <li><b>createComment</b>:
+                            <ul>
+                                <li>Use this method to create <b>Comment</b> record to specified <b>Post</b>;</li>
+                                <li>This method is available for all registered <b>Users</b>;</li>
+                                <li><b>Request: http://HOST:PORT/createComment?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request</td>
+                                            </tr>
+                                            <tr>
+                                                <td>post_id</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td><b>Post's</b> id corresponding to <b>Comment</b></td>
+                                            </tr>
+                                            <tr>
+                                                <td>text</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>Comment's</b> text</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/comment/createComment.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/comment/'</i>): '$ ./createComment.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
+                                                <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request;</li>
+                                                <li><b>-c</b> <b>Comment's<b> text;</li>
+                                            </ul>
+                                        </li>
+                                     </ul>
+                                </li>
+                                <li><b>Response:</b>
+                                    <ul> 
+                                        <li><b>Success</b>: JSON <b>TextResponse</b> object;</li>
+                                        <li><b>Fail</b>: JSON <b>TextResponse</b> object;</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
             </ul>
         </li>
     </ul>
@@ -2149,3 +2204,4 @@
             <li><b>A bracket expression [...]</b> specifies a character class, just as in POSIX regular expressions;</li>
         </ul>
     </li>
+</ul>
