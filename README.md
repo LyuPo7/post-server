@@ -1728,3 +1728,27 @@
             </ul>
         </li>
     </ul>
+<h3>Responses</h3>
+<ul> 
+    <li><b>PostResponse</b>
+        <p>This object represents a Response containing <b>Post</b> records.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>offset</td>
+                    <td>Integer</td>
+                    <td>Offset from first <b>Post's</b> record corresponding to request options (ordered by <b>Post's</b> id)</td>
+                </tr>
+                <tr>
+                    <td>posts</td>
+                    <td>Post</td>
+                    <td><b>Post's</b> record corresponding to request options (Limit 50 records in one request)</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+</ul>
