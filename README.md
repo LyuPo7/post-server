@@ -1728,6 +1728,220 @@
             </ul>
         </li>
     </ul>
+<h3>Objects</h3>
+<ul> 
+    <li><b>Post</b>
+        <p>This object represents a <b>Post</b> record.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>Integer</td>
+                    <td>Unique identifier for this Post</td>
+                </tr>
+                <tr>
+                    <td>author</td>
+                    <td>Author</td>
+                    <td>Author of <b>Post</b> record</td>
+                </tr>
+                <tr>
+                    <td>title</td>
+                    <td>String</td>
+                    <td>Title of <b>Post</b> record</td>
+                </tr>
+                <tr>
+                    <td>text</td>
+                    <td>String</td>
+                    <td>Text of <b>Post</b> record</td>
+                </tr>
+                <tr>
+                    <td>created_at</td>
+                    <td>String</td>
+                    <td>Date of creation of this <b>Post</b> record. Formated like "DD.MM.YY"</td>
+                </tr>
+                <tr>
+                    <td>category</td>
+                    <td>Category</td>
+                    <td><b>Category</b> of <b>Post</b> record</td>
+                </tr>
+                <tr>
+                    <td>tags</td>
+                    <td>[Tag]</td>
+                    <td><i>Optional.</i> List of <b>Tags</b> of <b>Post</b> record</td>
+                </tr>
+                <tr>
+                    <td>main_photo</td>
+                    <td>Photo</td>
+                    <td><i>Optional.</i> Main <b>Photo</b> of <b>Post</b> record</td>
+                </tr>
+                <tr>
+                    <td>add_photo</td>
+                    <td>[Photo]</td>
+                    <td><i>Optional.</i> Additional <b>Photos</b> of <b>Post</b> record</td>
+                </tr>
+                <tr>
+                    <td>comments</td>
+                    <td>[Comment]</td>
+                    <td><i>Optional.</i><b>Comments</b> of <b>Post</b> record</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>User</b>
+        <p>This object represents a <b>User</b> record.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>Integer</td>
+                    <td>Unique identifier for this <b>User</b></td>
+                </tr>
+                <tr>
+                    <td>is_admin</td>
+                    <td>Boolean</td>
+                    <td>True, if this <b>User</b> is a admin</td>
+                </tr>
+                <tr>
+                    <td>first_name</td>
+                    <td>String</td>
+                    <td><b>User's</b> first name</td>
+                </tr>
+                <tr>
+                    <td>last_name</td>
+                    <td>String</td>
+                    <td><b>User's</b> last name</td>
+                </tr>
+                <tr>
+                    <td>photo</td>
+                    <td>Photo</td>
+                    <td><b>User's</b> <b>Photo</b></td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>Author</b>
+        <p>This object represents a <b>Author</b> record.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>user</td>
+                    <td>User</td>
+                    <td><b>User</b> corresponding to this <b>Author</b></td>
+                </tr>
+                <tr>
+                    <td>description</td>
+                    <td>String</td>
+                    <td><b>Author's</b> description</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>Category</b>
+        <p>This object represents a <b>Category</b> record.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>Integer</td>
+                    <td>Unique identifier for this <b>Category</b></td>
+                </tr>
+                <tr>
+                    <td>title</td>
+                    <td>String</td>
+                    <td><b>Category's</b> title</td>
+                </tr>
+                <tr>
+                    <td>subcategory</td>
+                    <td>Category</td>
+                    <td><i>Optional.</i><b>SubCategory</b> of this <b>Category</b></td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>Tag</b>
+        <p>This object represents a <b>Tag</b> record.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>Integer</td>
+                    <td>Unique identifier for this <b>Tag</b></td>
+                </tr>
+                <tr>
+                    <td>title</td>
+                    <td>String</td>
+                    <td><b>Tag's</b> title</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>Draft</b>
+        <p>This object represents a <b>Draft</b> record.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>Integer</td>
+                    <td>Unique identifier for this <b>Draft</b></td>
+                </tr>
+                <tr>
+                    <td>text</td>
+                    <td>String</td>
+                    <td><b>Draft's</b> text</td>
+                </tr>
+                <tr>
+                    <td>post_id</td>
+                    <td>Integer</td>
+                    <td><b>Post's</b> id corresponding to <b>Draft</b></td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>Comment</b>
+        <p>This object represents a <b>Comment</b> record.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>Integer</td>
+                    <td>Unique identifier for this <b>Comment</b></td>
+                </tr>
+                <tr>
+                    <td>text</td>
+                    <td>String</td>
+                    <td><b>Comment's</b> text</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
 <h3>Responses</h3>
 <ul> 
     <li><b>PostResponse</b>
