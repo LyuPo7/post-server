@@ -1567,15 +1567,47 @@
                             <ul>
                                 <li>Use this method to edit <b>Draft's</b> text;</li>
                                 <li>This method is available only for <b>Author-Post</b> owner;</li>
-                                <li><b>Script: 'data/curl/drafts/editDraft.sh'</b></li>
-                                <li><b>Usage: '$ ./editDraft.sh [flags]'</b></li>
-                                    <ul> 
-                                        <li><b>-h</b> Print help message and exit;</li>
-                                        <li><b>-y</b> Host server name;</li>
-                                        <li><b>-t</b> <b>User's</b> token (must has Author Read Permissions);</li>
-                                        <li><b>-b</b> New Draft's text;</li>
-                                        <li><b>-i</b> <b>Post's</b> id;</li>
+                                <li><b>Request: http://HOST:PORT/editDraft?PARAMETERS</b></li>
+                                     <table>
+                                            <tr>
+                                                <th><b>Parameter</b></th>
+                                                <th><b>Type</b></th>
+                                                <th><b>Required</b></th>
+                                                <th><b>Description</b></th>
+                                            </tr>
+                                            <tr>
+                                                <td>token</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td><b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</td>
+                                            </tr>
+                                            <tr>
+                                                <td>post_id</td>
+                                                <td>Integer</td>
+                                                <td>Yes</td>
+                                                <td><b>Post's</b> id corresponding to <b>Draft</b></td>
+                                            </tr>
+                                            <tr>
+                                                <td>text</td>
+                                                <td>String</td>
+                                                <td>Yes</td>
+                                                <td>New <b>Draft's</b> text</td>
+                                            </tr>
+                                    </table> 
+                                <li><b>Curl:</b>
+                                    <ul>
+                                        <li><b>Script location: <i>'data/curl/drafts/editDraft.sh'</i></b></li>
+                                        <li><b>Usage (from <i>'data/curl/drafts/'</i>): '$ ./editDraft.sh [flags]'</b>
+                                            <ul> 
+                                                <li><b>-h</b> Print help message and exit;</li>
+                                                <li><b>-y</b> Host server name;</li>
+                                                <li><b>-t</b> <b>User's</b> token (must has Author Read Permissions);</li>
+                                                <li><b>-b</b> New Draft's text;</li>
+                                                <li><b>-i</b> <b>Post's</b> id;</li>
+                                            </ul>
+                                        </li>
                                     </ul>
+                                </li>
                                 <li><b>Response:</b>
                                     <ul> 
                                         <li><b>Success</b>: JSON <b>TextResponse</b> object with text success;</li>
