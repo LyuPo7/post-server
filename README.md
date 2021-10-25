@@ -1976,6 +1976,27 @@
             </table> 
         </p>
     </li>
+    <li><b>Photo</b>
+        <p>This object represents a <b>Photo</b> record.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>id</td>
+                    <td>Integer</td>
+                    <td>Unique identifier for this <b>Photo</b></td>
+                </tr>
+                <tr>
+                    <td>link</td>
+                    <td>String</td>
+                    <td>Link to <b>Photo</b></td>
+                </tr>
+            </table> 
+        </p>
+    </li>
     <li><b>Comment</b>
         <p>This object represents a <b>Comment</b> record.
            <table>

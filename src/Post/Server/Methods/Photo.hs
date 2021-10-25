@@ -24,7 +24,7 @@ upload handle pathToFile = do
       portServer = ServerConfig.port $ cServer handle
       server = "http://" <> hostServer <> ":" <> convert portServer
       link = server <> pathToFile
-      dir = "src/files/photos/"
+      dir = "data/files/photos/"
       fileName = takeFileName $ T.unpack pathToFile
   (tempFileName, _) <- openTempFile handle dir fileName
   manager <- newManager handle tlsManagerSettings
