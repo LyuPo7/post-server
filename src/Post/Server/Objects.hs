@@ -248,7 +248,7 @@ instance ToJSON AuthorResponse where
     fieldLabelModifier = drop 11 }
 
 -- | TextResponse Response
-data TextResponse = TextResponse {
+newtype TextResponse = TextResponse {
   respText_message :: Text -- Text Message.
   } deriving (Show, Generic, Eq)
 
