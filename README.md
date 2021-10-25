@@ -9,9 +9,9 @@
         <li>The response contains a <b>JSON</b> object;</li>
         <li>Supports 4 levels of logging:
             <ul>
-                <li><b>error</b>-level: show only error messages;</li>
+                <li><b>error</b>-level(default): show only error messages;</li>
                 <li><b>warning</b>-level: show only error and warning messages;</li>
-                <li><b>info</b>-level(default): show info, error and warning messages;</li>
+                <li><b>info</b>-level: show info, error and warning messages;</li>
                 <li><b>debug</b>-level: show even more details than info-level;</li>
             </ul>
         </li>
