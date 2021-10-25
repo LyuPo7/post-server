@@ -2152,31 +2152,38 @@
             <li>Permissions to get/remove <b>User's</b> records;</li>
             <li>Permissions to get/create/edit/remove <b>Category's</b> records;</li>
             <li>Permissions to get/create/edit/remove <b>Tag's</b> records;</li>
+            <li>Permissions to create <b>Comment's</b> records;</li>
         </ul>
     </li>
     <li><b>User Permission</b>
         <p>This type of permissions have all registered <b>Users</b></p>
         <ul>
             <li>Permissions to get <b>Post's</b> records;</li>
+            <li>Permissions to get <b>User's</b> records;</li>
             <li>Permissions to get <b>Category's</b> records;</li>
             <li>Permissions to get <b>Tag's</b> records;</li>
+            <li>Permissions to create <b>Comment's</b> records;</li>
         </ul>
     </li>
     <li><b>Author Write Permission</b>
         <p>This type of permissions have all registered <b>Users</b></p>
         <ul>
             <li>Permissions to get/create <b>Post's</b> records;</li>
+            <li>Permissions to get <b>User's</b> records;</li>
             <li>Permissions to get <b>Category's</b> records;</li>
             <li>Permissions to get <b>Tag's</b> records;</li>
+            <li>Permissions to create <b>Comment's</b> records;</li>
         </ul>
     </li>
     <li><b>Author Write Permission</b>
         <p>This type of permissions have all registered <b>Users</b></p>
         <ul>
             <li>Permissions to get/create <b>Post's</b> records;</li>
+            <li>Permissions to get <b>User's</b> records;</li>
             <li>Permissions to get/edit/publish/remove <b>Draft's</b> records of <b>Post's</b> belonging to this <b>Author</b>;</li>
             <li>Permissions to get <b>Category's</b> records;</li>
             <li>Permissions to get <b>Tag's</b> records;</li>
+            <li>Permissions to create <b>Comment's</b> records;</li>
         </ul>
     </li>
 </ul>
