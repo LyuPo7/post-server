@@ -1745,8 +1745,129 @@
                 </tr>
                 <tr>
                     <td>posts</td>
-                    <td>Post</td>
-                    <td><b>Post's</b> record corresponding to request options (Limit 50 records in one request)</td>
+                    <td>[Post]</td>
+                    <td>List of <b>Post's</b> records corresponding to request options (Limit 50 records in one request)</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>UserResponse</b>
+        <p>This object represents a Response containing <b>User</b> records.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>offset</td>
+                    <td>Integer</td>
+                    <td>Offset from first <b>User's</b> record (ordered by <b>User's</b> id)</td>
+                </tr>
+                <tr>
+                    <td>users</td>
+                    <td>[User]</td>
+                    <td>List of <b>User's</b> records corresponding to request options (Limit 50 records in one request)</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>AuthorResponse</b>
+        <p>This object represents a Response containing <b>Author</b> records.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>offset</td>
+                    <td>Integer</td>
+                    <td>Offset from first <b>Author's</b> record (ordered by <b>Author's</b> id)</td>
+                </tr>
+                <tr>
+                    <td>users</td>
+                    <td>[Author]</td>
+                    <td>List of <b>Author's</b> records corresponding to request options (Limit 50 records in one request)</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>CategoryResponse</b>
+        <p>This object represents a Response containing <b>Category</b> records.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>offset</td>
+                    <td>Integer</td>
+                    <td>Offset from first <b>Category's</b> record (ordered by <b>Category's</b> id)</td>
+                </tr>
+                <tr>
+                    <td>categories</td>
+                    <td>[Category]</td>
+                    <td>List of <b>Category's</b> records corresponding to request options (Limit 50 records in one request)</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>TagResponse</b>
+        <p>This object represents a Response containing <b>Tag</b> records.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>offset</td>
+                    <td>Integer</td>
+                    <td>Offset from first <b>Tag's</b> record (ordered by <b>Tag's</b> id)</td>
+                </tr>
+                <tr>
+                    <td>tags</td>
+                    <td>[Tag]</td>
+                    <td>List of <b>Tag's</b> records corresponding to request options (Limit 50 records in one request)</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>DraftResponse</b>
+        <p>This object represents a Response containing <b>Draft</b> records.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>offset</td>
+                    <td>Integer</td>
+                    <td>Offset from first <b>Draft's</b> record (ordered by <b>Draft's</b> id)</td>
+                </tr>
+                <tr>
+                    <td>drafts</td>
+                    <td>[Draft]</td>
+                    <td>List of <b>Draft's</b> records corresponding to request options (Limit 50 records in one request)</td>
+                </tr>
+            </table> 
+        </p>
+    </li>
+    <li><b>TextResponse</b>
+        <p>This object represents a message detailing success/error of processing request.
+           <table>
+                <tr>
+                    <th><b>Field</b></th>
+                    <th><b>Type</b></th>
+                    <th><b>Description</b></th>
+                </tr>
+                <tr>
+                    <td>message</td>
+                    <td>String</td>
+                    <td>Message detailing success/error of processing request</td>
                 </tr>
             </table> 
         </p>
