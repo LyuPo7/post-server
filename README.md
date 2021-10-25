@@ -2125,3 +2125,27 @@
         </ul>
     </li>
 </ul>
+<h3>Appendix A</h3>
+<ul>
+    <li>For unicode symbols in requests (using <i>.sh</i> scripts) use folowing:
+        <ul>
+            <li>Instead of whitespace: <b>%20</b></li>
+            <li>Instead of left square parenthesis "[": <b>%5B</b></li>
+            <li>Instead of right square parenthesis "[": <b>%5D</b></li>
+        </ul>
+    </li>
+    <li>Supporting wildcard symbols:
+        <ul>
+            <li><b>_</b> denotes any single character (is comparable to <b>.</b> in POSIX regular expressions);</li>
+            <li><b>%</b> denotes any string (is comparable to <b>.*</b> in POSIX regular expressions);</li>
+            <li><b>|</b> denotes alternation (either of two alternatives);</li>
+            <li><b>*</b> denotes repetition of the previous item zero or more times;</li>
+            <li><b>+</b> denotes repetition of the previous item one or more times;</li>
+            <li><b>?</b> denotes repetition of the previous item zero or one time;</li>
+            <li><b>{m}</b> denotes repetition of the previous item exactly m times;</li>
+            <li><b>{m,}</b> denotes repetition of the previous item m or more times;</li>
+            <li><b>{m,n}</b> denotes repetition of the previous item at least m and not more than n times;</li>
+            <li><b>Parentheses ()</b> can be used to group items into a single logical item;</li>
+            <li><b>A bracket expression [...]</b> specifies a character class, just as in POSIX regular expressions;</li>
+        </ul>
+    </li>
