@@ -1767,7 +1767,7 @@
                                                 <li><b>-y</b> Host server name;</li>
                                                 <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request;</li>
-                                                <li><b>-c</b> <b>Comment's<b> text;</li>
+                                                <li><b>-c</b> <b>Comment's</b> text;</li>
                                             </ul>
                                         </li>
                                      </ul>
