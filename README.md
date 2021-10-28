@@ -47,6 +47,10 @@
                     </ul>
              </ul>
        </li>
+       <li><h4>Since bot use PostgreSQL You'll need check if you have installed PostgreSQL in your system (if not - use):</h4>
+           <ul><b>$ sudo apt-get update -y && sudo apt-get install libpq-dev postgresql -y</b>
+           </ul>
+       </li>
        <li><h4>Build project using <b>stack</b>:</h4>
            <ul><b>$ stack build</b>
            </ul>
