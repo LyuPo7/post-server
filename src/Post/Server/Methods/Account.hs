@@ -1,10 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.Methods.Account where
 
 import Network.HTTP.Types (Query)
 import Network.Wai (Response)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
@@ -19,9 +17,9 @@ login handle query = do
       dbqh = hDBQ handle
   Logger.logDebug logh "Login intent"
   tokenE <- runEitherT $ do
-    reqParams <- EitherT $ QP.extractRequired logh query params
+    reqParams <- newEitherT $ QP.extractRequired logh query params
     let [userLogin, password] = reqParams
-    token <- EitherT $ DBAC.getToken dbqh userLogin password
+    token <- newEitherT $ DBAC.getToken dbqh userLogin password
     return (userLogin, token)
   case tokenE of
     Left msg -> return $ respError msg

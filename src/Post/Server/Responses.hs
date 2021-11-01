@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.Responses where
 
 import Control.Exception (SomeException)

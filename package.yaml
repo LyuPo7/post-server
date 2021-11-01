@@ -46,6 +46,8 @@ dependencies:
 - convertible
 - Cabal
 
+default-extensions: OverloadedStrings
+
 library:
   source-dirs: src
   ghc-options: 

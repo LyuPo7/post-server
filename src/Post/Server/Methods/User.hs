@@ -1,10 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.Methods.User where
 
 import Network.HTTP.Types (Query)
 import Network.Wai (Response)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
 import Control.Monad (guard)
 
@@ -14,7 +12,8 @@ import qualified Post.DB.User as DBU
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as QP
-import Post.Server.Objects (Permission(..), UserResponse(..), TextResponse(..))
+import Post.Server.Objects (Permission(..), UserResponse(..),
+                            TextResponse(..))
 import Post.Server.Responses (respOk, respError, resp404)
 
 -- | Create getUsers Response
@@ -24,7 +23,7 @@ getUsersResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get User records"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -32,10 +31,10 @@ getUsersResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       usersRespE <- runEitherT $ do
-        reqParams <- EitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ QP.extractRequired logh query params
         let [offsetText] = reqParams
-        offset <- EitherT $ Util.readEitherMa offsetText "offset"
-        users <- EitherT $ DBU.getUserRecords dbqh offset
+        offset <- newEitherT $ Util.readEitherMa offsetText "offset"
+        users <- newEitherT $ DBU.getUserRecords dbqh offset
         return $ UserResponse users offset
       case usersRespE of
         Left msg -> return $ respError $ TextResponse msg
@@ -53,9 +52,9 @@ createUserResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create User record"
   loginE <- runEitherT $ do
-    reqParams <- EitherT $ QP.extractRequired logh query params
+    reqParams <- newEitherT $ QP.extractRequired logh query params
     let [firstName, lastName, login, password] = reqParams
-    _ <- EitherT $ DBU.createUser dbqh firstName lastName login password
+    _ <- newEitherT $ DBU.createUser dbqh firstName lastName login password
     return login
   case loginE of
     Right login -> do
@@ -73,7 +72,7 @@ removeUserResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove User record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -81,10 +80,10 @@ removeUserResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       userIdE <- runEitherT $ do
-        reqParams <- EitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ QP.extractRequired logh query params
         let [idUser] = reqParams
-        userId <- EitherT $ Util.readEitherMa idUser "user_id"
-        _ <- EitherT $ DBU.removeUser dbqh userId
+        userId <- newEitherT $ Util.readEitherMa idUser "user_id"
+        _ <- newEitherT $ DBU.removeUser dbqh userId
         return userId
       case userIdE of
         Right userId -> do
@@ -104,7 +103,7 @@ setUserPhotoResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: add Photo to User record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -113,10 +112,10 @@ setUserPhotoResp handle query = do
     Left _ -> return resp404
     Right token -> do
       photoIdE <- runEitherT $ do
-        reqParams <- EitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ QP.extractRequired logh query params
         let [path] = reqParams
-        userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
-        EitherT $ DBU.setUserPhoto dbqh userId path
+        userId <- newEitherT $ DBAC.getUserIdRecordByToken dbqh token
+        newEitherT $ DBU.setUserPhoto dbqh userId path
       case photoIdE of
         Right _ -> do
           let msg = "User Photo was loaded"

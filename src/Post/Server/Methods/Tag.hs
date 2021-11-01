@@ -1,10 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.Methods.Tag where
 
 import Network.HTTP.Types (Query)
 import Network.Wai ( Response)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
 import Control.Monad (guard)
 
@@ -14,7 +12,8 @@ import qualified Post.DB.Tag as DBT
 import qualified Post.DB.Account as DBAC
 import qualified Post.Server.QueryParameters as QP
 import qualified Post.Server.Util as Util
-import Post.Server.Objects (Permission(..), TagResponse(..), TextResponse(..))
+import Post.Server.Objects (Permission(..), TagResponse(..),
+                            TextResponse(..))
 import Post.Server.Responses (respOk, respError, resp404)
 
 -- | Create getTags Response
@@ -24,7 +23,7 @@ getTagsResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Tag records"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -32,10 +31,10 @@ getTagsResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       tagsRespE <- runEitherT $ do
-        reqParams <- EitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ QP.extractRequired logh query params
         let [offsetText] = reqParams
-        offset <- EitherT $ Util.readEitherMa offsetText "offset"
-        tags <- EitherT $ DBT.getAllTagRecords dbqh offset
+        offset <- newEitherT $ Util.readEitherMa offsetText "offset"
+        tags <- newEitherT $ DBT.getAllTagRecords dbqh offset
         return $ TagResponse tags offset
       case tagsRespE of
         Left msg -> return $ respError $ TextResponse msg
@@ -53,7 +52,7 @@ createTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Tag record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -61,9 +60,9 @@ createTagResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       tagIdE <- runEitherT $ do
-        reqParams <- EitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ QP.extractRequired logh query params
         let [title] = reqParams
-        EitherT $ DBT.createTag dbqh title
+        newEitherT $ DBT.createTag dbqh title
       case tagIdE of
         Right _ -> do
           let msg = "Tag created"
@@ -81,7 +80,7 @@ removeTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Tag record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -89,9 +88,9 @@ removeTagResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       tagIdE <- runEitherT $ do
-        reqParams <- EitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ QP.extractRequired logh query params
         let [tagTitle] = reqParams
-        EitherT $ DBT.removeTag dbqh tagTitle
+        newEitherT $ DBT.removeTag dbqh tagTitle
       case tagIdE of
         Right tagId -> do
           _ <- DBT.removeTagPostsDeps dbqh tagId
@@ -110,7 +109,7 @@ editTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Tag record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
@@ -118,9 +117,9 @@ editTagResp handle query = do
     Left _ -> return resp404
     Right _ -> do
       tagE <- runEitherT $ do
-        reqParams <- EitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ QP.extractRequired logh query params
         let [oldTitle, newTitle] = reqParams
-        EitherT $ DBT.editTag dbqh oldTitle newTitle
+        newEitherT $ DBT.editTag dbqh oldTitle newTitle
       case tagE of
         Right _ -> do
           let msg = "Tag edited"

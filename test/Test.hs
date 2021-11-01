@@ -1,6 +1,5 @@
-import Test.Tasty
-import Test.Tasty.Hspec
---import Test.Tasty.Hedgehog
+import Test.Tasty (testGroup, defaultMain)
+import Test.Tasty.Hspec (testSpecs)
 
 import qualified TestPost.DB.DBQSpec as DBQSpec
 import qualified TestPost.DB.Tag as DBT
@@ -17,7 +16,6 @@ import qualified TestPost.Server.QueryParameters as QP
 import qualified TestPost.Config as Config
 
 main :: IO ()
---main = defaultMain $ testGroup "(no tests)" []
 main = do
   specs <- concat <$> mapM testSpecs
              [ 
@@ -103,6 +101,4 @@ main = do
              ]
   defaultMain (testGroup "All Tests" [
                   testGroup "Specs" specs
-                --  testGroup "Properties" props
-                --, testGroup "Golden Tests" goldens
                 ])

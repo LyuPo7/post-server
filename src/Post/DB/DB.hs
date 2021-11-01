@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-
 module Post.DB.DB where
 
 import Control.Monad (when)
@@ -14,7 +12,9 @@ import qualified Network.HTTP.Client as HC
 import Post.DB.DBSpec (Handle(..), Config(..))
 import qualified Post.Logger as Logger
 import qualified Post.Server.ServerConfig as ServerConfig
-import Post.DB.Data
+import Post.DB.Data (Table(..), Column(..), TableName,
+                     ColumnName, ConstraintName, PropType)
+import qualified Post.DB.Data as DB
 
 withHandleIO :: Logger.Handle IO ->
                 Config -> ServerConfig.Config -> (Handle IO -> IO a) -> IO a
@@ -70,24 +70,24 @@ Create tables and ask the database engine to verify some info:
 -}
 prepDB :: Handle IO -> IO ()
 prepDB handle = do
-  _ <- createTable handle tableUsers
-  _ <- createTable handle tableAuthors
-  _ <- createTable handle tableCats
-  _ <- createTable handle tableTags
-  _ <- createTable handle tablePosts
-  _ <- createTable handle tableComs
-  _ <- createTable handle tableDrafts
-  _ <- createTable handle tablePhotos
-  _ <- createTable handle tableUserPhoto
-  _ <- createTable handle tableAuthorUser
-  _ <- createTable handle tableUserCom
-  _ <- createTable handle tablePostAuthor
-  _ <- createTable handle tablePostCat
-  _ <- createTable handle tablePostCom
-  _ <- createTable handle tablePostDraft
-  _ <- createTable handle tablePostTag
-  _ <- createTable handle tablePostMainPhoto
-  _ <- createTable handle tablePostAddPhoto
+  _ <- createTable handle DB.tableUsers
+  _ <- createTable handle DB.tableAuthors
+  _ <- createTable handle DB.tableCats
+  _ <- createTable handle DB.tableTags
+  _ <- createTable handle DB.tablePosts
+  _ <- createTable handle DB.tableComs
+  _ <- createTable handle DB.tableDrafts
+  _ <- createTable handle DB.tablePhotos
+  _ <- createTable handle DB.tableUserPhoto
+  _ <- createTable handle DB.tableAuthorUser
+  _ <- createTable handle DB.tableUserCom
+  _ <- createTable handle DB.tablePostAuthor
+  _ <- createTable handle DB.tablePostCat
+  _ <- createTable handle DB.tablePostCom
+  _ <- createTable handle DB.tablePostDraft
+  _ <- createTable handle DB.tablePostTag
+  _ <- createTable handle DB.tablePostMainPhoto
+  _ <- createTable handle DB.tablePostAddPhoto
   return ()
 
 createTable :: Handle IO -> Table -> IO ()
@@ -200,7 +200,8 @@ changeColumnType handle tableName colName propType = do
       <> "'"
   commit dbh
 
-addConstraintNotNull :: Handle IO -> TableName -> ColumnName -> PropType -> IO ()
+addConstraintNotNull :: Handle IO -> TableName ->
+                        ColumnName -> PropType -> IO ()
 addConstraintNotNull handle tableName colName propType = do
   let dbh = conn handle
       logh = hLogger handle
@@ -214,14 +215,16 @@ addConstraintNotNull handle tableName colName propType = do
          ++ show propType
          ++ " NOT NULL"
     _ <- run dbh query []
-    Logger.logInfo logh $ "Constraint 'NOT NULL' was successfully added to column '" 
+    Logger.logInfo logh $ "Constraint 'NOT NULL' \
+                          \was successfully added to column '" 
       <> colName
       <> "' in table '"
       <> tableName
       <> "'"
   commit dbh
 
-addConstraintUnique :: Handle IO -> TableName -> ColumnName -> ConstraintName -> IO ()
+addConstraintUnique :: Handle IO -> TableName ->
+                       ColumnName -> ConstraintName -> IO ()
 addConstraintUnique handle tableName colName conName = do
   let dbh = conn handle
       logh = hLogger handle
@@ -252,7 +255,8 @@ addConstraintUnique handle tableName colName conName = do
         <> "' is already in use!"
   commit dbh
 
-addConstraintPrimaryKey :: Handle IO -> TableName -> ColumnName -> ConstraintName -> IO ()
+addConstraintPrimaryKey :: Handle IO -> TableName ->
+                           ColumnName -> ConstraintName -> IO ()
 addConstraintPrimaryKey handle tableName colName conName = do
   let dbh = conn handle
       logh = hLogger handle

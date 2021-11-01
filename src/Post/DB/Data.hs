@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.DB.Data where
 
 import qualified Data.Text as T
@@ -7,7 +5,7 @@ import Data.Text (Text)
 import Database.HDBC (SqlValue(..))
 import Data.List (sort)
 
---
+-- Synonims
 type TableName = Text
 type ColumnName = Text
 type ConstraintName = Text

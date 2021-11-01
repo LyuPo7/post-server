@@ -1,40 +1,39 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module TestPost.DB.Photo where
 
-import Control.Monad.Identity
+import Control.Monad.Identity (Identity(..))
 import Database.HDBC (toSql)
 import Data.Text (Text)
 
-import Test.Hspec
+import Test.Hspec (Spec, shouldBe, it, describe)
 
 import qualified TestPost.Handlers as H
 
 import qualified Post.DB.Photo as DBPh
 import qualified Post.DB.DBQSpec as DBQSpec
-import Post.Server.Objects
+import qualified Post.Server.Objects as PSO
 
 spec_newPhoto :: Spec
-spec_newPhoto = describe "Testing newPhoto" $ do
+spec_newPhoto =
+  describe "Testing newPhoto" $ do
     it "Should successfully create Photo from [sqlValue]" $ do
-      let photoLink = "image/new-11.png" :: Link
-          photoId = 11 :: PhotoId
+      let photoLink = "image/new-11.png" :: PSO.Link
+          photoId = 11 :: PSO.PhotoId
           sqlPhotoA = [
             toSql photoId,
             toSql photoLink
            ]
           photoE = DBPh.newPhoto H.dbqh sqlPhotoA
-          check = Photo {
-            photo_id = photoId,
-            photo_link = "http://localhost:3000/" <> photoLink
+          check = PSO.Photo {
+            PSO.photo_id = photoId,
+            PSO.photo_link = "http://localhost:3000/" <> photoLink
           }
-      photoE `shouldBe` (Identity $ Right check)
+      photoE `shouldBe` Identity (Right check)
     it "Should fail with empty input" $ do
       let photoE = DBPh.newPhoto H.dbqh []
-      photoE `shouldBe` (Identity $ Left "Invalid Photo!")
+      photoE `shouldBe` Identity (Left "Invalid Photo!")
     it "Should fail with too many fields in input array" $ do
-      let photoLink = "image/new-11.png" :: Link
-          photoId = 11 :: PhotoId
+      let photoLink = "image/new-11.png" :: PSO.Link
+          photoId = 11 :: PSO.PhotoId
           text = "text" :: Text
           sqlPhotoA = [
             toSql photoId,
@@ -42,20 +41,21 @@ spec_newPhoto = describe "Testing newPhoto" $ do
             toSql text
            ]
           photoE = DBPh.newPhoto H.dbqh sqlPhotoA
-      photoE `shouldBe` (Identity $ Left "Invalid Photo!")
+      photoE `shouldBe` Identity (Left "Invalid Photo!")
 
 spec_getLastPhotoRecord :: Spec
-spec_getLastPhotoRecord = describe "Testing getLastPhotoRecord" $ do
+spec_getLastPhotoRecord =
+  describe "Testing getLastPhotoRecord" $ do
     it "Should successfully return PhotoId for array of one element" $ do
-      let photoId = 101 :: PhotoId
+      let photoId = 101 :: PSO.PhotoId
           sqlPhotoA = [[toSql photoId]]
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPhotoA
           }
           photoIdE = DBPh.getLastPhotoRecord dbqh'
-      photoIdE `shouldBe` (Identity $ Right photoId)
+      photoIdE `shouldBe` Identity (Right photoId)
     it "Should fail on array of many elements" $ do
-      let photoId = 101 :: PhotoId
+      let photoId = 101 :: PSO.PhotoId
           sqlPhotoA = [
               [toSql photoId],
               [toSql photoId]]
@@ -64,20 +64,21 @@ spec_getLastPhotoRecord = describe "Testing getLastPhotoRecord" $ do
           }
           photoIdE = DBPh.getLastPhotoRecord dbqh'
           msg = "Incorrect Photo record!"
-      photoIdE `shouldBe` (Identity $ Left msg)
+      photoIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
           photoIdE = DBPh.getLastPhotoRecord dbqh'
           msg = "No exist Photos in db!"
-      photoIdE `shouldBe` (Identity $ Left msg)
+      photoIdE `shouldBe` Identity (Left msg)
 
 spec_getPhotoRecordById :: Spec
-spec_getPhotoRecordById = describe "Testing getPhotoRecordById" $ do
+spec_getPhotoRecordById =
+  describe "Testing getPhotoRecordById" $ do
     it "Should successfully return Photo for array of one element" $ do
-      let photoLink = "image/new-11.png" :: Link
-          photoId = 11 :: PhotoId
+      let photoLink = "image/new-11.png" :: PSO.Link
+          photoId = 11 :: PSO.PhotoId
           sqlPhotoA = [[
             toSql photoId,
             toSql photoLink
@@ -86,15 +87,15 @@ spec_getPhotoRecordById = describe "Testing getPhotoRecordById" $ do
             DBQSpec.makeDBRequest = \_ -> return sqlPhotoA
           }
           photoE = DBPh.getPhotoRecordById dbqh' photoId
-          check = Photo {
-            photo_id = photoId,
-            photo_link = "http://localhost:3000/" <> photoLink
+          check = PSO.Photo {
+            PSO.photo_id = photoId,
+            PSO.photo_link = "http://localhost:3000/" <> photoLink
           }
-      photoE `shouldBe` (Identity $ Right check)
+      photoE `shouldBe` Identity (Right check)
     it "Should fail on array of many elements" $ do
-      let photoLink1 = "image/new-11.png" :: Link
-          photoLink2 = "image/old-11.png" :: Link
-          photoId = 11 :: PhotoId
+      let photoLink1 = "image/new-11.png" :: PSO.Link
+          photoLink2 = "image/old-11.png" :: PSO.Link
+          photoId = 11 :: PSO.PhotoId
           sqlPhotoA = [
             [toSql photoId,
             toSql photoLink1],
@@ -107,31 +108,32 @@ spec_getPhotoRecordById = describe "Testing getPhotoRecordById" $ do
           photoE = DBPh.getPhotoRecordById dbqh' photoId
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Photo with Id: 11"
-      photoE `shouldBe` (Identity $ Left msg)
+      photoE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let photoId = 101 :: PhotoId
+      let photoId = 101 :: PSO.PhotoId
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
           user = DBPh.getPhotoRecordById dbqh' photoId
           msg = "No exists Photo with id: 101"
-      user `shouldBe` (Identity $ Left msg)
+      user `shouldBe` Identity (Left msg)
 
 spec_getPhotoIdByName :: Spec
-spec_getPhotoIdByName = describe "Testing getPhotoIdByName" $ do
+spec_getPhotoIdByName =
+  describe "Testing getPhotoIdByName" $ do
     it "Should successfully return PhotoId for array of one element" $ do
-      let photoLink = "image/new-11.png" :: Link
-          photoId = 11 :: PhotoId
+      let photoLink = "image/new-11.png" :: PSO.Link
+          photoId = 11 :: PSO.PhotoId
           sqlPhotoA = [[toSql photoId]]
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return sqlPhotoA
           }
           photoIdE = DBPh.getPhotoIdByName dbqh' photoLink
-      photoIdE `shouldBe` (Identity $ Right photoId)
+      photoIdE `shouldBe` Identity (Right photoId)
     it "Should fail on array of many elements" $ do
-      let photoLink = "image/new-11.png" :: Link
-          photoId1 = 11 :: PhotoId
-          photoId2 = 21 :: PhotoId
+      let photoLink = "image/new-11.png" :: PSO.Link
+          photoId1 = 11 :: PSO.PhotoId
+          photoId2 = 21 :: PSO.PhotoId
           sqlPhotoA = [
             [toSql photoId1],
             [toSql photoId2]
@@ -143,13 +145,13 @@ spec_getPhotoIdByName = describe "Testing getPhotoIdByName" $ do
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Photo: \
                 \'image/new-11.png'"
-      photoIdE `shouldBe` (Identity $ Left msg)
+      photoIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let photoLink = "image/new-11.png" :: Link
+      let photoLink = "image/new-11.png" :: PSO.Link
           dbqh' = H.dbqh {
             DBQSpec.makeDBRequest = \_ -> return []
           }
           photoIdE = DBPh.getPhotoIdByName dbqh' photoLink
           msg = "No exists Photo: \
                 \'image/new-11.png'"
-      photoIdE `shouldBe` (Identity $ Left msg)
+      photoIdE `shouldBe` Identity (Left msg)

@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-
 module Post.DB.Photo where
 
 import qualified Data.Text as T
@@ -7,12 +5,13 @@ import Data.Text (Text)
 import Database.HDBC (fromSql, toSql, SqlValue)
 import System.FilePath ((</>))
 
-import Post.DB.DBQSpec
+import Post.DB.DBQSpec (Handle(..))
+import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
-import Post.Server.Objects
-import Post.DB.Data
+import Post.Server.Objects (Photo(..), PhotoId)
+import qualified Post.DB.Data as DB
 import Post.Server.Util (convert)
 
 {-- | DB methods for Photo --}
@@ -35,9 +34,9 @@ savePhoto handle path = do
 getPhotoIdByName :: Monad m => Handle m -> Text -> m (Either Text PhotoId)
 getPhotoIdByName handle pathToPhoto = do
   let logh = hLogger handle
-  idPhotoSql <- selectFromWhere handle tablePhotos
-                 [colIdPhoto]
-                 [colLinkPhoto]
+  idPhotoSql <- DBQSpec.selectFromWhere handle DB.tablePhotos
+                 [DB.colIdPhoto]
+                 [DB.colLinkPhoto]
                  [toSql pathToPhoto]
   case idPhotoSql of
     [] -> do
@@ -62,9 +61,9 @@ getPhotoIdByName handle pathToPhoto = do
 getPhotoRecordById :: Monad m => Handle m -> PhotoId -> m (Either Text Photo)
 getPhotoRecordById handle photoId = do
   let logh = hLogger handle
-  photoSql <- selectFromWhere handle tablePhotos
-               [colIdPhoto, colLinkPhoto]
-               [colIdPhoto]
+  photoSql <- DBQSpec.selectFromWhere handle DB.tablePhotos
+               [DB.colIdPhoto, DB.colLinkPhoto]
+               [DB.colIdPhoto]
                [toSql photoId]
   case photoSql of
     [] -> do
@@ -88,9 +87,9 @@ getPhotoRecordById handle photoId = do
 getLastPhotoRecord :: Monad m => Handle m -> m (Either Text PhotoId)
 getLastPhotoRecord handle = do
   let logh = hLogger handle
-  idPhotoSql <- selectFromOrderLimit handle tablePhotos
-                 [colIdPhoto]
-                  colIdPhoto 1
+  idPhotoSql <- DBQSpec.selectFromOrderLimit handle DB.tablePhotos
+                 [DB.colIdPhoto]
+                  DB.colIdPhoto 1
   case idPhotoSql of
     [] -> do
       let msg = "No exist Photos in db!"
@@ -110,8 +109,8 @@ getLastPhotoRecord handle = do
 insertPhotoRecord :: Monad m => Handle m -> Text -> m ()
 insertPhotoRecord handle pathToPhoto = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tablePhotos 
-        [colLinkPhoto] 
+  _ <- DBQSpec.insertIntoValues handle DB.tablePhotos 
+        [DB.colLinkPhoto] 
         [toSql pathToPhoto]
   Logger.logInfo logh $ "Inserting photo: '"
     <> pathToPhoto

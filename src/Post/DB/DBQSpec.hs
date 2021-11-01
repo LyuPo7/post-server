@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-
 module Post.DB.DBQSpec where
 
 import Database.HDBC (SqlValue, fromSql, toSql)
@@ -8,7 +6,7 @@ import Crypto.Scrypt (ScryptParams, Pass, EncryptedPass)
 import Data.Time.Clock (UTCTime)
 import Data.List (intercalate, union)
 import Text.Read (readEither)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
 import Distribution.Simple.Utils (safeHead)
 import qualified Data.Text as T
@@ -18,7 +16,8 @@ import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Logger as Logger
 import qualified Post.Exception as E
 import qualified Post.Settings as Settings
-import Post.DB.Data
+import Post.DB.Data (PostQuery, DbQuery, Column(..), Table(..))
+import qualified Post.DB.Data as DB
 import Post.Server.Objects (Token, PostId, Offset)
 import Post.Server.Util (convert, sqlAtoText, sqlDAtoText)
 
@@ -131,7 +130,8 @@ queryFromWhereInLimit table colSelect colWhere values offset = do
       return $ Left msg
 
 -- | SELECT FROM query
-selectFromOrderLimitOffset :: Monad m => Handle m -> Table -> [Column] -> Offset -> m [[SqlValue]]
+selectFromOrderLimitOffset :: Monad m => Handle m ->
+                              Table -> [Column] -> Offset -> m [[SqlValue]]
 selectFromOrderLimitOffset handle table colSelect offset = do
   dbQuery <- queryFromOrderLimitOffset table colSelect offset
   case dbQuery of
@@ -140,7 +140,8 @@ selectFromOrderLimitOffset handle table colSelect offset = do
       <> show msg
 
 -- | Build SELECT FROM query
-queryFromOrderLimitOffset :: Monad m => Table -> [Column] -> Offset -> m (Either Text DbQuery)
+queryFromOrderLimitOffset :: Monad m => Table -> [Column] ->
+                             Offset -> m (Either Text DbQuery)
 queryFromOrderLimitOffset table colSelect offset = do
   case safeHead colSelect of
     Nothing -> do
@@ -206,7 +207,8 @@ queryDeleteWhere table colWhere values = do
                return $ Left msg
              | otherwise = do
                let tableName = table_name table
-                   whereName = T.intercalate " = ? AND " $ map column_name colWhere
+                   whereName = T.intercalate " = ? AND " $
+                     map column_name colWhere
                    query = "DELETE FROM " <> tableName
                        <> " WHERE " <> whereName
                        <> " = ?"
@@ -225,8 +227,8 @@ insertIntoValues handle table colInsert values = do
       <> show msg
 
 -- | Build INSERT INTO VALUES query
-queryInsertIntoValues :: Monad m =>
-                         Table -> [Column] -> [SqlValue] -> m (Either Text DbQuery)
+queryInsertIntoValues :: Monad m => Table -> [Column] ->
+                        [SqlValue] -> m (Either Text DbQuery)
 queryInsertIntoValues table colInsert values = do
   let action | null colInsert || null values = do
                let msg = "'colInsert'/'values' can't be empty"
@@ -273,8 +275,10 @@ queryUpdateSetWhere table colSet colWhere valSet valWhere = do
              | otherwise = do
                let tableName = table_name table
                    values = valSet <> valWhere
-                   setName = T.intercalate "," $ map ((<> " = ? ") . column_name) colSet
-                   whereName = T.intercalate " = ? AND " $ map column_name colWhere
+                   setName = T.intercalate "," $
+                     map ((<> " = ? ") . column_name) colSet
+                   whereName = T.intercalate " = ? AND " $
+                     map column_name colWhere
                    query = "UPDATE " <> tableName
                        <> " SET " <> setName
                        <> " WHERE " <> whereName
@@ -296,7 +300,8 @@ specialQuery handle table column dbParams = do
       <> show msg
 
 -- | Build Special query for Posts
-querySpecialPosts :: Monad m => Table -> Column -> DbQuery -> m (Either Text DbQuery)
+querySpecialPosts :: Monad m => Table -> Column ->
+                     DbQuery -> m (Either Text DbQuery)
 querySpecialPosts table column dbParams = do
   let query = "SELECT "
           <> column_name column
@@ -310,10 +315,10 @@ querySpecialPosts table column dbParams = do
 searchPost :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 searchPost handle params = do
   let logh = hLogger handle
-      postParams = filter (\x -> fst x `elem` dbPostReqParams) params
+      postParams = filter (\x -> fst x `elem` DB.dbPostReqParams) params
   searchQuery <- runEitherT $ do
-    search <- EitherT $ querySearchPost handle postParams
-    EitherT $ querySpecialPosts tablePosts colIdPost search
+    search <- newEitherT $ querySearchPost handle postParams
+    newEitherT $ querySpecialPosts DB.tablePosts DB.colIdPost search
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
@@ -348,9 +353,9 @@ keyPostToDb :: Monad m => Handle m -> PostQuery -> m (Either Text Text)
 keyPostToDb handle postQuery = do
   let logh = hLogger handle
       (key, value) = postQuery
-      createdAt = column_name colCreatedAtPost
-      title = column_name colTitlePost
-      text = column_name colTextPost
+      createdAt = column_name DB.colCreatedAtPost
+      title = column_name DB.colTitlePost
+      text = column_name DB.colTextPost
   case value of
     Just "" -> do
       Logger.logError logh $ "keyPostToDb function: empty argument: " <> key
@@ -368,10 +373,10 @@ keyPostToDb handle postQuery = do
 searchCat :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 searchCat handle params = do
   let logh = hLogger handle
-      catParams = filter (\x -> fst x `elem` dbCatReqParams) params
+      catParams = filter (\x -> fst x `elem` DB.dbCatReqParams) params
   searchQuery <- runEitherT $ do
-    search <- EitherT $ querySearchCat handle catParams
-    EitherT $ querySpecialPosts tablePostCat colIdPostPostCat search
+    search <- newEitherT $ querySearchCat handle catParams
+    newEitherT $ querySpecialPosts DB.tablePostCat DB.colIdPostPostCat search
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
@@ -407,7 +412,7 @@ querySearchCat handle args = do
 keyCatToDb :: Monad m => Handle m -> PostQuery -> m (Either Text Text)
 keyCatToDb handle ("category", valueM) = do
   let logh = hLogger handle
-      idCPC = column_name colIdCatPostCat
+      idCPC = column_name DB.colIdCatPostCat
   case valueM of
     Nothing ->  do
       Logger.logError logh "keyCatToDb function: empty argument: category"
@@ -419,7 +424,8 @@ keyCatToDb handle ("category", valueM) = do
       case readEither (T.unpack value) :: Either String Integer of
         Right _ -> return $ Right $ idCPC <> " = ?"
         Left _ -> do
-          Logger.logError logh "keyCatToDb function: incorrect argument: category"
+          Logger.logError logh "keyCatToDb function: \
+                               \incorrect argument: category"
           return $ Left "Value of key: category must be Integer"
 keyCatToDb handle (key, _) = do
   let logh = hLogger handle
@@ -430,12 +436,13 @@ keyCatToDb handle (key, _) = do
 searchTag :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 searchTag handle params = do
   let logh = hLogger handle
-      tagParams = filter (\x -> fst x `elem` dbTagReqParams) params
+      tagParams = filter (\x -> fst x `elem` DB.dbTagReqParams) params
   searchQuery <- runEitherT $ do
-    search <- EitherT $ querySearchTag handle tagParams
+    search <- newEitherT $ querySearchTag handle tagParams
     if null $ snd search
-      then EitherT $ querySpecialPosts tablePosts colIdPost search
-      else EitherT $ querySpecialPosts tablePostTag colIdPostPostTag search
+      then newEitherT $ querySpecialPosts DB.tablePosts DB.colIdPost search
+      else newEitherT $
+        querySpecialPosts DB.tablePostTag DB.colIdPostPostTag search
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
@@ -465,24 +472,28 @@ querySearchTag handle [(key, Just value)] = do
           let query = "WHERE " <> keyDb
           return $ Right (query, paramArgs)
         Left msg -> do
-          Logger.logError logh $ "querySearchTag function: incorrect tag argument: " <> msg
+          Logger.logError logh $ "querySearchTag function: \
+                                 \incorrect tag argument: "
+                                   <> msg
           return $ Left $ "Incorrect tag argument: " <> msg
 querySearchTag handle _ = do
   let logh = hLogger handle
-  Logger.logError logh "querySearchTag function: Used more than one keys: ['tag', 'tag__in', 'tag__all']"
+  Logger.logError logh "querySearchTag function: Used more than one keys: \
+                       \['tag', 'tag__in', 'tag__all']"
   return $ Left "You can use only one of keys: ['tag', 'tag__in', 'tag__all']"
 
 -- | Convert key in PostQuery to DbQueryString
 keyTagToDb :: Monad m => Handle m -> Text -> Int -> m (Either Text Text)
 keyTagToDb handle key n = do
   let logh = hLogger handle
-      cIdTPT = column_name colIdTagPostTag
+      cIdTPT = column_name DB.colIdTagPostTag
   case key of
     "tag" -> do
       if n == 1
         then return $ Right $ cIdTPT <> " = ?"
         else do
-          Logger.logError logh "keyTagToDb function: too many values in argument: tag"
+          Logger.logError logh "keyTagToDb function: \
+                               \too many values in argument: tag"
           return $ Left "Array of key tag must contain only one tag_id"
     "tag__in" -> return $ Right 
       $ cIdTPT <> " IN (" 
@@ -497,10 +508,11 @@ keyTagToDb handle key n = do
 searchAuthor :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 searchAuthor handle params = do
   let logh = hLogger handle
-      tagParams = filter (\x -> fst x `elem` dbAuthorReqParams) params
+      tagParams = filter (\x -> fst x `elem` DB.dbAuthorReqParams) params
   searchQuery <- runEitherT $ do
-    search <- EitherT $ querySearchAuthor handle tagParams
-    EitherT $ querySpecialPosts tablePostAuthor colIdPostPostAuthor search
+    search <- newEitherT $ querySearchAuthor handle tagParams
+    newEitherT $
+      querySpecialPosts DB.tablePostAuthor DB.colIdPostPostAuthor search
   case searchQuery of
     Right query -> do
       idPosts <- makeDBRequest handle query
@@ -510,7 +522,8 @@ searchAuthor handle params = do
     Left msg -> Exc.throw $ E.DbQueryError $ show msg
 
 -- | Build Query Search Author
-querySearchAuthor :: Monad m => Handle m -> [PostQuery] -> m (Either Text DbQuery)
+querySearchAuthor :: Monad m => Handle m ->
+                    [PostQuery] -> m (Either Text DbQuery)
 querySearchAuthor handle [] = do
   let logh = hLogger handle
       msg = "Default search Author query!"
@@ -526,13 +539,13 @@ querySearchAuthor handle [(_, value)] = do
     Just param -> do
       if length (T.words param) == 2
         then do
-          let tAuthorUserAU = table_name tableAuthorUser
-              tUsersU = table_name tableUsers
-              cAuthorIdAU = column_name colIdAuthorAuthorUser
-              cUserIdAU = column_name colIdUserAuthorUser
-              cIdU = column_name colIdUser
-              cFNU = column_name colFNUser
-              cLNU = column_name colLNUser
+          let tAuthorUserAU = table_name DB.tableAuthorUser
+              tUsersU = table_name DB.tableUsers
+              cAuthorIdAU = column_name DB.colIdAuthorAuthorUser
+              cUserIdAU = column_name DB.colIdUserAuthorUser
+              cIdU = column_name DB.colIdUser
+              cFNU = column_name DB.colFNUser
+              cLNU = column_name DB.colLNUser
               query = "WHERE " <> cAuthorIdAU <> " = (\
                       \SELECT " <> cAuthorIdAU <> " \
                       \FROM " <> tAuthorUserAU <> " \
@@ -560,23 +573,27 @@ querySearchAuthor handle _ = do
 findIn :: Monad m => Handle m -> [PostQuery] -> m [PostId]
 findIn handle params = do
   let logh = hLogger handle
-      findParams = filter (\x -> fst x `elem` dbSearchParams) params
+      findParams = filter (\x -> fst x `elem` DB.dbSearchParams) params
   idPostsE <- runEitherT $ do
     -- posts
-    postFindInPosts <- EitherT $ findInPosts handle findParams
-    queryIdPost <- EitherT $ querySpecialPosts tablePosts colIdPost postFindInPosts
+    postFindInPosts <- newEitherT $ findInPosts handle findParams
+    queryIdPost <- newEitherT $
+      querySpecialPosts DB.tablePosts DB.colIdPost postFindInPosts
     idSPosts <- lift (concat <$> makeDBRequest handle queryIdPost)
     -- authors
-    postFindInAuthors <- EitherT $ findInAuthors handle findParams
-    queryIdAuthor <- EitherT $ querySpecialPosts tablePostAuthor colIdPostPostAuthor postFindInAuthors
+    postFindInAuthors <- newEitherT $ findInAuthors handle findParams
+    queryIdAuthor <- newEitherT $
+      querySpecialPosts DB.tablePostAuthor DB.colIdPostPostAuthor postFindInAuthors
     idAuthorSPosts <- lift (concat <$> makeDBRequest handle queryIdAuthor)
     -- categories
-    postFindInCats <- EitherT $ findInCats handle findParams
-    queryIdCat <- EitherT $ querySpecialPosts tablePostCat colIdPostPostCat postFindInCats
+    postFindInCats <- newEitherT $ findInCats handle findParams
+    queryIdCat <- newEitherT $
+      querySpecialPosts DB.tablePostCat DB.colIdPostPostCat postFindInCats
     idCatSPosts <- lift (concat <$> makeDBRequest handle queryIdCat)
     -- tags
-    postFindInTags <- EitherT $ findInTags handle findParams
-    queryIdTag <- EitherT $ querySpecialPosts tablePostTag colIdPostPostTag postFindInTags
+    postFindInTags <- newEitherT $ findInTags handle findParams
+    queryIdTag <- newEitherT $
+      querySpecialPosts DB.tablePostTag DB.colIdPostPostTag postFindInTags
     idTagSPosts <- lift (concat <$> makeDBRequest handle queryIdTag)
     return $ ((idSPosts 
         `union` idCatSPosts) 
@@ -609,8 +626,8 @@ findInPosts handle [(key, value)] = do
       Logger.logWarning logh msg
       return $ Right ("", [])
     Just _ -> do
-      let cTextP = column_name colTextPost
-          cTitleP = column_name colTitlePost
+      let cTextP = column_name DB.colTextPost
+          cTitleP = column_name DB.colTitlePost
           query = "WHERE " <> cTextP <> " \
                   \LIKE ? \
                   \OR " <> cTitleP <> " \
@@ -643,13 +660,13 @@ findInAuthors handle [(key, value)] = do
       Logger.logWarning logh msg
       return $ Right ("", [])
     Just _ -> do
-      let tAuthorUserAU = table_name tableAuthorUser
-          tUsersU = table_name tableUsers
-          cAuthorIdAU = column_name colIdAuthorAuthorUser
-          cUserIdAU = column_name colIdUserAuthorUser
-          cIdU = column_name colIdUser
-          cFNU = column_name colFNUser
-          cLNU = column_name colLNUser
+      let tAuthorUserAU = table_name DB.tableAuthorUser
+          tUsersU = table_name DB.tableUsers
+          cAuthorIdAU = column_name DB.colIdAuthorAuthorUser
+          cUserIdAU = column_name DB.colIdUserAuthorUser
+          cIdU = column_name DB.colIdUser
+          cFNU = column_name DB.colFNUser
+          cLNU = column_name DB.colLNUser
           query = "WHERE " <> cAuthorIdAU <> " = (\
                   \SELECT " <> cAuthorIdAU <> " \
                   \FROM " <> tAuthorUserAU <> " \
@@ -686,10 +703,10 @@ findInCats handle [(key, value)] = do
       Logger.logWarning logh msg
       return $ Right ("", [])
     Just _ -> do
-      let tCatsC = table_name tableCats
-          cIdCatPC = column_name colIdCatPostCat
-          cIdC = column_name colIdCat
-          cTitleC = column_name colTitleCat
+      let tCatsC = table_name DB.tableCats
+          cIdCatPC = column_name DB.colIdCatPostCat
+          cIdC = column_name DB.colIdCat
+          cTitleC = column_name DB.colTitleCat
           query = "WHERE " <> cIdCatPC <> " \
                   \IN (\
                     \SELECT " <> cIdC <> " \
@@ -724,10 +741,10 @@ findInTags handle [(key, value)] = do
       Logger.logWarning logh msg
       return $ Right ("", [])
     Just _ -> do
-      let tTagsC = table_name tableTags
-          cIdTagPC = column_name colIdTagPostTag
-          cIdT = column_name colIdTag
-          cTitleT = column_name colTitleTag
+      let tTagsC = table_name DB.tableTags
+          cIdTagPC = column_name DB.colIdTagPostTag
+          cIdT = column_name DB.colIdTag
+          cTitleT = column_name DB.colTitleTag
           query = "WHERE " <> cIdTagPC <> " \
                   \IN (\
                     \SELECT " <> cIdT <> " \
@@ -744,9 +761,10 @@ findInTags handle _ = do
   return $ Left msg
 
 -- | Sort query
-sortQuery :: Monad m => Handle m -> [PostQuery] -> [SqlValue] -> Offset -> m [PostId]
+sortQuery :: Monad m => Handle m ->[PostQuery] ->
+            [SqlValue] -> Offset -> m [PostId]
 sortQuery handle params ids offset = do
-  let orderParams = filter (\x -> fst x `elem` dbOrderParams) params
+  let orderParams = filter (\x -> fst x `elem` DB.dbOrderParams) params
   dbQuery <- querySort handle orderParams ids offset
   case dbQuery of
     Right query -> do
@@ -762,9 +780,9 @@ querySort handle [] ids offset = do
   let logh = hLogger handle
       nIds = length ids
       qString = T.intersperse ',' $ T.replicate nIds "?"
-      tPosts = table_name tablePosts
-      cIdP = column_name colIdPost
-      createdAt = column_name colCreatedAtPost
+      tPosts = table_name DB.tablePosts
+      cIdP = column_name DB.colIdPost
+      createdAt = column_name DB.colCreatedAtPost
       query = "SELECT " <> cIdP <> " \
               \FROM " <> tPosts <> " \
               \WHERE " <> cIdP <> " \
@@ -781,9 +799,9 @@ querySort handle [(key, _)] ids offset = do
       qString = T.intersperse ',' $ T.replicate nIds "?"
   case key of
     "order_by_date" -> do
-      let tPosts = table_name tablePosts
-          cIdP = column_name colIdPost
-          createdAt = column_name colCreatedAtPost
+      let tPosts = table_name DB.tablePosts
+          cIdP = column_name DB.colIdPost
+          createdAt = column_name DB.colCreatedAtPost
           query = "SELECT " <> cIdP <> " \
                   \FROM " <> tPosts <> " \
                   \WHERE " <> cIdP <> " \
@@ -795,13 +813,13 @@ querySort handle [(key, _)] ids offset = do
       Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_category" -> do
-      let tPC = table_name tablePostCat
-          tC = table_name tableCats
-          cIdP = column_name colIdPost
-          cIdCPC = column_name colIdCatPostCat
-          cIdPPC = column_name colIdPostPostCat
-          cIdC = column_name colIdCat
-          cTitleP = column_name colTitlePost
+      let tPC = table_name DB.tablePostCat
+          tC = table_name DB.tableCats
+          cIdP = column_name DB.colIdPost
+          cIdCPC = column_name DB.colIdCatPostCat
+          cIdPPC = column_name DB.colIdPostPostCat
+          cIdC = column_name DB.colIdCat
+          cTitleP = column_name DB.colTitlePost
           query = "SELECT " <> cIdP <> " \
                   \FROM " <> tPC <> " \
                   \JOIN " <> tC <> " \
@@ -816,10 +834,10 @@ querySort handle [(key, _)] ids offset = do
       Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_photos" -> do
-      let tP = table_name tablePosts
-          tPAPh = table_name tablePostAddPhoto
-          cIdP = column_name colIdPost
-          cIdPPAPh = column_name colIdPostPostAddPhoto
+      let tP = table_name DB.tablePosts
+          tPAPh = table_name DB.tablePostAddPhoto
+          cIdP = column_name DB.colIdPost
+          cIdPPAPh = column_name DB.colIdPostPostAddPhoto
           query = "SELECT " <> tP <> "." <> cIdP <> ", COUNT(*) as photo_count \
                   \FROM " <> tP <> " \
                   \LEFT JOIN " <> tPAPh <> " \
@@ -835,16 +853,16 @@ querySort handle [(key, _)] ids offset = do
       Logger.logDebug logh msg
       return $ Right (query, ids)
     "order_by_author" -> do
-      let tAU = table_name tableAuthorUser
-          tPA = table_name tablePostAuthor
-          tU = table_name tableUsers
-          cIdP = column_name colIdPost
-          cIdAPA = column_name colIdAuthorPostAuthor
-          cIdAAU = column_name colIdAuthorAuthorUser
-          cIdUAU = column_name colIdUserAuthorUser
-          cIdU = column_name colIdUser
-          cFNU = column_name colFNUser
-          cLNU = column_name colLNUser
+      let tAU = table_name DB.tableAuthorUser
+          tPA = table_name DB.tablePostAuthor
+          tU = table_name DB.tableUsers
+          cIdP = column_name DB.colIdPost
+          cIdAPA = column_name DB.colIdAuthorPostAuthor
+          cIdAAU = column_name DB.colIdAuthorAuthorUser
+          cIdUAU = column_name DB.colIdUserAuthorUser
+          cIdU = column_name DB.colIdUser
+          cFNU = column_name DB.colFNUser
+          cLNU = column_name DB.colLNUser
           query = "SELECT " <> cIdP <> " \
                   \FROM " <> tPA <> " \
                   \INNER JOIN " <> tAU <> " \

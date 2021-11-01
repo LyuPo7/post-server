@@ -12,7 +12,7 @@ import Database.HDBC.PostgreSQL (Connection)
 
 import qualified Post.Logger as Logger
 import qualified Post.Server.ServerConfig as ServerConfig
-import Post.Server.Objects
+import Post.Server.Objects (Admin)
 
 -- | DB Config
 data Config = Config {

@@ -1,16 +1,15 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-
 module Post.DB.Tag where
 
 import Data.Text (Text)
 import Database.HDBC (fromSql, toSql, SqlValue)
 import Control.Monad.Trans (lift)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 
-import Post.DB.DBQSpec
+import Post.DB.DBQSpec (Handle(..))
+import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.Logger as Logger
-import Post.Server.Objects
-import Post.DB.Data
+import Post.Server.Objects (Tag(..), PostId, TagId, Title, Offset)
+import qualified Post.DB.Data as DB
 import Post.Server.Util (convert)
 
 {-- | DB methods for Tag --}
@@ -44,7 +43,7 @@ getTagRecordsByIds handle tagIds = do
 -- | Remove Tag record if exist
 removeTag :: Monad m => Handle m -> Title -> m (Either Text TagId)
 removeTag handle tagTitle = runEitherT $ do
-  tagId <- EitherT $ getTagIdByTitle handle tagTitle
+  tagId <- newEitherT $ getTagIdByTitle handle tagTitle
   lift $ deleteTagRecord handle tagId
   return tagId
 
@@ -63,14 +62,14 @@ editTag handle oldTitle newTitle = do
       Logger.logWarning logh msg
       return $ Left msg
     Left _ -> runEitherT $ do
-      tagIdOld <- EitherT $ getTagIdByTitle handle oldTitle
+      tagIdOld <- newEitherT $ getTagIdByTitle handle oldTitle
       lift $ updateTagRecord handle tagIdOld newTitle
       return newTitle
 
 -- | Remove Tag-Post record
 removeTagPostsDeps :: Monad m => Handle m -> TagId -> m (Either Text [PostId])
 removeTagPostsDeps handle tagId = runEitherT $ do
-  postIds <- EitherT $ getTagPostRecords handle tagId
+  postIds <- newEitherT $ getTagPostRecords handle tagId
   lift $ deleteTagPostsRecords handle tagId
   return postIds
 
@@ -78,9 +77,9 @@ removeTagPostsDeps handle tagId = runEitherT $ do
 getTagIdByTitle :: Monad m => Handle m -> Title -> m (Either Text TagId)
 getTagIdByTitle handle tagTitle = do
   let logh = hLogger handle
-  tagSQL <- selectFromWhere handle tableTags
-            [colIdTag]
-            [colTitleTag]
+  tagSQL <- DBQSpec.selectFromWhere handle DB.tableTags
+            [DB.colIdTag]
+            [DB.colTitleTag]
             [toSql tagTitle]
   case tagSQL of
     [] -> do
@@ -106,8 +105,8 @@ getTagIdByTitle handle tagTitle = do
 getAllTagRecords :: Monad m => Handle m -> Offset -> m (Either Text [Tag])
 getAllTagRecords handle offset = do
   let logh = hLogger handle
-  tagsSQL <- selectFromOrderLimitOffset  handle tableTags
-             [colIdTag, colTitleTag]
+  tagsSQL <- DBQSpec.selectFromOrderLimitOffset  handle DB.tableTags
+             [DB.colIdTag, DB.colTitleTag]
               offset
   case tagsSQL of
     [] -> do
@@ -122,9 +121,9 @@ getAllTagRecords handle offset = do
 getTagRecordsById :: Monad m => Handle m -> TagId -> m (Either Text Tag)
 getTagRecordsById handle tagId = do
   let logh = hLogger handle
-  tagsSql <- selectFromWhere handle tableTags
-              [colIdTag, colTitleTag]
-              [colIdTag]
+  tagsSql <- DBQSpec.selectFromWhere handle DB.tableTags
+              [DB.colIdTag, DB.colTitleTag]
+              [DB.colIdTag]
               [toSql tagId]
   case tagsSql of
     [] -> do
@@ -146,9 +145,9 @@ getTagRecordsById handle tagId = do
 getTagPostRecords :: Monad m => Handle m -> PostId -> m (Either Text [PostId])
 getTagPostRecords handle tagId = do
   let logh = hLogger handle
-  postsIdSQL <- selectFromWhere handle tablePostTag
-                [colIdPostPostTag]
-                [colIdTagPostTag]
+  postsIdSQL <- DBQSpec.selectFromWhere handle DB.tablePostTag
+                [DB.colIdPostPostTag]
+                [DB.colIdTagPostTag]
                 [toSql tagId]
   case postsIdSQL of
     [] -> do
@@ -166,8 +165,8 @@ getTagPostRecords handle tagId = do
 deleteTagPostsRecords :: Monad m => Handle m -> TagId -> m ()
 deleteTagPostsRecords handle tagId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePostTag
-        [colIdTagPostTag]
+  _ <- DBQSpec.deleteWhere handle DB.tablePostTag
+        [DB.colIdTagPostTag]
         [toSql tagId]
   Logger.logInfo logh "Removing dependencies between Post and Tag from db."
 
@@ -175,8 +174,8 @@ deleteTagPostsRecords handle tagId = do
 insertTagRecord :: Monad m => Handle m -> Title -> m ()
 insertTagRecord handle tagTitle = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tableTags
-        [colTitleTag]
+  _ <- DBQSpec.insertIntoValues handle DB.tableTags
+        [DB.colTitleTag]
         [toSql tagTitle]
   Logger.logInfo logh $ "Tag with title: '"
     <> tagTitle
@@ -186,8 +185,8 @@ insertTagRecord handle tagTitle = do
 deleteTagRecord :: Monad m => Handle m -> TagId -> m ()
 deleteTagRecord handle tagId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tableTags
-        [colIdTag]
+  _ <- DBQSpec.deleteWhere handle DB.tableTags
+        [DB.colIdTag]
         [toSql tagId]
   Logger.logInfo logh $ "Removing Tag with id: "
     <> convert tagId
@@ -197,9 +196,9 @@ deleteTagRecord handle tagId = do
 updateTagRecord :: Monad m => Handle m -> TagId -> Title -> m ()
 updateTagRecord handle tagId newTitle = do
   let logh = hLogger handle
-  _ <- updateSetWhere handle tableTags
-        [colTitleTag]
-        [colIdTag]
+  _ <- DBQSpec.updateSetWhere handle DB.tableTags
+        [DB.colTitleTag]
+        [DB.colIdTag]
         [toSql newTitle]
         [toSql tagId]
   Logger.logInfo logh $ "Updating Tag with id: "

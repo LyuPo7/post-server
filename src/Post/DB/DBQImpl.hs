@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-
 module Post.DB.DBQImpl where
 
 import Database.HDBC (run, commit, handleSql, quickQuery', SqlValue, fromSql)
@@ -9,7 +7,7 @@ import qualified Data.Text as T
 import Post.DB.DBSpec (Handle(..))
 import qualified Post.Logger as Logger
 import qualified Post.Exception as E
-import Post.DB.Data
+import Post.DB.Data (DbQuery)
 
 {-- | Db IO actions --}
 --  | Make quickQuery' to db

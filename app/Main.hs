@@ -23,4 +23,4 @@ main = Exc.handle errorHandler $ do
     Server.runServer hServer
   where
     errorHandler :: E.PostError -> IO ()
-    errorHandler e = putStrLn $ show e
+    errorHandler e = print e

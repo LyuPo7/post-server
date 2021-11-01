@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.QueryParameters where
 
 import Prelude hiding (log)
@@ -10,7 +8,7 @@ import Network.HTTP.Types (Query)
 
 import Post.Logger (Handle(..))
 import qualified Post.Logger as Logger
-import Post.DB.Data
+import Post.DB.Data (PostQuery)
 import Post.Server.Util (convert)
 
 -- | Extracting Required parameters

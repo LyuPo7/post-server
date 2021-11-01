@@ -1,8 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module TestPost.Handlers where
 
-import Control.Monad.Identity
+import Control.Monad.Identity (Identity)
 
 import qualified Post.Logger as Logger
 import qualified Post.DB.DBQSpec as DBQSpec

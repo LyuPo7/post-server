@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.Server where
 
 import Network.Wai (Application, pathInfo, queryString)
@@ -50,7 +48,7 @@ app serverh req sendResponse = handle (sendResponse . respInvalid) $ do
                           >>= sendResponse -- author only
     ["removePost"] -> do MP.removePostResp serverh options 
                           >>= sendResponse -- admins only
-    ["setPostMainPhoto"] -> do MP.setPostMainPhotoResp serverh options 
+    ["setPostMainPhoto"] -> do MP.setPostMainPhotoResp serverh options
                                 >>= sendResponse -- author only
     ["setPostAddPhoto"] -> do MP.setPostAddPhotoResp serverh options 
                                >>= sendResponse -- author only
@@ -79,15 +77,15 @@ app serverh req sendResponse = handle (sendResponse . respInvalid) $ do
     ["removeTag"] -> do MT.removeTagResp serverh options 
                          >>= sendResponse -- admins only
     ["getDrafts"] -> do MD.getDraftsResp serverh options 
-                         >>= sendResponse-- authors only + only theirs drafts
+                         >>= sendResponse-- authors only (theirs drafts)
     ["createDraft"] -> do MD.createDraftResp serverh options 
-                           >>= sendResponse -- authors only + only theirs drafts
+                           >>= sendResponse -- authors only (theirs drafts)
     ["editDraft"] -> do MD.editDraftResp serverh options 
-                         >>= sendResponse -- authors only + only theirs drafts
+                         >>= sendResponse -- authors only (theirs drafts)
     ["removeDraft"] -> do MD.removeDraftResp serverh options 
-                           >>= sendResponse -- authors only + only theirs drafts
+                           >>= sendResponse -- authors only (theirs drafts)
     ["publishDraft"] -> do MD.publishDraftResp serverh options
-                            >>= sendResponse -- authors only + only theirs drafts
+                            >>= sendResponse -- authors only (theirs drafts)
     ["getUsers"] -> do MU.getUsersResp serverh options 
                         >>= sendResponse -- all
     ["createUser"] -> do MU.createUserResp serverh options 

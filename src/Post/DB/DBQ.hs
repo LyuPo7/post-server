@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-
 module Post.DB.DBQ where
 
 import qualified Crypto.Scrypt as CS

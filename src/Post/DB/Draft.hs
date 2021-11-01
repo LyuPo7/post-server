@@ -1,17 +1,16 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-
 module Post.DB.Draft where
 
 import Data.Text (Text)
 import Database.HDBC (SqlValue, fromSql, toSql)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
 
-import Post.DB.DBQSpec
+import Post.DB.DBQSpec (Handle(..))
+import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.Logger as Logger
 import qualified Post.DB.Post as DBP
-import Post.Server.Objects
-import Post.DB.Data
+import Post.Server.Objects (Draft(..), DraftId, PostId, Offset)
+import qualified Post.DB.Data as DB
 import Post.Server.Util (convert)
 
 {-- | DB methods for Draft --}
@@ -21,13 +20,13 @@ createDraft :: Monad m => Handle m -> PostId -> Text -> m (Either Text DraftId)
 createDraft handle postId text = do
   let logh = hLogger handle
   draftIdE <- runEitherT $ do
-    _ <- EitherT $ DBP.getPostRecord handle postId
-    EitherT $ DBP.getPostDraftIdByPostId handle postId
+    _ <- newEitherT $ DBP.getPostRecord handle postId
+    newEitherT $ DBP.getPostDraftIdByPostId handle postId
   case draftIdE of
     Left _ -> runEitherT $ do
       _ <- lift $ insertDraftRecord handle text postId
-      draftId <- EitherT $ getLastDraftRecord handle
-      _ <- EitherT $ DBP.createPostDraftDep handle postId draftId
+      draftId <- newEitherT $ getLastDraftRecord handle
+      _ <- newEitherT $ DBP.createPostDraftDep handle postId draftId
       return draftId
     Right _ -> do
       let msg = "Post with id: "
@@ -39,7 +38,7 @@ createDraft handle postId text = do
 -- | Remove Draft record if exists
 removeDraft :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
 removeDraft handle postId = runEitherT $ do
-  draftId <- EitherT $ DBP.getPostDraftIdByPostId handle postId
+  draftId <- newEitherT $ DBP.getPostDraftIdByPostId handle postId
   lift $ deleteDraftRecord handle draftId
   _ <- lift $ DBP.removePostDraftDep handle postId
   return draftId
@@ -47,16 +46,16 @@ removeDraft handle postId = runEitherT $ do
 -- | Edit Draft record if exists
 editDraft :: Monad m => Handle m -> PostId -> Text -> m (Either Text DraftId)
 editDraft handle postId newText = runEitherT $ do
-  draftId <- EitherT $ DBP.getPostDraftIdByPostId handle postId
-  EitherT $ updateDraftRecord handle draftId newText
+  draftId <- newEitherT $ DBP.getPostDraftIdByPostId handle postId
+  newEitherT $ updateDraftRecord handle draftId newText
 
 -- | Publish Draft record if exists
 publishDraft :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
 publishDraft handle postId = do
   let logh = hLogger handle
   draftIdTextE <- runEitherT $ do
-    draftId <- EitherT $ DBP.getPostDraftIdByPostId handle postId
-    text <- EitherT $ getDraftText handle draftId
+    draftId <- newEitherT $ DBP.getPostDraftIdByPostId handle postId
+    text <- newEitherT $ getDraftText handle draftId
     return (draftId, text)
   case draftIdTextE of
     Left msg -> return $ Left msg
@@ -70,9 +69,9 @@ getDraftRecords :: Monad m => Handle m ->
                   [DraftId] -> Offset -> m (Either Text [Draft])
 getDraftRecords handle draftIds offset = do
   let logh = hLogger handle
-  draftsSql <- selectFromWhereInLimit handle tableDrafts
-                [colIdDraft, colTextDraft, colIdPostDraft]
-                 colIdDraft
+  draftsSql <- DBQSpec.selectFromWhereInLimit handle DB.tableDrafts
+                [DB.colIdDraft, DB.colTextDraft, DB.colIdPostDraft]
+                 DB.colIdDraft
                  (map toSql draftIds)
                  offset
   case draftsSql of
@@ -87,9 +86,9 @@ getDraftRecords handle draftIds offset = do
 getLastDraftRecord :: Monad m => Handle m -> m (Either Text DraftId)
 getLastDraftRecord handle = do
   let logh = hLogger handle
-  idDraftSql <- selectFromOrderLimit handle tableDrafts
-                 [colIdDraft]
-                  colIdDraft 1
+  idDraftSql <- DBQSpec.selectFromOrderLimit handle DB.tableDrafts
+                 [DB.colIdDraft]
+                  DB.colIdDraft 1
   case idDraftSql of
     [] -> do
       let msg = "No exist Drafts in db!"
@@ -109,9 +108,9 @@ getLastDraftRecord handle = do
 updateDraftRecord :: Monad m => Handle m -> DraftId -> Text -> m (Either Text DraftId)
 updateDraftRecord handle draftId text = do
   let logh = hLogger handle
-  _ <- updateSetWhere handle tableDrafts
-        [colTextDraft]
-        [colIdDraft]
+  _ <- DBQSpec.updateSetWhere handle DB.tableDrafts
+        [DB.colTextDraft]
+        [DB.colIdDraft]
         [toSql text]
         [toSql draftId]
   Logger.logInfo logh $ "Updating Draft with id: "
@@ -120,12 +119,13 @@ updateDraftRecord handle draftId text = do
   return $ Right draftId
 
 -- | Update Post record (update Post's Text when publish Draft)
-updatePostRecord :: Monad m => Handle m -> PostId -> Text -> m (Either Text PostId)
+updatePostRecord :: Monad m => Handle m -> PostId ->
+                    Text -> m (Either Text PostId)
 updatePostRecord handle postId text = do
   let logh = hLogger handle
-  _ <- updateSetWhere handle tablePosts
-        [colTextPost]
-        [colIdPost]
+  _ <- DBQSpec.updateSetWhere handle DB.tablePosts
+        [DB.colTextPost]
+        [DB.colIdPost]
         [toSql text]
         [toSql postId]
   Logger.logInfo logh $ "Updating Post with id: "
@@ -137,9 +137,9 @@ updatePostRecord handle postId text = do
 getDraftText :: Monad m => Handle m -> DraftId -> m (Either Text Text)
 getDraftText handle draftId = do
   let logh = hLogger handle
-  textSql <- selectFromWhere handle tableDrafts
-              [colTextDraft]
-              [colIdDraft]
+  textSql <- DBQSpec.selectFromWhere handle DB.tableDrafts
+              [DB.colTextDraft]
+              [DB.colIdDraft]
               [toSql draftId]
   case textSql of
     [] -> do
@@ -163,8 +163,8 @@ getDraftText handle draftId = do
 insertDraftRecord :: Monad m => Handle m -> Text -> PostId -> m ()
 insertDraftRecord handle text postId = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tableDrafts 
-        [colTextDraft, colIdPostDraft] 
+  _ <- DBQSpec.insertIntoValues handle DB.tableDrafts 
+        [DB.colTextDraft, DB.colIdPostDraft] 
         [toSql text, toSql postId]
   Logger.logInfo logh "Draft was successfully inserted in db."
 
@@ -172,8 +172,8 @@ insertDraftRecord handle text postId = do
 deleteDraftRecord :: Monad m => Handle m -> DraftId -> m ()
 deleteDraftRecord handle draftId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tableDrafts
-        [colIdDraft]
+  _ <- DBQSpec.deleteWhere handle DB.tableDrafts
+        [DB.colIdDraft]
         [toSql draftId]
   Logger.logInfo logh $ "Removing Draft with id: "
     <> convert draftId

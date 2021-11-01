@@ -1,10 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.Methods.Comment where
 
 import Network.HTTP.Types (Query)
 import Network.Wai (Response)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad (guard)
 import Control.Monad.Trans (lift)
 
@@ -25,7 +23,7 @@ createCommentResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Comment record"
   permE <- runEitherT $ do
-    givenToken <- EitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ QP.extractRequired logh query authParams
     let [token] = givenToken
     perm <- lift $ DBAC.checkUserPerm dbqh token
     guard $ perm == UserPerm
@@ -34,12 +32,12 @@ createCommentResp handle query = do
     Left _ -> return resp404
     Right token -> do
       msgE <- runEitherT $ do
-        reqParams <- EitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ QP.extractRequired logh query params
         let [idPost, text] = reqParams
-        userId <- EitherT $ DBAC.getUserIdRecordByToken dbqh token
-        postId <- EitherT $ Util.readEitherMa idPost "post_id"
-        _ <- EitherT $ DBP.getPostRecord dbqh postId
-        EitherT $ DBCo.createComment dbqh postId userId text
+        userId <- newEitherT $ DBAC.getUserIdRecordByToken dbqh token
+        postId <- newEitherT $ Util.readEitherMa idPost "post_id"
+        _ <- newEitherT $ DBP.getPostRecord dbqh postId
+        newEitherT $ DBCo.createComment dbqh postId userId text
       case msgE of
         Right _ -> do
           let msg = "Comment was created"

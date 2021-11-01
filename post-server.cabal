@@ -65,6 +65,8 @@ library
       Paths_post_server
   hs-source-dirs:
       src
+  default-extensions:
+      OverloadedStrings
   ghc-options: -Wall -Werror
   build-depends:
       Cabal
@@ -100,6 +102,8 @@ executable post-server-exe
       Paths_post_server
   hs-source-dirs:
       app
+  default-extensions:
+      OverloadedStrings
   ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       Cabal
@@ -150,6 +154,8 @@ test-suite post-server-test
       TestPost.Config
   hs-source-dirs:
       test
+  default-extensions:
+      OverloadedStrings
   ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       Cabal

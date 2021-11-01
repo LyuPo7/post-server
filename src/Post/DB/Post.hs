@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
-
 module Post.DB.Post where
 
 import qualified Data.Text as T
@@ -8,36 +6,40 @@ import Data.Time.Clock (UTCTime(..))
 import Data.Text (Text)
 import Data.List (intersect)
 import Control.Monad.Trans (lift)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Data.Either.Combinators (rightToMaybe)
 
-import Post.DB.DBQSpec
+import Post.DB.DBQSpec (Handle(..))
+import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.Logger as Logger
 import qualified Post.DB.Author as DBA
 import qualified Post.DB.Category as DBC
 import qualified Post.DB.Tag as DBT
 import qualified Post.DB.Photo as DBPh
 import qualified Post.DB.Comment as DBCo
-import Post.Server.Objects
-import Post.DB.Data
+import Post.Server.Objects (Post(..), Comment(..), Photo(..),
+                            DraftId, PostId, TagId, CategoryId,
+                            AuthorId, PhotoId, Title, Offset)
+import Post.DB.Data (PostQuery)
+import qualified Post.DB.Data as DB
 import Post.Server.Util (convert)
 
 {-- | DB methods for Post --}
 {-- | Create new Post and all Post-Dependencies
       if doesn't already exist Post with the same Title --}
-createPost :: Monad m => Handle m -> Title ->
-              Text -> AuthorId -> CategoryId -> [TagId] -> m (Either Text PostId)
+createPost :: Monad m => Handle m -> Title -> Text ->
+              AuthorId -> CategoryId -> [TagId] -> m (Either Text PostId)
 createPost handle title text authorId catId tagIds = do
   let logh = hLogger handle
   postIdE <- getPostIdByTitle handle title
   case postIdE of
     Left _ -> runEitherT $ do
-      _ <- EitherT $ DBC.getCatRecordByCatId handle catId
-      _ <- EitherT $ DBT.getTagRecordsByIds handle tagIds
+      _ <- newEitherT $ DBC.getCatRecordByCatId handle catId
+      _ <- newEitherT $ DBT.getTagRecordsByIds handle tagIds
       lift $ insertPostRecord handle title text
-      postId <- EitherT $ getLastPostRecord handle
-      _ <- EitherT $ createPostAuthorDep handle postId authorId
-      _ <- EitherT $ createPostCatDep handle postId catId
+      postId <- newEitherT $ getLastPostRecord handle
+      _ <- newEitherT $ createPostAuthorDep handle postId authorId
+      _ <- newEitherT $ createPostCatDep handle postId catId
       lift $ mapM_ (createPostTagDep handle postId) tagIds
       return postId
     Right _ -> do
@@ -48,16 +50,17 @@ createPost handle title text authorId catId tagIds = do
       return $ Left msg
 
 -- | Get all Post records corresponding [PostQuery]
-getPosts :: Monad m => Handle m -> [PostQuery] -> Offset -> m (Either Text [Post])
+getPosts :: Monad m => Handle m -> [PostQuery] ->
+            Offset -> m (Either Text [Post])
 getPosts handle postQuery offset = do
   let logh = hLogger handle
   -- Request to DB table posts
-  idAllPosts <- searchPost handle postQuery
-  idCatPosts <- searchCat handle postQuery
-  idTagPosts <- searchTag handle postQuery
-  idAuthorPosts <- searchAuthor handle postQuery
+  idAllPosts <- DBQSpec.searchPost handle postQuery
+  idCatPosts <- DBQSpec.searchCat handle postQuery
+  idTagPosts <- DBQSpec.searchTag handle postQuery
+  idAuthorPosts <- DBQSpec.searchAuthor handle postQuery
   -- Search request to DB table posts
-  idSearch <- findIn handle postQuery
+  idSearch <- DBQSpec.findIn handle postQuery
   -- Requests
   let idAllSimple = ((idAllPosts 
         `intersect` idCatPosts) 
@@ -71,7 +74,8 @@ getPosts handle postQuery offset = do
       return $ Left "No Posts!"
     correctIds -> do
       Logger.logInfo logh "Sorting Posts from db!"
-      postsSql <- sortQuery handle postQuery (map toSql correctIds) offset
+      postsSql <- DBQSpec.sortQuery handle
+        postQuery (map toSql correctIds) offset
       case postsSql of
         [] -> do
           Logger.logWarning logh "No Posts in db!"
@@ -83,7 +87,7 @@ getPosts handle postQuery offset = do
 -- | Remove Post record and all Post-Dependecies
 removePost :: Monad m => Handle m -> PostId -> m (Either Text PostId)
 removePost handle postId = runEitherT $ do
-  _ <- EitherT $ getPostRecord handle postId
+  _ <- newEitherT $ getPostRecord handle postId
   _ <- lift $ removePostAuthorDep handle postId
   _ <- lift $ removePostCatDep handle postId
   _ <- lift $ removePostTagDep handle postId
@@ -97,7 +101,8 @@ removePost handle postId = runEitherT $ do
 {-- Set Main Post Photo 
     if Main Post Photo doesn't exist - create
     if Main Post Photo exists - update --}
-setPostMainPhoto :: Monad m => Handle m -> PostId -> Text -> m (Either Text PhotoId)
+setPostMainPhoto :: Monad m => Handle m ->
+                    PostId -> Text -> m (Either Text PhotoId)
 setPostMainPhoto handle postId path = do
   let logh = hLogger handle
   photoIdE <- DBPh.savePhoto handle path
@@ -114,7 +119,8 @@ setPostMainPhoto handle postId path = do
         Right _ -> updatePostMainPhotoRecord handle postId photoId
 
 -- | Add Additional Post Photo
-setPostAddPhoto :: Monad m => Handle m -> PostId -> Text -> m (Either Text PhotoId)
+setPostAddPhoto :: Monad m => Handle m ->
+                   PostId -> Text -> m (Either Text PhotoId)
 setPostAddPhoto handle postId path = do
   let logh = hLogger handle
   photoIdE <- DBPh.savePhoto handle path
@@ -158,7 +164,8 @@ createPostCatDep handle postId catId = do
       return $ Left msg
 
 -- | Create Post-Tag record if doesn't exist 
-createPostTagDep :: Monad m => Handle m -> PostId -> TagId -> m (Either Text TagId)
+createPostTagDep :: Monad m => Handle m ->
+                    PostId -> TagId -> m (Either Text TagId)
 createPostTagDep handle postId tagId = do
   let logh = hLogger handle
   tagsIdE <- getPostTagIdsByPostId handle postId
@@ -193,49 +200,52 @@ createPostDraftDep handle postId draftId = do
 -- | Remove Post-Author record if exists
 removePostAuthorDep :: Monad m => Handle m -> PostId -> m (Either Text AuthorId)
 removePostAuthorDep handle postId = runEitherT $ do
-  authorId <- EitherT $ getPostAuthorIdbyPostId handle postId
+  authorId <- newEitherT $ getPostAuthorIdbyPostId handle postId
   lift $ deletePostAuthorRecord handle postId
   return authorId
 
 -- | Remove Post-Category record if exists
 removePostCatDep :: Monad m => Handle m -> PostId -> m (Either Text CategoryId)
 removePostCatDep handle postId = runEitherT $ do
-  catId <- EitherT $ getPostCategoryIdByPostId handle postId
+  catId <- newEitherT $ getPostCategoryIdByPostId handle postId
   lift $ deletePostCatRecord handle postId
   return catId
 
 -- | Remove Post-Tag records if exist
 removePostTagDep :: Monad m => Handle m -> PostId -> m (Either Text [TagId])
 removePostTagDep handle postId = runEitherT $ do
-  tagsId <- EitherT $ getPostTagIdsByPostId handle postId
+  tagsId <- newEitherT $ getPostTagIdsByPostId handle postId
   lift $ deletePostTagRecord handle postId
   return tagsId
 
 -- | Remove Post-Main-Photo record if exists
-removePostMainPhotoDep :: Monad m => Handle m -> PostId -> m (Either Text PhotoId)
+removePostMainPhotoDep :: Monad m => Handle m ->
+                          PostId -> m (Either Text PhotoId)
 removePostMainPhotoDep handle postId = runEitherT $ do
-  photoId <- EitherT $ getPostMainPhotoIdByPostId handle postId
+  photoId <- newEitherT $ getPostMainPhotoIdByPostId handle postId
   lift $ deletePostMainPhotoRecord handle postId
   return $ photo_id photoId
 
 -- | Remove Post-Additional-Photo records if exist
-removePostAddPhotoDep :: Monad m => Handle m -> PostId -> m (Either Text [PhotoId])
+removePostAddPhotoDep :: Monad m => Handle m ->
+                         PostId -> m (Either Text [PhotoId])
 removePostAddPhotoDep handle postId = runEitherT $ do
-  photosAdd <- EitherT $ getPostAddPhotoIdsByPostId handle postId
+  photosAdd <- newEitherT $ getPostAddPhotoIdsByPostId handle postId
   lift $ deletePostAddPhotoRecords handle postId
   return $ map photo_id photosAdd
 
 -- | Remove Post-Main-Comment records if exist
-removePostCommentDep :: Monad m => Handle m -> PostId -> m (Either Text [PhotoId])
+removePostCommentDep :: Monad m => Handle m ->
+                        PostId -> m (Either Text [PhotoId])
 removePostCommentDep handle postId = runEitherT $ do
-  comments <- EitherT $ getPostCommentRecords handle postId
+  comments <- newEitherT $ getPostCommentRecords handle postId
   lift $ deletePostComRecords handle postId
   return $ map comment_id comments    
 
 -- | Remove Post-Draft record if exists
 removePostDraftDep :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
 removePostDraftDep handle postId = runEitherT $ do
-  draftId <- EitherT $ getPostDraftIdByPostId handle postId
+  draftId <- newEitherT $ getPostDraftIdByPostId handle postId
   lift $ deletePostDraftRecord handle postId
   return draftId
 
@@ -243,9 +253,14 @@ removePostDraftDep handle postId = runEitherT $ do
 getPostRecord :: Monad m => Handle m -> PostId -> m (Either Text Post)
 getPostRecord handle postId = do
   let logh = hLogger handle
-  postSQL <- selectFromWhere handle tablePosts
-              [colIdPost, colTitlePost, colCreatedAtPost, colTextPost]
-              [colIdPost]
+  postSQL <- DBQSpec.selectFromWhere handle DB.tablePosts
+              [
+                DB.colIdPost,
+                DB.colTitlePost,
+                DB.colCreatedAtPost,
+                DB.colTextPost
+              ]
+              [DB.colIdPost]
               [toSql postId]
   case postSQL of
     [] -> do
@@ -267,9 +282,9 @@ getPostRecord handle postId = do
 getLastPostRecord :: Monad m => Handle m -> m (Either Text PostId)
 getLastPostRecord handle = do
   let logh = hLogger handle
-  idPostSql <- selectFromOrderLimit handle tablePosts
-                [colIdPost]
-                 colIdPost 1
+  idPostSql <- DBQSpec.selectFromOrderLimit handle DB.tablePosts
+                [DB.colIdPost]
+                 DB.colIdPost 1
   case idPostSql of
     [] -> do
       let msg = "No exist Posts!"
@@ -289,9 +304,9 @@ getLastPostRecord handle = do
 getPostIdByTitle :: Monad m => Handle m -> Title -> m (Either Text PostId)
 getPostIdByTitle handle title = do
   let logh = hLogger handle
-  postIdSQL <- selectFromWhere handle tablePosts
-                [colIdPost]
-                [colTitlePost]
+  postIdSQL <- DBQSpec.selectFromWhere handle DB.tablePosts
+                [DB.colIdPost]
+                [DB.colTitlePost]
                 [toSql title]
   case postIdSQL of
     [] -> do
@@ -314,12 +329,13 @@ getPostIdByTitle handle title = do
       return $ Left msg
 
 -- | Get AuthorId by PostId if exists
-getPostAuthorIdbyPostId :: Monad m => Handle m -> PostId -> m (Either Text AuthorId)
+getPostAuthorIdbyPostId :: Monad m => Handle m ->
+                           PostId -> m (Either Text AuthorId)
 getPostAuthorIdbyPostId handle postId = do
   let logh = hLogger handle
-  authorIdSql <- selectFromWhere handle tablePostAuthor
-                  [colIdAuthorPostAuthor]
-                  [colIdPostPostAuthor]
+  authorIdSql <- DBQSpec.selectFromWhere handle DB.tablePostAuthor
+                  [DB.colIdAuthorPostAuthor]
+                  [DB.colIdPostPostAuthor]
                   [toSql postId]
   case authorIdSql of
     [] -> do
@@ -345,9 +361,9 @@ getPostCategoryIdByPostId :: Monad m => Handle m ->
                              PostId -> m (Either Text CategoryId)
 getPostCategoryIdByPostId handle postId = do
   let logh = hLogger handle
-  catIdSql <- selectFromWhere handle tablePostCat
-               [colIdCatPostCat]
-               [colIdPostPostCat]
+  catIdSql <- DBQSpec.selectFromWhere handle DB.tablePostCat
+               [DB.colIdCatPostCat]
+               [DB.colIdPostPostCat]
                [toSql postId]
   case catIdSql of
     [] -> do
@@ -369,12 +385,13 @@ getPostCategoryIdByPostId handle postId = do
       return $ Left msg
 
 -- | Get [TagId] by PostId if exist
-getPostTagIdsByPostId :: Monad m => Handle m -> PostId -> m (Either Text [TagId])
+getPostTagIdsByPostId :: Monad m => Handle m ->
+                         PostId -> m (Either Text [TagId])
 getPostTagIdsByPostId handle postId = do
   let logh = hLogger handle
-  tagsIdSql <- selectFromWhere handle tablePostTag
-                [colIdTagPostTag]
-                [colIdPostPostTag]
+  tagsIdSql <- DBQSpec.selectFromWhere handle DB.tablePostTag
+                [DB.colIdTagPostTag]
+                [DB.colIdPostPostTag]
                 [toSql postId]
   case tagsIdSql of
     [] -> do
@@ -390,12 +407,13 @@ getPostTagIdsByPostId handle postId = do
       return $ Right $ map fromSql $ concat tagIds
 
 -- | Get Main-PhotoId by PostId if exists
-getPostMainPhotoIdByPostId :: Monad m => Handle m -> PostId -> m (Either Text Photo)
+getPostMainPhotoIdByPostId :: Monad m => Handle m ->
+                              PostId -> m (Either Text Photo)
 getPostMainPhotoIdByPostId handle postId = do
   let logh = hLogger handle
-  photoIdSql <- selectFromWhere handle tablePostMainPhoto
-                 [colIdPhotoPostMainPhoto]
-                 [colIdPostPostMainPhoto]
+  photoIdSql <- DBQSpec.selectFromWhere handle DB.tablePostMainPhoto
+                 [DB.colIdPhotoPostMainPhoto]
+                 [DB.colIdPostPostMainPhoto]
                  [toSql postId]
   case photoIdSql of
     [] -> do
@@ -415,12 +433,13 @@ getPostMainPhotoIdByPostId handle postId = do
       return $ Left msg
 
 -- | Get Additional-[PhotoId] by PostId if exist
-getPostAddPhotoIdsByPostId :: Monad m => Handle m -> PostId -> m (Either Text [Photo])
+getPostAddPhotoIdsByPostId :: Monad m => Handle m ->
+                              PostId -> m (Either Text [Photo])
 getPostAddPhotoIdsByPostId handle postId = do
   let logh = hLogger handle
-  photoIdSql <- selectFromWhere handle tablePostAddPhoto
-                 [colIdPhotoPostAddPhoto]
-                 [colIdPostPostAddPhoto]
+  photoIdSql <- DBQSpec.selectFromWhere handle DB.tablePostAddPhoto
+                 [DB.colIdPhotoPostAddPhoto]
+                 [DB.colIdPostPostAddPhoto]
                  [toSql postId]
   case photoIdSql of
     [] -> do
@@ -437,12 +456,13 @@ getPostAddPhotoIdsByPostId handle postId = do
       return $ sequence addPhotos
 
 -- | Get DraftId by PostId if exists
-getPostDraftIdByPostId :: Monad m => Handle m -> PostId -> m (Either Text DraftId)
+getPostDraftIdByPostId :: Monad m => Handle m ->
+                          PostId -> m (Either Text DraftId)
 getPostDraftIdByPostId handle postId = do
   let logh = hLogger handle
-  draftIdSql <- selectFromWhere handle tablePostDraft
-                 [colIdDraftPostDraft]
-                 [colIdPostPostDraft]
+  draftIdSql <- DBQSpec.selectFromWhere handle DB.tablePostDraft
+                 [DB.colIdDraftPostDraft]
+                 [DB.colIdPostPostDraft]
                  [toSql postId]
   case draftIdSql of
     [] -> do
@@ -465,9 +485,9 @@ getPostDraftIdsByPostIds :: Monad m => Handle m ->
                            [PostId] -> m (Either Text [DraftId])
 getPostDraftIdsByPostIds handle postIds = do
   let logh = hLogger handle
-  draftIdsSql <- selectFromWhereIn handle tablePostDraft
-                 [colIdDraftPostDraft]
-                  colIdPostPostDraft
+  draftIdsSql <- DBQSpec.selectFromWhereIn handle DB.tablePostDraft
+                 [DB.colIdDraftPostDraft]
+                  DB.colIdPostPostDraft
                   $ map toSql postIds
   case draftIdsSql of
     [] -> do
@@ -485,9 +505,9 @@ getPostCommentRecords :: Monad m => Handle m ->
                          PostId -> m (Either Text [Comment])
 getPostCommentRecords handle postId = do
   let logh = hLogger handle
-  comsIdSql <- selectFromWhere handle tablePostCom
-               [colIdComPostCom]
-               [colIdPostPostCom]
+  comsIdSql <- DBQSpec.selectFromWhere handle DB.tablePostCom
+               [DB.colIdComPostCom]
+               [DB.colIdPostPostCom]
                [toSql postId]
   case comsIdSql of
     [] -> do
@@ -509,8 +529,8 @@ insertPostRecord handle title text = do
   let logh = hLogger handle
   time <- getCurrentTime handle
   let day = utctDay time
-  _ <- insertIntoValues handle tablePosts
-        [colTitlePost, colTextPost, colCreatedAtPost]
+  _ <- DBQSpec.insertIntoValues handle DB.tablePosts
+        [DB.colTitlePost, DB.colTextPost, DB.colCreatedAtPost]
         [toSql title, toSql text, toSql day]
   Logger.logInfo logh $ "Post with title: '"
     <> title
@@ -521,9 +541,9 @@ updatePostMainPhotoRecord :: Monad m => Handle m ->
                              PostId -> PhotoId -> m (Either Text PhotoId)
 updatePostMainPhotoRecord handle postId photoId = do
   let logh = hLogger handle
-  _ <- updateSetWhere handle tablePostMainPhoto
-        [colIdPhotoPostMainPhoto]
-        [colIdPostPostMainPhoto]
+  _ <- DBQSpec.updateSetWhere handle DB.tablePostMainPhoto
+        [DB.colIdPhotoPostMainPhoto]
+        [DB.colIdPostPostMainPhoto]
         [toSql photoId]
         [toSql postId]
   Logger.logInfo logh "Post's Main Photo was successfully set."
@@ -534,8 +554,8 @@ insertPostMainPhotoRecord :: Monad m => Handle m ->
                              PostId -> PhotoId -> m (Either Text PhotoId)
 insertPostMainPhotoRecord handle postId photoId = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tablePostMainPhoto
-        [colIdPhotoPostMainPhoto, colIdPostPostMainPhoto] 
+  _ <- DBQSpec.insertIntoValues handle DB.tablePostMainPhoto
+        [DB.colIdPhotoPostMainPhoto, DB.colIdPostPostMainPhoto] 
         [toSql photoId, toSql postId]
   Logger.logInfo logh "Post's Main Photo was successfully updated."
   return $ Right photoId
@@ -545,8 +565,8 @@ insertPostAddPhotoRecord :: Monad m => Handle m ->
                             PostId -> PhotoId -> m (Either Text PhotoId)
 insertPostAddPhotoRecord handle postId photoId = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tablePostAddPhoto
-        [colIdPhotoPostAddPhoto, colIdPostPostAddPhoto] 
+  _ <- DBQSpec.insertIntoValues handle DB.tablePostAddPhoto
+        [DB.colIdPhotoPostAddPhoto, DB.colIdPostPostAddPhoto] 
         [toSql photoId, toSql postId]
   Logger.logInfo logh "Post's Add Photo was successfully inserted in db."
   return $ Right photoId
@@ -555,8 +575,8 @@ insertPostAddPhotoRecord handle postId photoId = do
 insertPostAuthorRecord :: Monad m => Handle m -> PostId -> AuthorId -> m ()
 insertPostAuthorRecord handle postId authorId = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tablePostAuthor 
-        [colIdPostPostAuthor, colIdAuthorPostAuthor] 
+  _ <- DBQSpec.insertIntoValues handle DB.tablePostAuthor 
+        [DB.colIdPostPostAuthor, DB.colIdAuthorPostAuthor] 
         [toSql postId, toSql authorId]
   Logger.logInfo logh "Creating dependency between Post and Author."
 
@@ -564,17 +584,18 @@ insertPostAuthorRecord handle postId authorId = do
 insertPostCatRecord :: Monad m => Handle m -> PostId -> CategoryId -> m ()
 insertPostCatRecord handle postId catId = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tablePostCat 
-        [colIdPostPostCat, colIdCatPostCat] 
+  _ <- DBQSpec.insertIntoValues handle DB.tablePostCat 
+        [DB.colIdPostPostCat, DB.colIdCatPostCat] 
         [toSql postId, toSql catId]
   Logger.logInfo logh "Creating dependency between Post and Category."
 
 -- | Insert Post-Tag record
-insertPostTagRecord :: Monad m => Handle m -> PostId -> TagId -> m (Either Text TagId)
+insertPostTagRecord :: Monad m => Handle m ->
+                       PostId -> TagId -> m (Either Text TagId)
 insertPostTagRecord handle postId tagId = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tablePostTag
-        [colIdTagPostTag, colIdPostPostTag] 
+  _ <- DBQSpec.insertIntoValues handle DB.tablePostTag
+        [DB.colIdTagPostTag, DB.colIdPostPostTag] 
         [toSql tagId, toSql postId]
   Logger.logInfo logh "Creating dependency between Post and Tag."
   return $ Right tagId
@@ -584,8 +605,8 @@ insertPostDraftRecord :: Monad m => Handle m ->
                          PostId -> DraftId -> m (Either Text DraftId)
 insertPostDraftRecord handle postId draftId = do
   let logh = hLogger handle
-  _ <- insertIntoValues handle tablePostDraft
-        [colIdDraftPostDraft, colIdPostPostDraft] 
+  _ <- DBQSpec.insertIntoValues handle DB.tablePostDraft
+        [DB.colIdDraftPostDraft, DB.colIdPostPostDraft] 
         [toSql draftId, toSql postId]
   Logger.logInfo logh "Creating dependency between Post and Draft."
   return $ Right draftId
@@ -594,8 +615,8 @@ insertPostDraftRecord handle postId draftId = do
 deletePostRecord :: Monad m => Handle m -> PostId -> m ()
 deletePostRecord handle postId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePosts
-        [colIdPost]
+  _ <- DBQSpec.deleteWhere handle DB.tablePosts
+        [DB.colIdPost]
         [toSql postId]
   Logger.logInfo logh $ "Removing Post with id: "
     <> convert postId
@@ -605,8 +626,8 @@ deletePostRecord handle postId = do
 deletePostAuthorRecord :: Monad m => Handle m -> PostId -> m ()
 deletePostAuthorRecord handle postId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePostAuthor
-        [colIdPostPostAuthor]
+  _ <- DBQSpec.deleteWhere handle DB.tablePostAuthor
+        [DB.colIdPostPostAuthor]
         [toSql postId]
   Logger.logInfo logh "Removing dependency between Post and Author."
 
@@ -614,8 +635,8 @@ deletePostAuthorRecord handle postId = do
 deletePostCatRecord :: Monad m => Handle m -> PostId -> m ()
 deletePostCatRecord handle postId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePostCat
-        [colIdPostPostCat]
+  _ <- DBQSpec.deleteWhere handle DB.tablePostCat
+        [DB.colIdPostPostCat]
         [toSql postId]
   Logger.logInfo logh "Removing dependency between Post and Category."
 
@@ -623,8 +644,8 @@ deletePostCatRecord handle postId = do
 deletePostTagRecord :: Monad m => Handle m -> PostId -> m ()
 deletePostTagRecord handle postId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePostTag
-        [colIdPostPostTag]
+  _ <- DBQSpec.deleteWhere handle DB.tablePostTag
+        [DB.colIdPostPostTag]
         [toSql postId]
   Logger.logInfo logh "Removing dependency between Post and Tag."
 
@@ -632,8 +653,8 @@ deletePostTagRecord handle postId = do
 deletePostMainPhotoRecord :: Monad m => Handle m -> PostId -> m ()
 deletePostMainPhotoRecord handle postId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePostMainPhoto
-        [colIdPostPostMainPhoto]
+  _ <- DBQSpec.deleteWhere handle DB.tablePostMainPhoto
+        [DB.colIdPostPostMainPhoto]
         [toSql postId]
   Logger.logInfo logh "Removing dependency between Post and Main Photo from db."
 
@@ -641,8 +662,8 @@ deletePostMainPhotoRecord handle postId = do
 deletePostAddPhotoRecords :: Monad m => Handle m -> PostId -> m ()
 deletePostAddPhotoRecords handle postId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePostAddPhoto
-        [colIdPostPostAddPhoto]
+  _ <- DBQSpec.deleteWhere handle DB.tablePostAddPhoto
+        [DB.colIdPostPostAddPhoto]
         [toSql postId]
   Logger.logInfo logh "Removing dependency between \
                       \Post and Additional Photo from db."
@@ -651,8 +672,8 @@ deletePostAddPhotoRecords handle postId = do
 deletePostComRecords :: Monad m => Handle m -> PostId -> m ()
 deletePostComRecords handle postId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePostCom
-        [colIdPostPostCom]
+  _ <- DBQSpec.deleteWhere handle DB.tablePostCom
+        [DB.colIdPostPostCom]
         [toSql postId]
   Logger.logInfo logh "Removing dependency between Post and Comment from db."
 
@@ -660,8 +681,8 @@ deletePostComRecords handle postId = do
 deletePostDraftRecord :: Monad m => Handle m -> PostId -> m ()
 deletePostDraftRecord handle postId = do
   let logh = hLogger handle
-  _ <- deleteWhere handle tablePostDraft
-        [colIdPostPostDraft]
+  _ <- DBQSpec.deleteWhere handle DB.tablePostDraft
+        [DB.colIdPostPostDraft]
         [toSql postId]
   Logger.logInfo logh "Removing dependency between Post and Draft from db."
 
@@ -676,17 +697,17 @@ newPost handle [idPost, title, created_at, text] = do
   photosAddE <- getPostAddPhotoIdsByPostId handle postId
   commentsE <- getPostCommentRecords handle postId
   tagsE <- runEitherT $ do 
-    tagIds <- EitherT $ getPostTagIdsByPostId handle postId
-    EitherT $ DBT.getTagRecordsByIds handle tagIds
+    tagIds <- newEitherT $ getPostTagIdsByPostId handle postId
+    newEitherT $ DBT.getTagRecordsByIds handle tagIds
   let photoMainM = rightToMaybe photoMainE
       photosAddM = rightToMaybe photosAddE
       commentsM = rightToMaybe commentsE
       tagsM = rightToMaybe tagsE
   runEitherT $ do
-    authorId <- EitherT $ getPostAuthorIdbyPostId handle postId
-    author <- EitherT $ DBA.getAuthorRecord handle authorId
-    catId <- EitherT $ getPostCategoryIdByPostId handle postId
-    cat <- EitherT $ DBC.getCatRecordByCatId handle catId
+    authorId <- newEitherT $ getPostAuthorIdbyPostId handle postId
+    author <- newEitherT $ DBA.getAuthorRecord handle authorId
+    catId <- newEitherT $ getPostCategoryIdByPostId handle postId
+    cat <- newEitherT $ DBC.getCatRecordByCatId handle catId
     return Post {
       post_id = postId,
       post_title = postTitle,

@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.Methods.Photo where
 
 import qualified Data.ByteString.Lazy.Char8 as L8

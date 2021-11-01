@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Post.Server.Util where
 
 import qualified Data.Text as T
