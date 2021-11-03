@@ -8,9 +8,9 @@ import Control.Monad (guard)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import qualified Post.DB.Tag as DBT
-import qualified Post.DB.Account as DBAC
-import qualified Post.Server.QueryParameters as QP
+import qualified Post.DB.Tag as DBTag
+import qualified Post.DB.Account as DBAccount
+import qualified Post.Server.QueryParameters as Query
 import qualified Post.Server.Util as Util
 import Post.Server.Objects (Permission(..), TagResponse(..),
                             TextResponse(..))
@@ -23,18 +23,18 @@ getTagsResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: get Tag records"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logh query authParams
     let [token] = givenToken
-    perm <- lift $ DBAC.checkUserPerm dbqh token
+    perm <- lift $ DBAccount.checkUserPerm dbqh token
     guard $ perm == UserPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
       tagsRespE <- runEitherT $ do
-        reqParams <- newEitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logh query params
         let [offsetText] = reqParams
         offset <- newEitherT $ Util.readEitherMa offsetText "offset"
-        tags <- newEitherT $ DBT.getAllTagRecords dbqh offset
+        tags <- newEitherT $ DBTag.getAllTagRecords dbqh offset
         return $ TagResponse tags offset
       case tagsRespE of
         Left msg -> return $ respError $ TextResponse msg
@@ -52,17 +52,17 @@ createTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Tag record"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logh query authParams
     let [token] = givenToken
-    perm <- lift $ DBAC.checkAdminPerm dbqh token
+    perm <- lift $ DBAccount.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
       tagIdE <- runEitherT $ do
-        reqParams <- newEitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logh query params
         let [title] = reqParams
-        newEitherT $ DBT.createTag dbqh title
+        newEitherT $ DBTag.createTag dbqh title
       case tagIdE of
         Right _ -> do
           let msg = "Tag created"
@@ -80,20 +80,20 @@ removeTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: remove Tag record"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logh query authParams
     let [token] = givenToken
-    perm <- lift $ DBAC.checkAdminPerm dbqh token
+    perm <- lift $ DBAccount.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
       tagIdE <- runEitherT $ do
-        reqParams <- newEitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logh query params
         let [tagTitle] = reqParams
-        newEitherT $ DBT.removeTag dbqh tagTitle
+        newEitherT $ DBTag.removeTag dbqh tagTitle
       case tagIdE of
         Right tagId -> do
-          _ <- DBT.removeTagPostsDeps dbqh tagId
+          _ <- DBTag.removeTagPostsDeps dbqh tagId
           let msg = "Tag removed"
           Logger.logInfo logh msg
           return $ respOk $ TextResponse msg
@@ -109,17 +109,17 @@ editTagResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: edit Tag record"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logh query authParams
     let [token] = givenToken
-    perm <- lift $ DBAC.checkAdminPerm dbqh token
+    perm <- lift $ DBAccount.checkAdminPerm dbqh token
     guard $ perm == AdminPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
       tagE <- runEitherT $ do
-        reqParams <- newEitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logh query params
         let [oldTitle, newTitle] = reqParams
-        newEitherT $ DBT.editTag dbqh oldTitle newTitle
+        newEitherT $ DBTag.editTag dbqh oldTitle newTitle
       case tagE of
         Right _ -> do
           let msg = "Tag edited"

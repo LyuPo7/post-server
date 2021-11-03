@@ -3,7 +3,7 @@
 module Post.DB.DBSpec where
 
 import qualified System.IO as SIO
-import qualified Network.HTTP.Client as HC
+import qualified Network.HTTP.Client as HTTP
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -33,6 +33,6 @@ data Handle m = Handle {
   hPutStr :: SIO.Handle -> String -> m (),
   hClose :: SIO.Handle -> m (),
 
-  newManager :: HC.ManagerSettings -> m HC.Manager,
-  httpLbs :: HC.Request -> HC.Manager -> m (HC.Response L8.ByteString)
+  newManager :: HTTP.ManagerSettings -> m HTTP.Manager,
+  httpLbs :: HTTP.Request -> HTTP.Manager -> m (HTTP.Response L8.ByteString)
 }

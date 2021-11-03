@@ -7,14 +7,14 @@ import Data.Text (Text)
 import Test.Hspec (Spec, shouldBe, it, describe)
 
 import qualified Post.Server.Util as Util
-import qualified Post.Server.Objects as PSO
+import qualified Post.Server.Objects as Objects
 
 spec_sqlDAtoText :: Spec
 spec_sqlDAtoText =
   describe "Testing sqlDAtoText" $ do
     it "Should successfully convert [[SqlValue]] to Text" $ do
-      let bob = "Bob" :: PSO.FirstName
-          userId = 11 :: PSO.UserId
+      let bob = "Bob" :: Objects.FirstName
+          userId = 11 :: Objects.UserId
           isAdmin = True
           sqlList = [[toSql bob], [toSql userId], [toSql isAdmin]]
           text = Util.sqlDAtoText sqlList
@@ -29,8 +29,8 @@ spec_sqlAtoText :: Spec
 spec_sqlAtoText =
   describe "Testing sqlAtoText" $ do
     it "Should successfully convert [SqlValue] to Text" $ do
-      let bob = "Bob" :: PSO.FirstName
-          userId = 11 :: PSO.UserId
+      let bob = "Bob" :: Objects.FirstName
+          userId = 11 :: Objects.UserId
           isAdmin = True
           sqlList = [toSql bob, toSql userId, toSql isAdmin]
           text = Util.sqlAtoText sqlList

@@ -12,11 +12,11 @@ import Crypto.Scrypt (Pass(..), EncryptedPass(..),
 import Post.DB.DBQSpec (Handle(..))
 import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.Logger as Logger
-import qualified Post.DB.Post as DBP
-import qualified Post.DB.Author as DBA
+import qualified Post.DB.Post as DBPost
+import qualified Post.DB.Author as DBAuthor
 import Post.Server.Objects (Permission(..), Login, Password, Token,
                             UserId, AuthorId, PostId)
-import qualified Post.DB.Data as DB
+import qualified Post.DB.Data as DBData
 
 {-- | DB methods for Account --}
 {-- | Create new for User Token 
@@ -96,7 +96,7 @@ checkAuthorReadPerm :: Monad m => Handle m -> Text -> PostId -> m Permission
 checkAuthorReadPerm handle userToken postId = do
   let logh = hLogger handle
   perm <- runEitherT $ do
-    authorPostId <- newEitherT $ DBP.getPostAuthorIdbyPostId handle postId
+    authorPostId <- newEitherT $ DBPost.getPostAuthorIdbyPostId handle postId
     authorId <- newEitherT $ getAuthorId handle userToken
     guard $ authorId == authorPostId
   case perm of
@@ -109,15 +109,15 @@ checkAuthorReadPerm handle userToken postId = do
 getAuthorId :: Monad m => Handle m -> Text -> m (Either Text AuthorId)
 getAuthorId handle authorToken = runEitherT $ do
   userId <- newEitherT $ getUserIdRecordByToken  handle authorToken
-  newEitherT $ DBA.getAuthorIdByUserId handle userId
+  newEitherT $ DBAuthor.getAuthorIdByUserId handle userId
 
 -- | Get UserId by Token if exists
 getUserIdRecordByToken :: Monad m => Handle m -> Text -> m (Either Text UserId)
 getUserIdRecordByToken handle userToken = do
   let logh = hLogger handle
-  idUserSql <- DBQSpec.selectFromWhere handle DB.tableUsers
-                [DB.colIdUser]
-                [DB.colTokenUser]
+  idUserSql <- DBQSpec.selectFromWhere handle DBData.tableUsers
+                [DBData.colIdUser]
+                [DBData.colTokenUser]
                 [toSql userToken]
   case idUserSql of
     [[idUser]] -> do
@@ -136,9 +136,9 @@ getUserIdRecordByToken handle userToken = do
 getIsAdminRecordByToken :: Monad m => Handle m -> Text -> m (Either Text Bool)
 getIsAdminRecordByToken handle userToken = do
   let logh = hLogger handle
-  isAdminSql <- DBQSpec.selectFromWhere handle DB.tableUsers
-                [DB.colIsAdminUser]
-                [DB.colTokenUser]
+  isAdminSql <- DBQSpec.selectFromWhere handle DBData.tableUsers
+                [DBData.colIsAdminUser]
+                [DBData.colTokenUser]
                 [toSql userToken]
   case isAdminSql of
     [[isAdmin]] -> do
@@ -158,9 +158,9 @@ getPasswordRecordByLogin :: Monad m => Handle m ->
                             Login -> m (Either Text Password)
 getPasswordRecordByLogin handle login = do
   let logh = hLogger handle
-  passSql <- DBQSpec.selectFromWhere handle DB.tableUsers
-              [DB.colPassUser]
-              [DB.colLoginUser]
+  passSql <- DBQSpec.selectFromWhere handle DBData.tableUsers
+              [DBData.colPassUser]
+              [DBData.colLoginUser]
               [toSql login]
   case passSql of
     [[passwordDB]] -> do
@@ -177,9 +177,9 @@ getPasswordRecordByLogin handle login = do
 updateTokenRecord :: Monad m => Handle m -> Login -> Token -> m ()
 updateTokenRecord handle login userToken = do
   let logh = hLogger handle
-  _ <- DBQSpec.updateSetWhere handle DB.tableUsers
-        [DB.colTokenUser]
-        [DB.colLoginUser]
+  _ <- DBQSpec.updateSetWhere handle DBData.tableUsers
+        [DBData.colTokenUser]
+        [DBData.colLoginUser]
         [toSql userToken]
         [toSql login]
   Logger.logInfo logh $ "Updating Token for User with login: '"

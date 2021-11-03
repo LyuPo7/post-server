@@ -2,103 +2,103 @@ import Test.Tasty (testGroup, defaultMain)
 import Test.Tasty.Hspec (testSpecs)
 
 import qualified TestPost.DB.DBQSpec as DBQSpec
-import qualified TestPost.DB.Tag as DBT
-import qualified TestPost.DB.User as DBU
-import qualified TestPost.DB.Photo as DBPh
-import qualified TestPost.DB.Draft as DBD
-import qualified TestPost.DB.Comment as DBCo
-import qualified TestPost.DB.Category as DBC
-import qualified TestPost.DB.Author as DBA
-import qualified TestPost.DB.Account as DBAc
-import qualified TestPost.DB.Post as DBP
+import qualified TestPost.DB.Tag as DBTag
+import qualified TestPost.DB.User as DBUser
+import qualified TestPost.DB.Photo as DBPhoto
+import qualified TestPost.DB.Draft as DBDraft
+import qualified TestPost.DB.Comment as DBComment
+import qualified TestPost.DB.Category as DBCategory
+import qualified TestPost.DB.Author as DBAuthor
+import qualified TestPost.DB.Account as DBAccount
+import qualified TestPost.DB.Post as DBPost
 import qualified TestPost.Server.Util as Util
-import qualified TestPost.Server.QueryParameters as QP
+import qualified TestPost.Server.QueryParameters as Query
 import qualified TestPost.Config as Config
 
 main :: IO ()
 main = do
   specs <- concat <$> mapM testSpecs
-             [ 
-               DBQSpec.spec_queryFromWhere,
-               DBQSpec.spec_queryFromWhereIn,
-               DBQSpec.spec_queryFromWhereInLimit,
-               DBQSpec.spec_queryFromOrderLimitOffset,
-               DBQSpec.spec_queryFromOrderLimit,
-               DBQSpec.spec_queryDeleteWhere,
-               DBQSpec.spec_queryInsertIntoValues,
-               DBQSpec.spec_queryUpdateSetWhere,
-               DBQSpec.spec_querySpecialPosts,
-               DBQSpec.spec_querySearchPost,
-               DBQSpec.spec_querySearchCat,
-               DBQSpec.spec_querySearchTag,
-               DBQSpec.spec_querySearchAuthor,
-               DBQSpec.spec_findInPosts,
-               DBQSpec.spec_findInAuthors,
-               DBQSpec.spec_findInCats,
-               DBQSpec.spec_findInTags,
-               DBQSpec.spec_querySort,
-               DBT.spec_newTag,
-               DBT.spec_getTagPostRecords,
-               DBT.spec_getTagRecordsById,
-               DBT.spec_getAllTagRecords,
-               DBT.spec_getTagIdByTitle,
-               DBU.spec_newUser,
-               DBU.spec_getAuthorIdByUserId,
-               DBU.spec_getUserRecords,
-               DBU.spec_getUserRecordbyId,
-               DBU.spec_getUserIdByLogin,
-               DBPh.spec_newPhoto,
-               DBPh.spec_getLastPhotoRecord,
-               DBPh.spec_getPhotoRecordById,
-               DBPh.spec_getPhotoIdByName,
-               DBD.spec_newDraft,
-               DBD.spec_getDraftText,
-               DBD.spec_getDraftRecords,
-               DBCo.spec_newComment,
-               DBCo.spec_getLastCommentRecord,
-               DBCo.spec_getCommentRecord,
-               DBC.spec_getSub,
-               DBC.spec_newCatNull,
-               DBC.spec_newCat,
-               DBC.spec_getChildCatIdsByCatId,
-               DBC.spec_getCatPostIdsByCatId,
-               DBC.spec_getCatRecordByCatId,
-               DBC.spec_checkIfChildCatIsValid,
-               DBC.spec_getCats,
-               DBC.spec_getCatId,
-               DBA.spec_getAuthorIdByUserId,
-               DBA.spec_getPostIdsByAuthorId,
-               DBA.spec_getLastAuthorRecord,
-               DBA.spec_getAuthorRecords,
-               DBA.spec_getUserIdByAuthorId,
-               DBA.spec_getAuthorRecord,
-               DBAc.spec_getPasswordRecordByLogin,
-               DBAc.spec_getIsAdminRecordByToken,
-               DBAc.spec_getUserIdRecordByToken,
-               DBAc.spec_checkAuthorWritePerm,
-               DBAc.spec_checkUserPerm,
-               DBAc.spec_checkAdminPerm,
-               DBAc.spec_checkPassword,
-               DBP.spec_getPostDraftIdsByPostIds,
-               DBP.spec_getPostDraftIdByPostId,
-               DBP.spec_getPostAddPhotoIdsByPostId,
-               DBP.spec_getPostMainPhotoIdByPostId,
-               DBP.spec_getPostTagIdsByPostId,
-               DBP.spec_getPostCategoryIdByPostId,
-               DBP.spec_getPostAuthorIdbyPostId,
-               DBP.spec_getPostIdByTitle,
-               DBP.spec_getLastPostRecord,
-               DBP.spec_getPostRecord,
-               Util.spec_sqlDAtoText,
-               Util.spec_sqlAtoText,
-               Util.spec_readEitherMa,
-               QP.spec_lookupOptionalParam,
-               QP.spec_extractOptional,
-               QP.spec_createOptionalDict,
-               QP.spec_lookupReqParam,
-               QP.spec_extractRequired,
-               Config.spec_checkConfig
-             ]
+    [ 
+      DBQSpec.spec_queryFromWhere,
+      DBQSpec.spec_queryFromWhereIn,
+      DBQSpec.spec_queryFromWhereInLimit,
+      DBQSpec.spec_queryFromOrderLimitOffset,
+      DBQSpec.spec_queryFromOrderLimit,
+      DBQSpec.spec_queryDeleteWhere,
+      DBQSpec.spec_queryInsertIntoValues,
+      DBQSpec.spec_queryUpdateSetWhere,
+      DBQSpec.spec_querySpecialPosts,
+      DBQSpec.spec_querySearchPost,
+      DBQSpec.spec_querySearchCat,
+      DBQSpec.spec_querySearchTag,
+      DBQSpec.spec_querySearchAuthor,
+      DBQSpec.spec_findInPosts,
+      DBQSpec.spec_findInAuthors,
+      DBQSpec.spec_findInCats,
+      DBQSpec.spec_findInTags,
+      DBQSpec.spec_querySort,
+      DBTag.spec_newTag,
+      DBTag.spec_getTagPostRecords,
+      DBTag.spec_getTagRecordsById,
+      DBTag.spec_getAllTagRecords,
+      DBTag.spec_getTagIdByTitle,
+      DBUser.spec_newUser,
+      DBUser.spec_getAuthorIdByUserId,
+      DBUser.spec_getUserRecords,
+      DBUser.spec_getUserRecordbyId,
+      DBUser.spec_getUserIdByLogin,
+      DBPhoto.spec_newPhoto,
+      DBPhoto.spec_getLastPhotoRecord,
+      DBPhoto.spec_getPhotoRecordById,
+      DBPhoto.spec_getPhotoIdByName,
+      DBDraft.spec_newDraft,
+      DBDraft.spec_getDraftText,
+      DBDraft.spec_getDraftRecords,
+      DBComment.spec_newComment,
+      DBComment.spec_getLastCommentRecord,
+      DBComment.spec_getCommentRecord,
+      DBCategory.spec_getSub,
+      DBCategory.spec_newCatNull,
+      DBCategory.spec_newCat,
+      DBCategory.spec_getChildCatIdsByCatId,
+      DBCategory.spec_getCatPostIdsByCatId,
+      DBCategory.spec_getCatRecordByCatId,
+      DBCategory.spec_checkIfChildCatIsValid,
+      DBCategory.spec_getCats,
+      DBCategory.spec_getCatId,
+      DBAuthor.spec_getAuthorIdByUserId,
+      DBAuthor.spec_getPostIdsByAuthorId,
+      DBAuthor.spec_getLastAuthorRecord,
+      DBAuthor.spec_getAuthorRecords,
+      DBAuthor.spec_getUserIdByAuthorId,
+      DBAuthor.spec_getAuthorRecord,
+      DBAccount.spec_getPasswordRecordByLogin,
+      DBAccount.spec_getIsAdminRecordByToken,
+      DBAccount.spec_getUserIdRecordByToken,
+      DBAccount.spec_checkAuthorWritePerm,
+      DBAccount.spec_checkUserPerm,
+      DBAccount.spec_checkAdminPerm,
+      DBAccount.spec_checkPassword,
+      DBPost.spec_getPostDraftIdsByPostIds,
+      DBPost.spec_getPostDraftIdByPostId,
+      DBPost.spec_getPostAddPhotoIdsByPostId,
+      DBPost.spec_getPostMainPhotoIdByPostId,
+      DBPost.spec_getPostTagIdsByPostId,
+      DBPost.spec_getPostCategoryIdByPostId,
+      DBPost.spec_getPostAuthorIdbyPostId,
+      DBPost.spec_getPostIdByTitle,
+      DBPost.spec_getLastPostRecord,
+      DBPost.spec_getPostRecord,
+      Util.spec_sqlDAtoText,
+      Util.spec_sqlAtoText,
+      Util.spec_readEitherMa,
+      Query.spec_lookupOptionalParam,
+      Query.spec_extractOptional,
+      Query.spec_createOptionalDict,
+      Query.spec_lookupReqParam,
+      Query.spec_extractRequired,
+      Config.spec_checkConfig
+    ]
   defaultMain (testGroup "All Tests" [
-                  testGroup "Specs" specs
-                ])
+    testGroup "Specs" specs
+    ])

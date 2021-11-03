@@ -8,11 +8,11 @@ import Control.Monad.Trans (lift)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import qualified Post.DB.Post as DBP
-import qualified Post.DB.Comment as DBCo
-import qualified Post.DB.Account as DBAC
+import qualified Post.DB.Post as DBPost
+import qualified Post.DB.Comment as DBComment
+import qualified Post.DB.Account as DBAccount
 import qualified Post.Server.Util as Util
-import qualified Post.Server.QueryParameters as QP
+import qualified Post.Server.QueryParameters as Query
 import Post.Server.Objects (Permission(..), TextResponse(..))
 import Post.Server.Responses (respError, respOk, resp404)
 
@@ -23,21 +23,21 @@ createCommentResp handle query = do
       dbqh = hDBQ handle
   Logger.logInfo logh "Processing request: create Comment record"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ QP.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logh query authParams
     let [token] = givenToken
-    perm <- lift $ DBAC.checkUserPerm dbqh token
+    perm <- lift $ DBAccount.checkUserPerm dbqh token
     guard $ perm == UserPerm
     return token
   case permE of
     Left _ -> return resp404
     Right token -> do
       msgE <- runEitherT $ do
-        reqParams <- newEitherT $ QP.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logh query params
         let [idPost, text] = reqParams
-        userId <- newEitherT $ DBAC.getUserIdRecordByToken dbqh token
+        userId <- newEitherT $ DBAccount.getUserIdRecordByToken dbqh token
         postId <- newEitherT $ Util.readEitherMa idPost "post_id"
-        _ <- newEitherT $ DBP.getPostRecord dbqh postId
-        newEitherT $ DBCo.createComment dbqh postId userId text
+        _ <- newEitherT $ DBPost.getPostRecord dbqh postId
+        newEitherT $ DBComment.createComment dbqh postId userId text
       case msgE of
         Right _ -> do
           let msg = "Comment was created"

@@ -6,8 +6,8 @@ import Control.Monad.Trans.Either (newEitherT, runEitherT)
 
 import Post.Server.ServerSpec (Handle(..))
 import qualified Post.Logger as Logger
-import qualified Post.DB.Account as DBAC
-import qualified Post.Server.QueryParameters as QP
+import qualified Post.DB.Account as DBAccount
+import qualified Post.Server.QueryParameters as Query
 import Post.Server.Responses (respOk, respError)
 
 -- | Create login Response: Send new token
@@ -17,9 +17,9 @@ login handle query = do
       dbqh = hDBQ handle
   Logger.logDebug logh "Login intent"
   tokenE <- runEitherT $ do
-    reqParams <- newEitherT $ QP.extractRequired logh query params
+    reqParams <- newEitherT $ Query.extractRequired logh query params
     let [userLogin, password] = reqParams
-    token <- newEitherT $ DBAC.getToken dbqh userLogin password
+    token <- newEitherT $ DBAccount.getToken dbqh userLogin password
     return (userLogin, token)
   case tokenE of
     Left msg -> return $ respError msg

@@ -9,7 +9,7 @@ import Post.DB.DBQSpec (Handle(..))
 import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.Logger as Logger
 import Post.Server.Objects (Comment(..), UserId, CommentId, PostId)
-import qualified Post.DB.Data as DB
+import qualified Post.DB.Data as DBData
 import Post.Server.Util (convert)
 
 {-- | DB methods for Comment --}
@@ -27,9 +27,9 @@ createComment handle postId userId text = runEitherT $ do
 getCommentRecord :: Monad m => Handle m -> CommentId -> m (Either Text Comment)
 getCommentRecord handle commentId = do
   let logh = hLogger handle
-  comsSql <- DBQSpec.selectFromWhere handle DB.tableComs
-              [DB.colIdCom, DB.colTextCom]
-              [DB.colIdCom]
+  comsSql <- DBQSpec.selectFromWhere handle DBData.tableComs
+              [DBData.colIdCom, DBData.colTextCom]
+              [DBData.colIdCom]
               [toSql commentId]
   case comsSql of
     [] -> do
@@ -53,9 +53,9 @@ getCommentRecord handle commentId = do
 getLastCommentRecord :: Monad m => Handle m -> m (Either Text CommentId)
 getLastCommentRecord handle = do
   let logh = hLogger handle
-  idComSql <- DBQSpec.selectFromOrderLimit handle DB.tableComs
-               [DB.colIdCom]
-                DB.colIdCom 1
+  idComSql <- DBQSpec.selectFromOrderLimit handle DBData.tableComs
+               [DBData.colIdCom]
+                DBData.colIdCom 1
   case idComSql of
     [] -> do
       let msg = "No exist Comments!"
@@ -75,8 +75,8 @@ getLastCommentRecord handle = do
 insertCommentRecord :: Monad m => Handle m -> Text -> m ()
 insertCommentRecord handle text = do
   let logh = hLogger handle
-  _ <- DBQSpec.insertIntoValues handle DB.tableComs
-        [DB.colTextCom] 
+  _ <- DBQSpec.insertIntoValues handle DBData.tableComs
+        [DBData.colTextCom] 
         [toSql text]
   Logger.logInfo logh $ "Comment with text: '"
     <> text
@@ -86,8 +86,8 @@ insertCommentRecord handle text = do
 createCommentUserRecord :: Monad m => Handle m -> CommentId -> UserId -> m ()
 createCommentUserRecord handle commentId userId = do
   let logh = hLogger handle
-  _ <- DBQSpec.insertIntoValues handle DB.tableUserCom
-        [DB.colIdComUserCom, DB.colIdUserUserCom] 
+  _ <- DBQSpec.insertIntoValues handle DBData.tableUserCom
+        [DBData.colIdComUserCom, DBData.colIdUserUserCom] 
         [toSql commentId, toSql userId]
   Logger.logInfo logh "Creating dependency between Comment and User."
 
@@ -95,8 +95,8 @@ createCommentUserRecord handle commentId userId = do
 createPostCommentRecord :: Monad m => Handle m -> CommentId -> PostId -> m ()
 createPostCommentRecord handle commentId postId = do
   let logh = hLogger handle
-  _ <- DBQSpec.insertIntoValues handle DB.tablePostCom
-        [DB.colIdPostPostCom, DB.colIdComPostCom]
+  _ <- DBQSpec.insertIntoValues handle DBData.tablePostCom
+        [DBData.colIdPostPostCom, DBData.colIdComPostCom]
         [toSql postId, toSql commentId]
   Logger.logInfo logh "Creating dependency between Post and Comment."
 

@@ -7,14 +7,14 @@ import Data.Text (Text)
 import Data.List (intercalate)
 import qualified Data.Text as T
 import qualified System.IO as SIO
-import qualified Network.HTTP.Client as HC
+import qualified Network.HTTP.Client as HTTP
 
 import Post.DB.DBSpec (Handle(..), Config(..))
 import qualified Post.Logger as Logger
 import qualified Post.Server.ServerConfig as ServerConfig
 import Post.DB.Data (Table(..), Column(..), TableName,
                      ColumnName, ConstraintName, PropType)
-import qualified Post.DB.Data as DB
+import qualified Post.DB.Data as DBData
 
 withHandleIO :: Logger.Handle IO ->
                 Config -> ServerConfig.Config -> (Handle IO -> IO a) -> IO a
@@ -35,8 +35,8 @@ withHandleIO logger config serverConfig f = do
         hPutStr = SIO.hPutStr,
         hClose = SIO.hClose,
 
-        newManager = HC.newManager,
-        httpLbs = HC.httpLbs
+        newManager = HTTP.newManager,
+        httpLbs = HTTP.httpLbs
       }
       prepDB handle
       f handle
@@ -55,8 +55,8 @@ withHandleIO logger config serverConfig f = do
         hPutStr = SIO.hPutStr,
         hClose = SIO.hClose,
 
-        newManager = HC.newManager,
-        httpLbs = HC.httpLbs
+        newManager = HTTP.newManager,
+        httpLbs = HTTP.httpLbs
       }
       prepDB handle
       f handle
@@ -70,24 +70,24 @@ Create tables and ask the database engine to verify some info:
 -}
 prepDB :: Handle IO -> IO ()
 prepDB handle = do
-  _ <- createTable handle DB.tableUsers
-  _ <- createTable handle DB.tableAuthors
-  _ <- createTable handle DB.tableCats
-  _ <- createTable handle DB.tableTags
-  _ <- createTable handle DB.tablePosts
-  _ <- createTable handle DB.tableComs
-  _ <- createTable handle DB.tableDrafts
-  _ <- createTable handle DB.tablePhotos
-  _ <- createTable handle DB.tableUserPhoto
-  _ <- createTable handle DB.tableAuthorUser
-  _ <- createTable handle DB.tableUserCom
-  _ <- createTable handle DB.tablePostAuthor
-  _ <- createTable handle DB.tablePostCat
-  _ <- createTable handle DB.tablePostCom
-  _ <- createTable handle DB.tablePostDraft
-  _ <- createTable handle DB.tablePostTag
-  _ <- createTable handle DB.tablePostMainPhoto
-  _ <- createTable handle DB.tablePostAddPhoto
+  _ <- createTable handle DBData.tableUsers
+  _ <- createTable handle DBData.tableAuthors
+  _ <- createTable handle DBData.tableCats
+  _ <- createTable handle DBData.tableTags
+  _ <- createTable handle DBData.tablePosts
+  _ <- createTable handle DBData.tableComs
+  _ <- createTable handle DBData.tableDrafts
+  _ <- createTable handle DBData.tablePhotos
+  _ <- createTable handle DBData.tableUserPhoto
+  _ <- createTable handle DBData.tableAuthorUser
+  _ <- createTable handle DBData.tableUserCom
+  _ <- createTable handle DBData.tablePostAuthor
+  _ <- createTable handle DBData.tablePostCat
+  _ <- createTable handle DBData.tablePostCom
+  _ <- createTable handle DBData.tablePostDraft
+  _ <- createTable handle DBData.tablePostTag
+  _ <- createTable handle DBData.tablePostMainPhoto
+  _ <- createTable handle DBData.tablePostAddPhoto
   return ()
 
 createTable :: Handle IO -> Table -> IO ()

@@ -13,10 +13,10 @@ import Post.DB.DBQSpec (Handle(..))
 import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Logger as Logger
-import qualified Post.DB.Photo as DBPh
+import qualified Post.DB.Photo as DBPhoto
 import Post.Server.Objects (User(..), Photo(..), LastName, FirstName,
                             Offset, Password, Login, UserId, PhotoId, AuthorId)
-import qualified Post.DB.Data as DB
+import qualified Post.DB.Data as DBData
 import Post.Server.Util (convert)
 
 {-- | DB methods for User --}
@@ -34,13 +34,13 @@ createUser handle firstName lastName login password = do
       let encryptedPass = getEncryptedPass encrypted
       newToken <- createToken handle
       let isAdmin = login `elem` adminList
-      _ <- DBQSpec.insertIntoValues handle DB.tableUsers 
-           [DB.colIsAdminUser, 
-            DB.colFNUser,
-            DB.colLNUser,
-            DB.colLoginUser,
-            DB.colPassUser,
-            DB.colTokenUser] 
+      _ <- DBQSpec.insertIntoValues handle DBData.tableUsers 
+           [DBData.colIsAdminUser, 
+            DBData.colFNUser,
+            DBData.colLNUser,
+            DBData.colLoginUser,
+            DBData.colPassUser,
+            DBData.colTokenUser] 
            [toSql isAdmin,
             toSql firstName,
             toSql lastName,
@@ -89,7 +89,7 @@ removeUser handle userId = do
 setUserPhoto :: Monad m => Handle m -> UserId -> Text -> m (Either Text PhotoId)
 setUserPhoto handle userId path = do
   let logh = hLogger handle
-  photoIdE <- DBPh.savePhoto handle path
+  photoIdE <- DBPhoto.savePhoto handle path
   case photoIdE of
     Left _ -> do
       let msg = "Couldn't set Photo for User with id: "
@@ -114,9 +114,9 @@ removeUserPhotoDeps handle userId = runEitherT $ do
 getUserIdByLogin :: Monad m => Handle m -> Login -> m (Either Text UserId)
 getUserIdByLogin handle login = do
   let logh = hLogger handle
-  userIdSql <- DBQSpec.selectFromWhere handle DB.tableUsers
-                [DB.colIdUser]
-                [DB.colLoginUser]
+  userIdSql <- DBQSpec.selectFromWhere handle DBData.tableUsers
+                [DBData.colIdUser]
+                [DBData.colLoginUser]
                 [toSql login]
   case userIdSql of
     [] -> do
@@ -142,9 +142,14 @@ getUserIdByLogin handle login = do
 getUserRecordbyId :: Monad m => Handle m -> UserId -> m (Either Text User)
 getUserRecordbyId handle userId = do
   let logh = hLogger handle
-  usersSql <- DBQSpec.selectFromWhere handle DB.tableUsers 
-              [DB.colIdUser, DB.colFNUser, DB.colLNUser, DB.colIsAdminUser] 
-              [DB.colIdUser] 
+  usersSql <- DBQSpec.selectFromWhere handle DBData.tableUsers 
+              [
+                DBData.colIdUser,
+                DBData.colFNUser,
+                DBData.colLNUser,
+                DBData.colIsAdminUser
+              ] 
+              [DBData.colIdUser] 
               [toSql userId]
   case usersSql of
     [] -> do
@@ -168,8 +173,13 @@ getUserRecordbyId handle userId = do
 getUserRecords :: Monad m => Handle m -> Offset -> m (Either Text [User])
 getUserRecords handle offset = do
   let logh = hLogger handle
-  usersSQL <- DBQSpec.selectFromOrderLimitOffset handle DB.tableUsers
-              [DB.colIdUser, DB.colFNUser, DB.colLNUser, DB.colIsAdminUser]
+  usersSQL <- DBQSpec.selectFromOrderLimitOffset handle DBData.tableUsers
+              [
+                DBData.colIdUser,
+                DBData.colFNUser,
+                DBData.colLNUser,
+                DBData.colIsAdminUser
+              ]
                offset
   case usersSQL of
     [] -> do
@@ -184,9 +194,9 @@ getUserRecords handle offset = do
 getUserPhotoRecord :: Monad m => Handle m -> UserId -> m (Either Text Photo)
 getUserPhotoRecord handle userId = do
   let logh = hLogger handle
-  idPhotoSql <- DBQSpec.selectFromWhere handle DB.tableUserPhoto
-                [DB.colIdUserUserPhoto]
-                [DB.colIdUserUserPhoto]
+  idPhotoSql <- DBQSpec.selectFromWhere handle DBData.tableUserPhoto
+                [DBData.colIdUserUserPhoto]
+                [DBData.colIdUserUserPhoto]
                 [toSql userId]
   case idPhotoSql of
     [] -> do
@@ -198,7 +208,7 @@ getUserPhotoRecord handle userId = do
       Logger.logInfo logh $ "Getting Photo for User with id: "
         <> convert userId
         <> " from db."
-      DBPh.getPhotoRecordById handle $ fromSql photoId
+      DBPhoto.getPhotoRecordById handle $ fromSql photoId
     _ -> do
       let msg = "Violation of Unique record User-Photo in db: \
                 \exist more than one record for User with Id: "
@@ -210,9 +220,9 @@ getUserPhotoRecord handle userId = do
 getAuthorIdByUserId :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
 getAuthorIdByUserId handle userId = do
   let logh = hLogger handle
-  authorIdSql <- DBQSpec.selectFromWhere handle DB.tableAuthorUser
-                  [DB.colIdAuthorAuthorUser]
-                  [DB.colIdUserAuthorUser]
+  authorIdSql <- DBQSpec.selectFromWhere handle DBData.tableAuthorUser
+                  [DBData.colIdAuthorAuthorUser]
+                  [DBData.colIdUserAuthorUser]
                   [toSql userId]
   case authorIdSql of
     [] -> do
@@ -234,8 +244,8 @@ getAuthorIdByUserId handle userId = do
 deleteUserRecord :: Monad m => Handle m -> UserId -> m ()
 deleteUserRecord handle userId = do
   let logh = hLogger handle
-  _ <- DBQSpec.deleteWhere handle DB.tableUsers
-        [DB.colIdUser]
+  _ <- DBQSpec.deleteWhere handle DBData.tableUsers
+        [DBData.colIdUser]
         [toSql userId]
   Logger.logInfo logh $ "Removing User with id: "
     <> convert userId
@@ -245,8 +255,8 @@ deleteUserRecord handle userId = do
 insertUserPhotoRecord :: Monad m => Handle m -> UserId -> PhotoId -> m ()
 insertUserPhotoRecord handle userId photoId = do
   let logh = hLogger handle
-  _ <- DBQSpec.insertIntoValues handle DB.tableUserPhoto
-        [DB.colIdPhotoUserPhoto, DB.colIdUserUserPhoto] 
+  _ <- DBQSpec.insertIntoValues handle DBData.tableUserPhoto
+        [DBData.colIdPhotoUserPhoto, DBData.colIdUserUserPhoto] 
         [toSql photoId, toSql userId]
   Logger.logInfo logh "Creating dependencies between User and Photo in db."
 
@@ -254,9 +264,9 @@ insertUserPhotoRecord handle userId photoId = do
 updateUserPhotoRecord :: Monad m => Handle m -> UserId -> PhotoId -> m ()
 updateUserPhotoRecord handle userId photoIdNew = do
   let logh = hLogger handle
-  _ <- DBQSpec.updateSetWhere handle DB.tableUserPhoto
-        [DB.colIdPhotoUserPhoto]
-        [DB.colIdUserUserPhoto]
+  _ <- DBQSpec.updateSetWhere handle DBData.tableUserPhoto
+        [DBData.colIdPhotoUserPhoto]
+        [DBData.colIdUserUserPhoto]
         [toSql photoIdNew]
         [toSql userId]
   Logger.logInfo logh "Updating dependencies between User and Photo in db."
@@ -265,8 +275,8 @@ updateUserPhotoRecord handle userId photoIdNew = do
 deleteUserPhotoRecord :: Monad m => Handle m -> UserId -> m ()
 deleteUserPhotoRecord handle userId = do
   let logh = hLogger handle
-  _ <- DBQSpec.deleteWhere handle DB.tableUserPhoto
-        [DB.colIdUserUserPhoto]
+  _ <- DBQSpec.deleteWhere handle DBData.tableUserPhoto
+        [DBData.colIdUserUserPhoto]
         [toSql userId]
   Logger.logInfo logh "Removing dependencies between User and Photo from db."
 

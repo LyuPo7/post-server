@@ -8,10 +8,10 @@ import Data.Text (Text)
 import Post.DB.DBQSpec (Handle(..))
 import qualified Post.DB.DBQSpec as DBQSpec
 import qualified Post.Logger as Logger
-import qualified Post.DB.User as DBU
+import qualified Post.DB.User as DBUser
 import Post.Server.Objects (Author(..), UserId, AuthorId,
                             PostId, Description, Offset)
-import qualified Post.DB.Data as DB
+import qualified Post.DB.Data as DBData
 import Post.Server.Util (convert)
 
 {-- | DB methods for Author --}
@@ -87,9 +87,9 @@ removeAuthorUserDep handle userId = runEitherT $ do
 getAuthorRecord :: Monad m => Handle m -> AuthorId -> m (Either Text Author)
 getAuthorRecord handle authorId = do
   let logh = hLogger handle
-  authorSql <- DBQSpec.selectFromWhere handle DB.tableAuthors
-                [DB.colIdAuthor, DB.colDescAuthor]
-                [DB.colIdAuthor]
+  authorSql <- DBQSpec.selectFromWhere handle DBData.tableAuthors
+                [DBData.colIdAuthor, DBData.colDescAuthor]
+                [DBData.colIdAuthor]
                 [toSql authorId]
   case authorSql of
     [] -> do
@@ -112,9 +112,9 @@ getUserIdByAuthorId :: Monad m => Handle m ->
                              AuthorId -> m (Either Text UserId)
 getUserIdByAuthorId handle authorId = do
   let logh = hLogger handle
-  idUserSql <- DBQSpec.selectFromWhere handle DB.tableAuthorUser
-                [DB.colIdUserAuthorUser]
-                [DB.colIdAuthorAuthorUser]
+  idUserSql <- DBQSpec.selectFromWhere handle DBData.tableAuthorUser
+                [DBData.colIdUserAuthorUser]
+                [DBData.colIdAuthorAuthorUser]
                 [toSql authorId]
   case idUserSql of
     [] -> do
@@ -138,9 +138,9 @@ getUserIdByAuthorId handle authorId = do
 getAuthorIdByUserId :: Monad m => Handle m -> UserId -> m (Either Text AuthorId)
 getAuthorIdByUserId handle userId = do
   let logh = hLogger handle
-  authorIdSql <- DBQSpec.selectFromWhere handle DB.tableAuthorUser
-                 [DB.colIdAuthorAuthorUser]
-                 [DB.colIdUserAuthorUser]
+  authorIdSql <- DBQSpec.selectFromWhere handle DBData.tableAuthorUser
+                 [DBData.colIdAuthorAuthorUser]
+                 [DBData.colIdUserAuthorUser]
                  [toSql userId]
   case authorIdSql of
     [] -> do
@@ -162,8 +162,8 @@ getAuthorIdByUserId handle userId = do
 getAuthorRecords :: Monad m => Handle m -> Offset -> m (Either Text [Author])
 getAuthorRecords handle offset = do
   let logh = hLogger handle
-  authorsSQL <- DBQSpec.selectFromOrderLimitOffset  handle DB.tableAuthors
-                 [DB.colIdAuthor, DB.colDescAuthor]
+  authorsSQL <- DBQSpec.selectFromOrderLimitOffset  handle DBData.tableAuthors
+                 [DBData.colIdAuthor, DBData.colDescAuthor]
                   offset
   case authorsSQL of
     [] -> do
@@ -178,9 +178,9 @@ getAuthorRecords handle offset = do
 getLastAuthorRecord :: Monad m => Handle m -> m (Either Text AuthorId)
 getLastAuthorRecord handle = do
   let logh = hLogger handle
-  idAuthorSql <- DBQSpec.selectFromOrderLimit handle DB.tableAuthors
-                  [DB.colIdAuthor] 
-                   DB.colIdAuthor 1
+  idAuthorSql <- DBQSpec.selectFromOrderLimit handle DBData.tableAuthors
+                  [DBData.colIdAuthor] 
+                   DBData.colIdAuthor 1
   case idAuthorSql of
     [] -> do
       let msg = "No exist Authors!"
@@ -201,9 +201,9 @@ getPostIdsByAuthorId :: Monad m => Handle m ->
                         AuthorId -> m (Either Text [PostId])
 getPostIdsByAuthorId handle authorId = do
   let logh = hLogger handle
-  postsIdSql <- DBQSpec.selectFromWhere handle DB.tablePostAuthor
-                 [DB.colIdPostPostAuthor]
-                 [DB.colIdAuthorPostAuthor]
+  postsIdSql <- DBQSpec.selectFromWhere handle DBData.tablePostAuthor
+                 [DBData.colIdPostPostAuthor]
+                 [DBData.colIdAuthorPostAuthor]
                  [toSql authorId]
   case postsIdSql of
     [] -> do
@@ -219,8 +219,8 @@ getPostIdsByAuthorId handle authorId = do
 insertAuthorRecord :: Monad m => Handle m -> Description -> m ()
 insertAuthorRecord handle description = do
   let logh = hLogger handle
-  _ <- DBQSpec.insertIntoValues handle DB.tableAuthors 
-        [DB.colDescAuthor] 
+  _ <- DBQSpec.insertIntoValues handle DBData.tableAuthors 
+        [DBData.colDescAuthor] 
         [toSql description]
   Logger.logInfo logh "Author was successfully inserted in db."
 
@@ -228,9 +228,9 @@ insertAuthorRecord handle description = do
 updateAuthorRecord :: Monad m => Handle m -> AuthorId -> Description -> m ()
 updateAuthorRecord handle authorId newDescription = do
   let logh = hLogger handle
-  _ <- DBQSpec.updateSetWhere handle DB.tableAuthors
-        [DB.colDescAuthor]
-        [DB.colIdAuthor]
+  _ <- DBQSpec.updateSetWhere handle DBData.tableAuthors
+        [DBData.colDescAuthor]
+        [DBData.colIdAuthor]
         [toSql newDescription]
         [toSql authorId]
   Logger.logInfo logh $ "Updating Author with id: "
@@ -241,8 +241,8 @@ updateAuthorRecord handle authorId newDescription = do
 deleteAuthorRecord :: Monad m => Handle m -> AuthorId -> m ()
 deleteAuthorRecord handle authorId = do
   let logh = hLogger handle
-  _ <- DBQSpec.deleteWhere handle DB.tableAuthors
-        [DB.colIdAuthor]
+  _ <- DBQSpec.deleteWhere handle DBData.tableAuthors
+        [DBData.colIdAuthor]
         [toSql authorId]
   Logger.logInfo logh $ "Removing Author with id: "
     <> convert authorId
@@ -252,8 +252,8 @@ deleteAuthorRecord handle authorId = do
 insertAuthorUserRecord :: Monad m => Handle m -> AuthorId -> UserId -> m ()
 insertAuthorUserRecord handle authorId userId = do
   let logh = hLogger handle
-  _ <- DBQSpec.insertIntoValues handle DB.tableAuthorUser 
-        [DB.colIdAuthorAuthorUser, DB.colIdUserAuthorUser] 
+  _ <- DBQSpec.insertIntoValues handle DBData.tableAuthorUser 
+        [DBData.colIdAuthorAuthorUser, DBData.colIdUserAuthorUser] 
         [toSql authorId, toSql userId]
   Logger.logInfo logh "Creating dependency between Author and User."
 
@@ -261,8 +261,8 @@ insertAuthorUserRecord handle authorId userId = do
 deleteAuthorUserRecord :: Monad m => Handle m -> UserId -> m ()
 deleteAuthorUserRecord handle userId = do
   let logh = hLogger handle
-  _ <- DBQSpec.deleteWhere handle DB.tableAuthorUser
-        [DB.colIdUserAuthorUser]
+  _ <- DBQSpec.deleteWhere handle DBData.tableAuthorUser
+        [DBData.colIdUserAuthorUser]
         [toSql userId]
   Logger.logInfo logh "Removing dependency between Author and User."
 
@@ -273,7 +273,7 @@ newAuthor handle [idAuthor, desc] = do
     let authorId = fromSql idAuthor
         descr = fromSql desc
     userId <- newEitherT $ getUserIdByAuthorId handle authorId
-    user <- newEitherT $ DBU.getUserRecordbyId handle userId
+    user <- newEitherT $ DBUser.getUserRecordbyId handle userId
     return $ Author {
       author_user = user,
       author_description = descr
