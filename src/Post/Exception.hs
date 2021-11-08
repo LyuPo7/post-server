@@ -15,7 +15,7 @@ data PostError = ConfigLoggerRangeError
                deriving (Exception, Eq)
 
 instance Show PostError where
-  show ConfigLoggerRangeError = "Verbocity must be in ['debug', 'info', 'warning', 'error'] "
+  show ConfigLoggerRangeError = "Verbosity must be in ['debug', 'info', 'warning', 'error'] "
   show ConfigDBNameEmptyError = "DB name can't be empty"
   show ConfigServerHostEmptyError = "Host server can't be empty"
   show CreationObjectError = "Error while creating Object"

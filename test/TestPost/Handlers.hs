@@ -8,8 +8,8 @@ import qualified Post.DB.DBSpec as DBSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Config as PostConfig
 
-dbqh :: DBQSpec.Handle Identity
-dbqh = DBQSpec.Handle {
+dbqH :: DBQSpec.Handle Identity
+dbqH = DBQSpec.Handle {
   DBQSpec.hLogger = logH,
   DBQSpec.hDB = dbH,
   DBQSpec.cDB = dbC,
@@ -41,17 +41,17 @@ dbH = DBSpec.Handle {
 logH :: Logger.Handle Identity
 logH = Logger.Handle {
     Logger.log = \_ _ -> return (),
-    Logger.hconfig = logC
+    Logger.hConfig = logC
 }
 
 logC :: Logger.Config
 logC = Logger.Config {
-  Logger.cVerbocity = Nothing
+  Logger.cVerbosity = Nothing
 }
 
 dbC :: DBSpec.Config
 dbC = DBSpec.Config {
-  DBSpec.dbname = "post-server",
+  DBSpec.dbName = "post-server",
   DBSpec.user = Just "lyupo",
   DBSpec.admins = ["lyupo"]
 }

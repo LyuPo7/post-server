@@ -16,7 +16,7 @@ import Post.Server.Objects (Admin)
 
 -- | DB Config
 data Config = Config {
-  dbname :: Text,
+  dbName :: Text,
   user :: Maybe Text,
   admins :: [Admin]
 } deriving (Show, Generic, Eq, FromJSON, ToJSON)

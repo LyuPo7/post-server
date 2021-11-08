@@ -33,7 +33,7 @@ savePhoto handle path = do
 -- | Save Photo if doesn't exist Photo with the same name
 getPhotoIdByName :: Monad m => Handle m -> Text -> m (Either Text PhotoId)
 getPhotoIdByName handle pathToPhoto = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   idPhotoSql <- DBQSpec.selectFromWhere handle DBData.tablePhotos
                  [DBData.colIdPhoto]
                  [DBData.colLinkPhoto]
@@ -42,25 +42,25 @@ getPhotoIdByName handle pathToPhoto = do
     [] -> do
       let msg = "No exists Photo: '"
             <> pathToPhoto <> "'"
-      Logger.logInfo logh msg
+      Logger.logInfo logH msg
       return $ Left msg
     [[idPhoto]] -> do
       let msg = "Photo: '"
             <> pathToPhoto
             <> "' already exists!"
-      Logger.logInfo logh msg
+      Logger.logInfo logH msg
       return $ Right $ fromSql idPhoto
     _ -> do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Photo: '"
                   <> pathToPhoto <> "'"
-      Logger.logError logh msg
+      Logger.logError logH msg
       return $ Left msg
 
 -- | Get Photo record by PhotoId if exists
 getPhotoRecordById :: Monad m => Handle m -> PhotoId -> m (Either Text Photo)
 getPhotoRecordById handle photoId = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   photoSql <- DBQSpec.selectFromWhere handle DBData.tablePhotos
                [DBData.colIdPhoto, DBData.colLinkPhoto]
                [DBData.colIdPhoto]
@@ -69,10 +69,10 @@ getPhotoRecordById handle photoId = do
     [] -> do
       let msg = "No exists Photo with id: "
             <> convert photoId 
-      Logger.logWarning logh msg
+      Logger.logWarning logH msg
       return $ Left msg
     [idLinks] -> do
-      Logger.logInfo logh $ "Photo with id: "
+      Logger.logInfo logH $ "Photo with id: "
         <> convert photoId
         <> " extracted from db."
       newPhoto handle idLinks
@@ -80,39 +80,39 @@ getPhotoRecordById handle photoId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Photo with Id: "
                   <> convert photoId
-      Logger.logError logh msg
+      Logger.logError logH msg
       return $ Left msg
 
 -- | Get Last Photo if exists
 getLastPhotoRecord :: Monad m => Handle m -> m (Either Text PhotoId)
 getLastPhotoRecord handle = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   idPhotoSql <- DBQSpec.selectFromOrderLimit handle DBData.tablePhotos
                  [DBData.colIdPhoto]
                   DBData.colIdPhoto 1
   case idPhotoSql of
     [] -> do
       let msg = "No exist Photos in db!"
-      Logger.logWarning logh msg
+      Logger.logWarning logH msg
       return $ Left msg
     [[idPhoto]] -> do
       let photoId = fromSql idPhoto
-      Logger.logInfo logh $ "Last Photo inserted in db with id: "
+      Logger.logInfo logH $ "Last Photo inserted in db with id: "
         <> convert photoId
       return $ Right photoId
     _ -> do
       let msg = "Incorrect Photo record!"
-      Logger.logError logh msg
+      Logger.logError logH msg
       return $ Left msg
 
--- | Insery Photo record
+-- | Insert Photo record
 insertPhotoRecord :: Monad m => Handle m -> Text -> m ()
 insertPhotoRecord handle pathToPhoto = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   _ <- DBQSpec.insertIntoValues handle DBData.tablePhotos 
         [DBData.colLinkPhoto] 
         [toSql pathToPhoto]
-  Logger.logInfo logh $ "Inserting photo: '"
+  Logger.logInfo logH $ "Inserting photo: '"
     <> pathToPhoto
     <> "' !"
 

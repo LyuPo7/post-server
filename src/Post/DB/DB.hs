@@ -19,7 +19,7 @@ import qualified Post.DB.Data as DBData
 withHandleIO :: Logger.Handle IO ->
                 Config -> ServerConfig.Config -> (Handle IO -> IO a) -> IO a
 withHandleIO logger config serverConfig f = do
-  let db = "dbname=" <> dbname config
+  let db = "dbname=" <> dbName config
   case user config of
     Nothing -> do
       Logger.logDebug logger $ "Connecting to db: " <> db
@@ -93,7 +93,7 @@ prepDB handle = do
 createTable :: Handle IO -> Table -> IO ()
 createTable handle table = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
       tableName = table_name table
       columns = table_columns table
   tables <- getTables dbh
@@ -103,7 +103,7 @@ createTable handle table = do
          ++ intercalate "," (map show columns)
          ++ ")"
     _ <- run dbh query []
-    Logger.logInfo logh $ "Table '"
+    Logger.logInfo logH $ "Table '"
       <> tableName 
       <> "' was successfully created!"
   commit dbh
@@ -111,13 +111,13 @@ createTable handle table = do
 dropTable :: Handle IO -> TableName -> IO ()
 dropTable handle tableName = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `notElem` tables) $ do
     let query = "DROP TABLE " 
          ++ T.unpack tableName
     _ <- run dbh query []
-    Logger.logInfo logh $ "Table '"
+    Logger.logInfo logH $ "Table '"
       <> tableName
       <> "' was successfully removed!"
   commit dbh
@@ -125,7 +125,7 @@ dropTable handle tableName = do
 renameColumn :: Handle IO -> TableName -> ColumnName -> ColumnName -> IO ()
 renameColumn handle tableName oldColName newColName = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let query = T.unpack $ "ALTER TABLE "
@@ -135,7 +135,7 @@ renameColumn handle tableName oldColName newColName = do
          <> " TO "
          <> newColName
     _ <- run dbh query []
-    Logger.logInfo logh $ "Column '" 
+    Logger.logInfo logH $ "Column '" 
       <> oldColName
       <> "' was successfully renamed to '"
       <> newColName
@@ -147,7 +147,7 @@ renameColumn handle tableName oldColName newColName = do
 dropColumn :: Handle IO -> TableName -> ColumnName -> IO ()
 dropColumn handle tableName colName = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let query = T.unpack $ "ALTER TABLE "
@@ -155,9 +155,9 @@ dropColumn handle tableName colName = do
          <> " DROP COLUMN "
          <> colName
     _ <- run dbh query []
-    Logger.logInfo logh $ "Column '"
+    Logger.logInfo logH $ "Column '"
       <> colName 
-      <> "' was successfully droped from table '"
+      <> "' was successfully dropped from table '"
       <> tableName
       <> "'"
   commit dbh
@@ -165,7 +165,7 @@ dropColumn handle tableName colName = do
 addColumn :: Handle IO -> TableName -> Column -> IO ()
 addColumn handle tableName column = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let query = "ALTER TABLE "
@@ -173,7 +173,7 @@ addColumn handle tableName column = do
          ++ " ADD COLUMN "
          ++ show column
     _ <- run dbh query []
-    Logger.logInfo logh $ "Column '"
+    Logger.logInfo logH $ "Column '"
       <> column_name column
       <> "' was successfully added to table '"
       <> tableName
@@ -183,7 +183,7 @@ addColumn handle tableName column = do
 changeColumnType :: Handle IO -> TableName -> ColumnName -> PropType -> IO ()
 changeColumnType handle tableName colName propType = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let query = "ALTER TABLE "
@@ -193,7 +193,7 @@ changeColumnType handle tableName colName propType = do
          ++ " TYPE "
          ++ show propType
     _ <- run dbh query []
-    Logger.logInfo logh $ "Type of column '"
+    Logger.logInfo logH $ "Type of column '"
       <> colName
       <> "' was successfully changed in table '"
       <> tableName
@@ -204,7 +204,7 @@ addConstraintNotNull :: Handle IO -> TableName ->
                         ColumnName -> PropType -> IO ()
 addConstraintNotNull handle tableName colName propType = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let query = "ALTER TABLE "
@@ -215,7 +215,7 @@ addConstraintNotNull handle tableName colName propType = do
          ++ show propType
          ++ " NOT NULL"
     _ <- run dbh query []
-    Logger.logInfo logh $ "Constraint 'NOT NULL' \
+    Logger.logInfo logH $ "Constraint 'NOT NULL' \
                           \was successfully added to column '" 
       <> colName
       <> "' in table '"
@@ -227,7 +227,7 @@ addConstraintUnique :: Handle IO -> TableName ->
                        ColumnName -> ConstraintName -> IO ()
 addConstraintUnique handle tableName colName conName = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let check = "SELECT constraint_name \
@@ -246,11 +246,11 @@ addConstraintUnique handle tableName colName conName = do
              ++ T.unpack colName
              ++ " )"
         _ <- run dbh query []
-        Logger.logInfo logh $ "Constraint 'UNIQUE'\
+        Logger.logInfo logH $ "Constraint 'UNIQUE'\
           \ was successfully added to column '" 
           <> colName <> "' in table '"
           <> tableName <> "'"
-      _ -> Logger.logInfo logh $ "Constraint name '"
+      _ -> Logger.logInfo logH $ "Constraint name '"
         <> conName
         <> "' is already in use!"
   commit dbh
@@ -259,7 +259,7 @@ addConstraintPrimaryKey :: Handle IO -> TableName ->
                            ColumnName -> ConstraintName -> IO ()
 addConstraintPrimaryKey handle tableName colName conName = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let check = "SELECT constraint_name \
@@ -280,11 +280,11 @@ addConstraintPrimaryKey handle tableName colName conName = do
              ++ T.unpack colName
              ++ " )"
         _ <- run dbh query []
-        Logger.logInfo logh $ "Constraint 'PRIMARY KEY' \
+        Logger.logInfo logH $ "Constraint 'PRIMARY KEY' \
           \was successfully added to column '" 
           <> colName <> "' in table '"
           <> tableName <> "'"
-      _ -> Logger.logInfo logh $ "Constraint name '"
+      _ -> Logger.logInfo logH $ "Constraint name '"
         <> conName
         <> "' is already in use!"
   commit dbh
@@ -292,7 +292,7 @@ addConstraintPrimaryKey handle tableName colName conName = do
 dropConstraint :: Handle IO -> TableName -> ConstraintName -> IO ()
 dropConstraint handle tableName conName = do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let check = "SELECT constraint_name \
@@ -310,12 +310,12 @@ dropConstraint handle tableName conName = do
              ++ " DROP CONSTRAINT "
              ++ T.unpack conName
         _ <- run dbh query []
-        Logger.logInfo logh $ "Constraint '"
+        Logger.logInfo logH $ "Constraint '"
           <> conName
-          <> "' was successfully droped from table '"
+          <> "' was successfully dropped from table '"
           <> tableName
           <> "'"
-      _ -> Logger.logInfo logh $ "Constraint name '"
+      _ -> Logger.logInfo logH $ "Constraint name '"
         <> conName
         <> "' isn't in use!"
   commit dbh

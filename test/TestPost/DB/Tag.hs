@@ -50,10 +50,10 @@ spec_getTagPostRecords =
       let tagId = 100
           idP1 = 1 :: Objects.PostId
           sqlTagA = [[toSql idP1]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIdsE = DBTag.getTagPostRecords dbqh' tagId
+          tagIdsE = DBTag.getTagPostRecords dbqH' tagId
           check = [idP1]
       tagIdsE `shouldBe` Identity (Right check)
     it "Should successfully return TagId for array of many elements" $ do
@@ -62,18 +62,18 @@ spec_getTagPostRecords =
           idP2 = 10 :: Objects.PostId
           idP3 = 36 :: Objects.PostId
           sqlTagA = [[toSql idP1],[toSql idP2],[toSql idP3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIdsE = DBTag.getTagPostRecords dbqh' tagId
+          tagIdsE = DBTag.getTagPostRecords dbqH' tagId
           check = [idP1, idP2, idP3]
       tagIdsE `shouldBe` Identity (Right check)
     it "Should fail on empty array" $ do
       let tagId = 100
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          tagIdsE = DBTag.getTagPostRecords dbqh' tagId
+          tagIdsE = DBTag.getTagPostRecords dbqH' tagId
           msg = "No Posts corresponding to Tag with id: 100"
       tagIdsE `shouldBe` Identity (Left msg)
 
@@ -84,10 +84,10 @@ spec_getTagRecordsById =
       let tagId = 1 :: Objects.TagId
           title = "sport" :: Objects.Title
           sqlTagA = [[toSql tagId, toSql title]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagE = DBTag.getTagRecordsById dbqh' tagId
+          tagE = DBTag.getTagRecordsById dbqH' tagId
           check = Objects.Tag {
             Objects.tag_title = title,
             Objects.tag_id = tagId
@@ -98,19 +98,19 @@ spec_getTagRecordsById =
           title = "sport" :: Objects.Title
           sqlTagA = [[toSql tagId, toSql title],
                      [toSql tagId, toSql title]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagE = DBTag.getTagRecordsById dbqh' tagId
+          tagE = DBTag.getTagRecordsById dbqH' tagId
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Tag with Id: 1"
       tagE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let tagId = 1 :: Objects.TagId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          tagE = DBTag.getTagRecordsById dbqh' tagId
+          tagE = DBTag.getTagRecordsById dbqH' tagId
           msg = "No Tag with id in: 1"
       tagE `shouldBe` Identity (Left msg)
 
@@ -122,10 +122,10 @@ spec_getAllTagRecords =
           tagId = 1 :: Objects.TagId
           title = "sport" :: Objects.Title
           sqlTagA = [[toSql tagId, toSql title]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagsE = DBTag.getAllTagRecords dbqh' offset
+          tagsE = DBTag.getAllTagRecords dbqH' offset
           check = Objects.Tag {
             Objects.tag_title = title,
             Objects.tag_id = tagId
@@ -141,10 +141,10 @@ spec_getAllTagRecords =
               [toSql tagId1, toSql title1],
               [toSql tagId2, toSql title2]
               ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagsE = DBTag.getAllTagRecords dbqh' offset
+          tagsE = DBTag.getAllTagRecords dbqH' offset
           tag1 = Objects.Tag {
             Objects.tag_title = title1,
             Objects.tag_id = tagId1
@@ -156,10 +156,10 @@ spec_getAllTagRecords =
       tagsE `shouldBe` Identity (Right [tag1, tag2])
     it "Should fail on empty array" $ do
       let offset = 10
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          tagsE = DBTag.getAllTagRecords dbqh' offset
+          tagsE = DBTag.getAllTagRecords dbqH' offset
           msg = "No Tags!"
       tagsE `shouldBe` Identity (Left msg)
 
@@ -170,29 +170,29 @@ spec_getTagIdByTitle =
       let tagId = 12 :: Objects.TagId
           tagTitle = "sport" :: Objects.Title
           sqlTagA = [[toSql tagId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIdE = DBTag.getTagIdByTitle dbqh' tagTitle
+          tagIdE = DBTag.getTagIdByTitle dbqH' tagTitle
       tagIdE `shouldBe` Identity (Right tagId)
     it "Should fail on array of many elements" $ do
       let tagId = 12 :: Objects.TagId
           tagTitle = "sport" :: Objects.Title
           sqlTagA = [[toSql tagId], [toSql tagId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIdE = DBTag.getTagIdByTitle dbqh' tagTitle
+          tagIdE = DBTag.getTagIdByTitle dbqH' tagTitle
           msg = "Violation of Unique record in db: \
                 \exist more than one record for \
                 \Tag with title: 'sport'!"
       tagIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let tagTitle = "sport" :: Objects.Title
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          tagIdE = DBTag.getTagIdByTitle dbqh' tagTitle
+          tagIdE = DBTag.getTagIdByTitle dbqH' tagTitle
           msg = "No exists Tag with title: \
                  \'sport'!"
       tagIdE `shouldBe` Identity (Left msg)

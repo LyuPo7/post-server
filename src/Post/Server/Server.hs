@@ -31,69 +31,69 @@ withHandleIO logger dbh config f = do
 
 -- | Run Server
 runServer :: Handle IO -> IO ()
-runServer serverh = do
-  let serverPort = port $ cServer serverh
-  run serverPort (app serverh)
+runServer serverH = do
+  let serverPort = port $ cServer serverH
+  run serverPort (app serverH)
 
 -- | Router
 app :: Handle IO -> Application
-app serverh req sendResponse = handle (sendResponse . respInvalid) $ do
+app serverH req sendResponse = handle (sendResponse . respInvalid) $ do
   let options = queryString req
   case pathInfo req of
-    ["login"] -> do MAccount.login serverh options
+    ["login"] -> do MAccount.login serverH options
                      >>= sendResponse -- all
-    ["getPosts"] -> do MPost.getPostsResp serverh options
+    ["getPosts"] -> do MPost.getPostsResp serverH options
                         >>= sendResponse -- all
-    ["createPost"] -> do MPost.createPostResp serverh options
+    ["createPost"] -> do MPost.createPostResp serverH options
                           >>= sendResponse -- author only
-    ["removePost"] -> do MPost.removePostResp serverh options 
+    ["removePost"] -> do MPost.removePostResp serverH options 
                           >>= sendResponse -- admins only
-    ["setPostMainPhoto"] -> do MPost.setPostMainPhotoResp serverh options
+    ["setPostMainPhoto"] -> do MPost.setPostMainPhotoResp serverH options
                                 >>= sendResponse -- author only
-    ["setPostAddPhoto"] -> do MPost.setPostAddPhotoResp serverh options 
+    ["setPostAddPhoto"] -> do MPost.setPostAddPhotoResp serverH options 
                                >>= sendResponse -- author only
-    ["getAuthors"] -> do MAuthor.getAuthorsResp serverh options
+    ["getAuthors"] -> do MAuthor.getAuthorsResp serverH options
                           >>= sendResponse -- admins only
-    ["createAuthor"] -> do MAuthor.createAuthorResp serverh options 
+    ["createAuthor"] -> do MAuthor.createAuthorResp serverH options 
                             >>= sendResponse -- admins only
-    ["editAuthor"] -> do MAuthor.editAuthorResp serverh options 
+    ["editAuthor"] -> do MAuthor.editAuthorResp serverH options 
                           >>= sendResponse -- admins only
-    ["removeAuthor"] -> do MAuthor.removeAuthorResp serverh options 
+    ["removeAuthor"] -> do MAuthor.removeAuthorResp serverH options 
                             >>= sendResponse -- admins only
-    ["getCategories"] -> do MCategory.getCatsResp serverh options
+    ["getCategories"] -> do MCategory.getCatsResp serverH options
                              >>= sendResponse -- all
-    ["createCategory"] -> do MCategory.createCatResp serverh options 
+    ["createCategory"] -> do MCategory.createCatResp serverH options 
                               >>= sendResponse -- admins only
-    ["editCategory"] -> do MCategory.editCatResp serverh options
+    ["editCategory"] -> do MCategory.editCatResp serverH options
                             >>= sendResponse -- admins only
-    ["removeCategory"] -> do MCategory.removeCatResp serverh options
+    ["removeCategory"] -> do MCategory.removeCatResp serverH options
                               >>= sendResponse -- admins only
-    ["getTags"] -> do MTag.getTagsResp serverh options
+    ["getTags"] -> do MTag.getTagsResp serverH options
                        >>= sendResponse -- all
-    ["createTag"] -> do MTag.createTagResp serverh options 
+    ["createTag"] -> do MTag.createTagResp serverH options 
                          >>= sendResponse -- admins only
-    ["editTag"] -> do MTag.editTagResp serverh options 
+    ["editTag"] -> do MTag.editTagResp serverH options 
                        >>= sendResponse -- admins only
-    ["removeTag"] -> do MTag.removeTagResp serverh options 
+    ["removeTag"] -> do MTag.removeTagResp serverH options 
                          >>= sendResponse -- admins only
-    ["getDrafts"] -> do MDraft.getDraftsResp serverh options 
+    ["getDrafts"] -> do MDraft.getDraftsResp serverH options 
                          >>= sendResponse-- authors only (theirs drafts)
-    ["createDraft"] -> do MDraft.createDraftResp serverh options 
+    ["createDraft"] -> do MDraft.createDraftResp serverH options 
                            >>= sendResponse -- authors only (theirs drafts)
-    ["editDraft"] -> do MDraft.editDraftResp serverh options 
+    ["editDraft"] -> do MDraft.editDraftResp serverH options 
                          >>= sendResponse -- authors only (theirs drafts)
-    ["removeDraft"] -> do MDraft.removeDraftResp serverh options 
+    ["removeDraft"] -> do MDraft.removeDraftResp serverH options 
                            >>= sendResponse -- authors only (theirs drafts)
-    ["publishDraft"] -> do MDraft.publishDraftResp serverh options
+    ["publishDraft"] -> do MDraft.publishDraftResp serverH options
                             >>= sendResponse -- authors only (theirs drafts)
-    ["getUsers"] -> do MUser.getUsersResp serverh options 
+    ["getUsers"] -> do MUser.getUsersResp serverH options 
                         >>= sendResponse -- all
-    ["createUser"] -> do MUser.createUserResp serverh options 
+    ["createUser"] -> do MUser.createUserResp serverH options 
                           >>= sendResponse -- all
-    ["removeUser"] -> do MUser.removeUserResp serverh options
+    ["removeUser"] -> do MUser.removeUserResp serverH options
                           >>= sendResponse -- admins only
-    ["setUserPhoto"] -> do MUser.setUserPhotoResp serverh options
+    ["setUserPhoto"] -> do MUser.setUserPhotoResp serverH options
                             >>= sendResponse -- only user of this account
-    ["createComment"] -> do MComment.createCommentResp serverh options 
+    ["createComment"] -> do MComment.createCommentResp serverH options 
                              >>= sendResponse -- all
     _ -> do sendResponse resp404

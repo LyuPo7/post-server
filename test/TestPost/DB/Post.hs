@@ -19,10 +19,10 @@ spec_getPostDraftIdsByPostIds =
       let postId = 100 :: Objects.PostId
           draftId = 1 :: Objects.DraftId
           sqlPostA = [[toSql draftId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdsE = DBPost.getPostDraftIdsByPostIds dbqh' [postId]
+          draftIdsE = DBPost.getPostDraftIdsByPostIds dbqH' [postId]
           check = [draftId]
       draftIdsE `shouldBe` Identity (Right check)
     it "Should successfully return [DraftId] for array of many elements" $ do
@@ -31,19 +31,19 @@ spec_getPostDraftIdsByPostIds =
           draftId2 = 10 :: Objects.DraftId
           draftId3 = 100 :: Objects.DraftId
           sqlPostA = [[toSql draftId1],[toSql draftId2],[toSql draftId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdsE = DBPost.getPostDraftIdsByPostIds dbqh' [postId]
+          draftIdsE = DBPost.getPostDraftIdsByPostIds dbqH' [postId]
           check = [draftId1, draftId2, draftId3]
       draftIdsE `shouldBe` Identity (Right check)
     it "Should fail on empty array" $ do
       let postId1 = 100 :: Objects.PostId
           postId2 = 105 :: Objects.PostId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          draftIdsE = DBPost.getPostDraftIdsByPostIds dbqh' [postId1, postId2]
+          draftIdsE = DBPost.getPostDraftIdsByPostIds dbqH' [postId1, postId2]
           msg = "No exists Drafts corresponding to Posts with id: 100,105"
       draftIdsE `shouldBe` Identity (Left msg)
 
@@ -54,10 +54,10 @@ spec_getPostDraftIdByPostId =
       let postId = 100 :: Objects.PostId
           draftId = 1 :: Objects.DraftId
           sqlPostA = [[toSql draftId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdE = DBPost.getPostDraftIdByPostId dbqh' postId
+          draftIdE = DBPost.getPostDraftIdByPostId dbqH' postId
       draftIdE `shouldBe` Identity (Right draftId)
     it "Should fail on array of many elements" $ do
       let postId = 100 :: Objects.PostId
@@ -65,10 +65,10 @@ spec_getPostDraftIdByPostId =
           draftId2 = 10 :: Objects.DraftId
           draftId3 = 100 :: Objects.DraftId
           sqlPostA = [[toSql draftId1],[toSql draftId2],[toSql draftId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdE = DBPost.getPostDraftIdByPostId dbqh' postId
+          draftIdE = DBPost.getPostDraftIdByPostId dbqH' postId
           msg = "Violation of Unique record Post-Draft in db: \
                 \exist more than one record for Post with Id: 100"
       draftIdE `shouldBe` Identity (Left msg)
@@ -78,19 +78,19 @@ spec_getPostDraftIdByPostId =
           draftId2 = 10 :: Objects.DraftId
           draftId3 = 100 :: Objects.DraftId
           sqlPostA = [[toSql draftId1,toSql draftId2,toSql draftId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          draftIdE = DBPost.getPostDraftIdByPostId dbqh' postId
+          draftIdE = DBPost.getPostDraftIdByPostId dbqH' postId
           msg = "Violation of Unique record Post-Draft in db: \
                 \exist more than one record for Post with Id: 100"
       draftIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let postId = 100 :: Objects.PostId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          draftIdE = DBPost.getPostDraftIdByPostId dbqh' postId
+          draftIdE = DBPost.getPostDraftIdByPostId dbqH' postId
           msg = "No exists Draft corresponding to Post with id: 100"
       draftIdE `shouldBe` Identity (Left msg)
 
@@ -99,10 +99,10 @@ spec_getPostAddPhotoIdsByPostId =
   describe "Testing getPostAddPhotoIdsByPostId" $ do
     it "Should fail on empty array" $ do
       let postId = 100 :: Objects.PostId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          addPhotosE = DBPost.getPostAddPhotoIdsByPostId dbqh' postId
+          addPhotosE = DBPost.getPostAddPhotoIdsByPostId dbqH' postId
           msg = "No exist Add Photos for Post with id: 100"
       addPhotosE `shouldBe` Identity (Left msg)
 
@@ -111,10 +111,10 @@ spec_getPostMainPhotoIdByPostId =
   describe "Testing getPostMainPhotoIdByPostId" $ do
     it "Should fail on empty array" $ do
       let postId = 100 :: Objects.PostId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          addPhotosE = DBPost.getPostMainPhotoIdByPostId dbqh' postId
+          addPhotosE = DBPost.getPostMainPhotoIdByPostId dbqH' postId
           msg = "No exists Main Photo for Post with id: 100"
       addPhotosE `shouldBe` Identity (Left msg)
     it "Should fail on array with many elements" $ do
@@ -122,10 +122,10 @@ spec_getPostMainPhotoIdByPostId =
           photoId1 = 22 :: Objects.PhotoId
           photoId2 = 232 :: Objects.PhotoId
           sqlPostA = [[toSql photoId1], [toSql photoId2]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          addPhotosE = DBPost.getPostMainPhotoIdByPostId dbqh' postId
+          addPhotosE = DBPost.getPostMainPhotoIdByPostId dbqH' postId
           msg = "Violation of Unique record Post-MainPhoto in db: \
                 \exist more than one record for Post with Id: 100"
       addPhotosE `shouldBe` Identity (Left msg)
@@ -134,10 +134,10 @@ spec_getPostMainPhotoIdByPostId =
           photoId1 = 22 :: Objects.PhotoId
           photoId2 = 232 :: Objects.PhotoId
           sqlPostA = [[toSql photoId1, toSql photoId2]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          addPhotosE = DBPost.getPostMainPhotoIdByPostId dbqh' postId
+          addPhotosE = DBPost.getPostMainPhotoIdByPostId dbqH' postId
           msg = "Violation of Unique record Post-MainPhoto in db: \
                 \exist more than one record for Post with Id: \
                 \100"
@@ -150,10 +150,10 @@ spec_getPostTagIdsByPostId =
       let postId = 100
           idTag = 1 :: Objects.PostId
           sqlTagA = [[toSql idTag]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIds = DBPost.getPostTagIdsByPostId dbqh' postId
+          tagIds = DBPost.getPostTagIdsByPostId dbqH' postId
           check = [idTag]
       tagIds `shouldBe` Identity (Right check)
     it "Should successfully return [TagId] for array of many elements" $ do
@@ -162,18 +162,18 @@ spec_getPostTagIdsByPostId =
           idTag2 = 10 :: Objects.PostId
           idTag3 = 36 :: Objects.PostId
           sqlTagA = [[toSql idTag1],[toSql idTag2],[toSql idTag3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlTagA
           }
-          tagIds = DBPost.getPostTagIdsByPostId dbqh' postId
+          tagIds = DBPost.getPostTagIdsByPostId dbqH' postId
           check = [idTag1, idTag2, idTag3]
       tagIds `shouldBe` Identity (Right check)
     it "Should fail on empty array" $ do
       let postId = 100
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          tagIds = DBPost.getPostTagIdsByPostId dbqh' postId
+          tagIds = DBPost.getPostTagIdsByPostId dbqH' postId
           msg = "No exist Tags corresponding to Post with id: 100"
       tagIds `shouldBe` Identity (Left msg)
 
@@ -184,10 +184,10 @@ spec_getPostCategoryIdByPostId =
       let postId = 100 :: Objects.PostId
           catId = 1 :: Objects.CategoryId
           sqlPostA = [[toSql catId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          catIdE = DBPost.getPostCategoryIdByPostId dbqh' postId
+          catIdE = DBPost.getPostCategoryIdByPostId dbqH' postId
       catIdE `shouldBe` Identity (Right catId)
     it "Should fail on array of many elements" $ do
       let postId = 100 :: Objects.PostId
@@ -195,10 +195,10 @@ spec_getPostCategoryIdByPostId =
           catId2 = 10 :: Objects.CategoryId
           catId3 = 100 :: Objects.CategoryId
           sqlPostA = [[toSql catId1],[toSql catId2],[toSql catId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          catIdE = DBPost.getPostCategoryIdByPostId dbqh' postId
+          catIdE = DBPost.getPostCategoryIdByPostId dbqH' postId
           msg = "Violation of Unique record Post-Category in db: \
                 \exist more than one record for Post with Id: 100"
       catIdE `shouldBe` Identity (Left msg)
@@ -208,33 +208,33 @@ spec_getPostCategoryIdByPostId =
           catId2 = 10 :: Objects.CategoryId
           catId3 = 100 :: Objects.CategoryId
           sqlPostA = [[toSql catId1,toSql catId2,toSql catId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          catIdE = DBPost.getPostCategoryIdByPostId dbqh' postId
+          catIdE = DBPost.getPostCategoryIdByPostId dbqH' postId
           msg = "Violation of Unique record Post-Category in db: \
                 \exist more than one record for Post with Id: 100"
       catIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let postId = 100 :: Objects.PostId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          catIdE = DBPost.getPostCategoryIdByPostId dbqh' postId
+          catIdE = DBPost.getPostCategoryIdByPostId dbqH' postId
           msg = "No exists Category corresponding to Post with id: 100"
       catIdE `shouldBe` Identity (Left msg)
 
-spec_getPostAuthorIdbyPostId :: Spec
-spec_getPostAuthorIdbyPostId =
-  describe "Testing getPostAuthorIdbyPostId" $ do
+spec_getPostAuthorIdByPostId :: Spec
+spec_getPostAuthorIdByPostId =
+  describe "Testing getPostAuthorIdByPostId" $ do
     it "Should successfully AuthorId for array of one element" $ do
       let postId = 100 :: Objects.PostId
           authorId = 1 :: Objects.AuthorId
           sqlPostA = [[toSql authorId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          authorIdE = DBPost.getPostAuthorIdbyPostId dbqh' postId
+          authorIdE = DBPost.getPostAuthorIdByPostId dbqH' postId
       authorIdE `shouldBe` Identity (Right authorId)
     it "Should fail on array of many elements" $ do
       let postId = 100 :: Objects.PostId
@@ -242,10 +242,10 @@ spec_getPostAuthorIdbyPostId =
           authorId2 = 10 :: Objects.AuthorId
           authorId3 = 100 :: Objects.AuthorId
           sqlPostA = [[toSql authorId1],[toSql authorId2],[toSql authorId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          authorIdE = DBPost.getPostAuthorIdbyPostId dbqh' postId
+          authorIdE = DBPost.getPostAuthorIdByPostId dbqH' postId
           msg = "Violation of Unique record Post-Author in db: \
                 \exist more than one record for Post with Id: 100"
       authorIdE `shouldBe` Identity (Left msg)
@@ -255,19 +255,19 @@ spec_getPostAuthorIdbyPostId =
           authorId2 = 10 :: Objects.AuthorId
           authorId3 = 100 :: Objects.AuthorId
           sqlPostA = [[toSql authorId1,toSql authorId2,toSql authorId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          authorIdE = DBPost.getPostAuthorIdbyPostId dbqh' postId
+          authorIdE = DBPost.getPostAuthorIdByPostId dbqH' postId
           msg = "Violation of Unique record Post-Author in db: \
                 \exist more than one record for Post with Id: 100"
       authorIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let postId = 100 :: Objects.PostId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorIdE = DBPost.getPostAuthorIdbyPostId dbqh' postId
+          authorIdE = DBPost.getPostAuthorIdByPostId dbqH' postId
           msg = "No exists Author corresponding to Post with id: 100"
       authorIdE `shouldBe` Identity (Left msg)
 
@@ -278,10 +278,10 @@ spec_getPostIdByTitle =
       let title = "box" :: Objects.Title
           postId = 100 :: Objects.PostId
           sqlPostA = [[toSql postId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          postIdE = DBPost.getPostIdByTitle dbqh' title
+          postIdE = DBPost.getPostIdByTitle dbqH' title
       postIdE `shouldBe` Identity (Right postId)
     it "Should fail on array of many elements" $ do
       let title = "box" :: Objects.Title
@@ -289,10 +289,10 @@ spec_getPostIdByTitle =
           postId2 = 10 :: Objects.PostId
           postId3 = 100 :: Objects.PostId
           sqlPostA = [[toSql postId1],[toSql postId2],[toSql postId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          postIdE = DBPost.getPostIdByTitle dbqh' title
+          postIdE = DBPost.getPostIdByTitle dbqH' title
           msg = "Violation of Unique record Post in db: \
                 \exist more than one record for Post with title: \
                 \'box'!"
@@ -303,20 +303,20 @@ spec_getPostIdByTitle =
           postId2 = 10 :: Objects.PostId
           postId3 = 100 :: Objects.PostId
           sqlPostA = [[toSql postId1,toSql postId2,toSql postId3]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          postIdE = DBPost.getPostIdByTitle dbqh' title
+          postIdE = DBPost.getPostIdByTitle dbqH' title
           msg = "Violation of Unique record Post in db: \
                 \exist more than one record for Post with title: \
                 \'box'!"
       postIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let title = "box" :: Objects.Title
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          postIdE = DBPost.getPostIdByTitle dbqh' title
+          postIdE = DBPost.getPostIdByTitle dbqH' title
           msg = "No exists Post with title: 'box'!"
       postIdE `shouldBe` Identity (Left msg)
 
@@ -326,27 +326,27 @@ spec_getLastPostRecord =
     it "Should successfully return PostId for array of one element" $ do
       let postId = 101 :: Objects.PostId
           sqlPostA = [[toSql postId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          postIdE = DBPost.getLastPostRecord dbqh'
+          postIdE = DBPost.getLastPostRecord dbqH'
       postIdE `shouldBe` Identity (Right postId)
     it "Should fail on array of many elements" $ do
       let postId = 101 :: Objects.PostId
           sqlPostA = [
               [toSql postId],
               [toSql postId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlPostA
           }
-          postIdE = DBPost.getLastPostRecord dbqh'
+          postIdE = DBPost.getLastPostRecord dbqH'
           msg = "Incorrect Post record!"
       postIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let dbqh' = Handlers.dbqh {
+      let dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          postIdE = DBPost.getLastPostRecord dbqh'
+          postIdE = DBPost.getLastPostRecord dbqH'
           msg = "No exist Posts!"
       postIdE `shouldBe` Identity (Left msg)
 
@@ -362,18 +362,18 @@ spec_getPostRecord =
             [toSql postId, toSql title, toSql createdAt, toSql text],
             [toSql postId, toSql title, toSql createdAt, toSql text]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          postE = DBPost.getPostRecord dbqh' postId
+          postE = DBPost.getPostRecord dbqH' postId
           msg = "Violation of Unique Post record in db: \
                 \exist more than one record for Post with Id: 101"
       postE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let postId = 101 :: Objects.PostId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          postE = DBPost.getPostRecord dbqh' postId
+          postE = DBPost.getPostRecord dbqH' postId
           msg = "No exists Post with id: 101"
       postE `shouldBe` Identity (Left msg)

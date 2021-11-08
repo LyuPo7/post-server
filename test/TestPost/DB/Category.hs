@@ -30,10 +30,10 @@ spec_getSub =
             toSql subTitle,
             toSql (Nothing :: Maybe Objects.CategoryId)
            ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlSubCatA
           }
-          catE = DBCategory.getSub dbqh' sqlCatA
+          catE = DBCategory.getSub dbqH' sqlCatA
           check = Objects.Category {
             Objects.category_id = catId,
             Objects.category_title = title,
@@ -53,7 +53,7 @@ spec_getSub =
             toSql title,
             toSql (Nothing :: Maybe Objects.CategoryId)
            ]
-          catE = DBCategory.getSub Handlers.dbqh sqlCatA
+          catE = DBCategory.getSub Handlers.dbqH sqlCatA
           check = Objects.Category {
             Objects.category_id = catId,
             Objects.category_title = title,
@@ -61,7 +61,7 @@ spec_getSub =
           }
       catE `shouldBe` Identity (Right check)
     it "Should fail on empty array" $ do
-      let catE = DBCategory.getSub Handlers.dbqh []
+      let catE = DBCategory.getSub Handlers.dbqH []
           msg = "Invalid Category!"
       catE `shouldBe` Identity (Left msg)
     it "Should fail on array with too many elements" $ do
@@ -74,7 +74,7 @@ spec_getSub =
             toSql text,
             toSql (Nothing :: Maybe Objects.CategoryId)
            ]
-          catE = DBCategory.getSub Handlers.dbqh sqlCatA
+          catE = DBCategory.getSub Handlers.dbqH sqlCatA
           msg = "Invalid Category!"
       catE `shouldBe` Identity (Left msg)
 
@@ -132,10 +132,10 @@ spec_newCat =
             toSql subTitle,
             toSql (Nothing :: Maybe Objects.CategoryId)
            ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlSubCatA
           }
-          catE = DBCategory.newCat dbqh' sqlCatA
+          catE = DBCategory.newCat dbqH' sqlCatA
           check = Objects.Category {
             Objects.category_id = catId,
             Objects.category_title = title,
@@ -148,7 +148,7 @@ spec_newCat =
           }
       catE `shouldBe` Identity (Right check)
     it "Should fail on empty array" $ do
-      let catE = DBCategory.newCat Handlers.dbqh []
+      let catE = DBCategory.newCat Handlers.dbqH []
           msg = "Invalid Category!"
       catE `shouldBe` Identity (Left msg)
     it "Should fail on array with too many elements" $ do
@@ -161,7 +161,7 @@ spec_newCat =
             toSql text,
             toSql (Nothing :: Maybe Objects.CategoryId)
            ]
-          catE = DBCategory.newCat Handlers.dbqh sqlCatA
+          catE = DBCategory.newCat Handlers.dbqH sqlCatA
           msg = "Invalid Category!"
       catE `shouldBe` Identity (Left msg)
 
@@ -178,10 +178,10 @@ spec_getChildCatIdsByCatId =
             [toSql childCatId2],
             [toSql childCatId3]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          catIdsE = DBCategory.getChildCatIdsByCatId dbqh' catId
+          catIdsE = DBCategory.getChildCatIdsByCatId dbqH' catId
       catIdsE `shouldBe` Identity (
         Right [
           childCatId1,
@@ -189,10 +189,10 @@ spec_getChildCatIdsByCatId =
           childCatId3])
     it "Should fail on empty array" $ do
       let catId = 11 :: Objects.CommentId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          comE = DBCategory.getChildCatIdsByCatId dbqh' catId
+          comE = DBCategory.getChildCatIdsByCatId dbqH' catId
           msg = "Category with id: 11 hasn't child category."
       comE `shouldBe` Identity (Left msg)
 
@@ -203,10 +203,10 @@ spec_getCatPostIdsByCatId =
       let catId = 11 :: Objects.DraftId
           postId = 15 :: Objects.PostId
           sqlCatA = [[toSql postId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          postIdsE = DBCategory.getCatPostIdsByCatId dbqh' catId
+          postIdsE = DBCategory.getCatPostIdsByCatId dbqH' catId
       postIdsE `shouldBe` Identity (Right [postId])
     it "Should successfully return [PostId] for array of many elements" $ do
       let catId = 11 :: Objects.DraftId
@@ -218,17 +218,17 @@ spec_getCatPostIdsByCatId =
             [toSql postId2],
             [toSql postId3]
             ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          postIdsE = DBCategory.getCatPostIdsByCatId dbqh' catId
+          postIdsE = DBCategory.getCatPostIdsByCatId dbqH' catId
       postIdsE `shouldBe` Identity (Right [postId1, postId2, postId3])
     it "Should fail on empty array" $ do
       let catId = 11 :: Objects.CategoryId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          postIdsE = DBCategory.getCatPostIdsByCatId dbqh' catId
+          postIdsE = DBCategory.getCatPostIdsByCatId dbqH' catId
           msg = "No Posts corresponding to Category with id: 11"
       postIdsE `shouldBe` Identity (Left msg)
 
@@ -243,10 +243,10 @@ spec_getCatRecordByCatId =
             toSql title,
             toSql (Nothing :: Maybe Objects.CategoryId)
            ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          catE = DBCategory.getCatRecordByCatId dbqh' catId
+          catE = DBCategory.getCatRecordByCatId dbqH' catId
           check = Objects.Category {
             Objects.category_id = catId,
             Objects.category_title = title,
@@ -255,10 +255,10 @@ spec_getCatRecordByCatId =
       catE `shouldBe` Identity (Right check)
     it "Should fail on empty array" $ do
       let catId = 11 :: Objects.CategoryId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          catE = DBCategory.getCatRecordByCatId dbqh' catId
+          catE = DBCategory.getCatRecordByCatId dbqH' catId
           msg = "No Category with id: 11"
       catE `shouldBe` Identity (Left msg)
     it "Should fail on array on array with many elements" $ do
@@ -273,10 +273,10 @@ spec_getCatRecordByCatId =
             toSql title2,
             toSql (Nothing :: Maybe Objects.CategoryId)]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          catE = DBCategory.getCatRecordByCatId dbqh' catId
+          catE = DBCategory.getCatRecordByCatId dbqH' catId
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Category \
                 \with Id: 11"
@@ -288,12 +288,12 @@ spec_checkIfChildCatIsValid =
     it "Should successfully pass check if title /= subTitle" $ do
       let title = "crossfit" :: Objects.Title
           subTitle = "sport" :: Objects.Title
-          valid = DBCategory.checkIfChildCatIsValid Handlers.dbqh title subTitle
+          valid = DBCategory.checkIfChildCatIsValid Handlers.dbqH title subTitle
       valid `shouldBe` Identity (Right ())
     it "Should fail if title == subTitle" $ do
       let title = "sport" :: Objects.Title
           subTitle = "sport" :: Objects.Title
-          valid = DBCategory.checkIfChildCatIsValid Handlers.dbqh title subTitle
+          valid = DBCategory.checkIfChildCatIsValid Handlers.dbqH title subTitle
           msg = "Category and SubCategory can't have the same title!"
       valid `shouldBe` Identity (Left msg)
 
@@ -309,7 +309,7 @@ spec_getCats =
             toSql title,
             toSql (Nothing :: Maybe Objects.CategoryId)
             ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
           check = Objects.Category {
@@ -317,7 +317,7 @@ spec_getCats =
             Objects.category_title = title,
             Objects.category_subcategory = Nothing
           }
-          catsE = DBCategory.getCats dbqh' offset
+          catsE = DBCategory.getCats dbqH' offset
       catsE `shouldBe` Identity (Right [check])
     it "Should successfully create [Category] of many Category record" $ do
       let offset = 10
@@ -333,7 +333,7 @@ spec_getCats =
             toSql title2,
             toSql (Nothing :: Maybe Objects.CategoryId)]
             ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
           cat1 = Objects.Category {
@@ -346,14 +346,14 @@ spec_getCats =
             Objects.category_title = title2,
             Objects.category_subcategory = Nothing
           }
-          catsE = DBCategory.getCats dbqh' offset
+          catsE = DBCategory.getCats dbqH' offset
       catsE `shouldBe` Identity (Right [cat1, cat2])
     it "Should fail on empty Category record" $ do
       let offset = 10
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          catE = DBCategory.getCats dbqh' offset
+          catE = DBCategory.getCats dbqH' offset
           msg = "No Categories!"
       catE `shouldBe` Identity (Left msg)
 
@@ -364,10 +364,10 @@ spec_getCatId =
       let title = "crossfit" :: Objects.Title
           catId = 11 :: Objects.CategoryId
           sqlCatA = [[toSql catId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          photoIdE = DBCategory.getCatId dbqh' title
+          photoIdE = DBCategory.getCatId dbqH' title
       photoIdE `shouldBe` Identity (Right catId)
     it "Should fail on array of many elements" $ do
       let title = "crossfit" :: Objects.Title
@@ -377,20 +377,20 @@ spec_getCatId =
             [toSql catId1],
             [toSql catId2]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlCatA
           }
-          photoIdE = DBCategory.getCatId dbqh' title
+          photoIdE = DBCategory.getCatId dbqH' title
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Category with title: \
                 \'crossfit'!"
       photoIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let title = "crossfit" :: Objects.Title
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          photoIdE = DBCategory.getCatId dbqh' title
+          photoIdE = DBCategory.getCatId dbqH' title
           msg = "No exists Category with title: \
                 \'crossfit'!"
       photoIdE `shouldBe` Identity (Left msg)

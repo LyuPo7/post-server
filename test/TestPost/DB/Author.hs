@@ -18,17 +18,17 @@ spec_getAuthorIdByUserId =
       let userId = 100 :: Objects.UserId
           authorId = 22 :: Objects.AuthorId
           sqlAuthorA = [[toSql authorId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          authorIdE = DBAuthor.getAuthorIdByUserId dbqh' userId
+          authorIdE = DBAuthor.getAuthorIdByUserId dbqH' userId
       authorIdE `shouldBe` Identity (Right authorId)
     it "Should fail on empty array" $ do
       let userId = 100
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorIdE = DBAuthor.getAuthorIdByUserId dbqh' userId
+          authorIdE = DBAuthor.getAuthorIdByUserId dbqH' userId
           msg = "No exists Author corresponding to User with id: 100"
       authorIdE `shouldBe` Identity (Left msg)
     it "Should fail on array of many elements" $ do
@@ -38,10 +38,10 @@ spec_getAuthorIdByUserId =
           sqlAuthorA = [
             [toSql authorId1],
             [toSql authorId2]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          authorIdE = DBAuthor.getAuthorIdByUserId dbqh' userId
+          authorIdE = DBAuthor.getAuthorIdByUserId dbqH' userId
           msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for User with Id: 100"
       authorIdE `shouldBe` Identity (Left msg)
@@ -53,10 +53,10 @@ spec_getPostIdsByAuthorId =
       let authorId = 11 :: Objects.AuthorId
           postId = 15 :: Objects.PostId
           sqlAuthorA = [[toSql postId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          postIdsE = DBAuthor.getPostIdsByAuthorId dbqh' authorId
+          postIdsE = DBAuthor.getPostIdsByAuthorId dbqH' authorId
       postIdsE `shouldBe` Identity (Right [postId])
     it "Should successfully return [PostId] for array of many elements" $ do
       let authorId = 11 :: Objects.AuthorId
@@ -68,17 +68,17 @@ spec_getPostIdsByAuthorId =
             [toSql postId2],
             [toSql postId3]
             ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          postIdsE = DBAuthor.getPostIdsByAuthorId dbqh' authorId
+          postIdsE = DBAuthor.getPostIdsByAuthorId dbqH' authorId
       postIdsE `shouldBe` Identity (Right [postId1, postId2, postId3])
     it "Should fail on empty array" $ do
       let authorId = 11 :: Objects.AuthorId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          postIdsE = DBAuthor.getPostIdsByAuthorId dbqh' authorId
+          postIdsE = DBAuthor.getPostIdsByAuthorId dbqH' authorId
           msg = "No Posts corresponding to Author with id: 11"
       postIdsE `shouldBe` Identity (Left msg)
 
@@ -88,27 +88,27 @@ spec_getLastAuthorRecord =
     it "Should successfully return AuthorId for array of one element" $ do
       let authorId = 101 :: Objects.AuthorId
           sqlAuthorA = [[toSql authorId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          authorIdE = DBAuthor.getLastAuthorRecord dbqh'
+          authorIdE = DBAuthor.getLastAuthorRecord dbqH'
       authorIdE `shouldBe` Identity (Right authorId)
     it "Should fail on array of many elements" $ do
       let authorId = 101 :: Objects.AuthorId
           sqlAuthorA = [
               [toSql authorId],
               [toSql authorId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          authorIdE = DBAuthor.getLastAuthorRecord dbqh'
+          authorIdE = DBAuthor.getLastAuthorRecord dbqH'
           msg = "Incorrect Author record!"
       authorIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let dbqh' = Handlers.dbqh {
+      let dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorIdE = DBAuthor.getLastAuthorRecord dbqh'
+          authorIdE = DBAuthor.getLastAuthorRecord dbqH'
           msg = "No exist Authors!"
       authorIdE `shouldBe` Identity (Left msg)
 
@@ -117,10 +117,10 @@ spec_getAuthorRecords =
   describe "Testing getAuthorRecords" $ do
     it "Should fail on empty Author record" $ do
       let offset = 10
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorsE = DBAuthor.getAuthorRecords dbqh' offset
+          authorsE = DBAuthor.getAuthorRecords dbqH' offset
           msg = "No Authors!"
       authorsE `shouldBe` Identity (Left msg)
 
@@ -131,17 +131,17 @@ spec_getUserIdByAuthorId =
       let userId = 100 :: Objects.UserId
           authorId = 22 :: Objects.AuthorId
           sqlAuthorA = [[toSql userId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          userIdE = DBAuthor.getUserIdByAuthorId dbqh' authorId
+          userIdE = DBAuthor.getUserIdByAuthorId dbqH' authorId
       userIdE `shouldBe` Identity (Right userId)
     it "Should fail on empty array" $ do
       let authorId = 100
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          userIdE = DBAuthor.getUserIdByAuthorId dbqh' authorId
+          userIdE = DBAuthor.getUserIdByAuthorId dbqH' authorId
           msg = "No User corresponding to Author with id: 100"
       userIdE `shouldBe` Identity (Left msg)
     it "Should fail on array of many elements" $ do
@@ -151,10 +151,10 @@ spec_getUserIdByAuthorId =
           sqlAuthorA = [
             [toSql userId1],
             [toSql userId2]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          userIdE = DBAuthor.getUserIdByAuthorId dbqh' authorId
+          userIdE = DBAuthor.getUserIdByAuthorId dbqH' authorId
           msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for Author with Id: 100"
       userIdE `shouldBe` Identity (Left msg)
@@ -170,18 +170,18 @@ spec_getAuthorRecord =
             [toSql authorId, toSql desc1],
             [toSql authorId, toSql desc2]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAuthorA
           }
-          authorE = DBAuthor.getAuthorRecord dbqh' authorId
+          authorE = DBAuthor.getAuthorRecord dbqH' authorId
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Author with Id: 101"
       authorE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let authorId = 101 :: Objects.AuthorId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorE = DBAuthor.getAuthorRecord dbqh' authorId
+          authorE = DBAuthor.getAuthorRecord dbqH' authorId
           msg = "No exists Author with id: 101"
       authorE `shouldBe` Identity (Left msg)

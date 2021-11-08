@@ -19,27 +19,27 @@ import Post.Server.Responses (respOk, respError, respOk, resp404)
 -- | Create getCategories Response
 getCatsResp :: Monad m => Handle m -> Query -> m Response
 getCatsResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: get Category records"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: get Category records"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkUserPerm dbqh token
+    perm <- lift $ DBAccount.checkUserPerm dbqH token
     guard $ perm == UserPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
       catsRespE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logH query params
         let [offsetText] = reqParams
         offset <- newEitherT $ Util.readEitherMa offsetText "offset"
-        cats <- newEitherT $ DBCategory.getCats dbqh offset
+        cats <- newEitherT $ DBCategory.getCats dbqH offset
         return $ CatResponse cats offset
       case catsRespE of
         Left msg -> return $ respError $ TextResponse msg
         Right response -> do
-          Logger.logInfo logh "Categories were sent"
+          Logger.logInfo logH "Categories were sent"
           return $ respOk response
     where
       authParams = ["token"]
@@ -48,27 +48,27 @@ getCatsResp handle query = do
 -- | Create createCategory Response
 createCatResp :: Monad m => Handle m -> Query -> m Response
 createCatResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: create Category record"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: create Category record"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAdminPerm dbqh token
+    perm <- lift $ DBAccount.checkAdminPerm dbqH token
     guard $ perm == AdminPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      optParams <- Query.extractOptional logh query paramsOpt
-      let [subcat] = optParams
+      optParams <- Query.extractOptional logH query paramsOpt
+      let [subCat] = optParams
       msgE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query paramsReq
+        reqParams <- newEitherT $ Query.extractRequired logH query paramsReq
         let [title] = reqParams
-        newEitherT $ DBCategory.createCat dbqh title subcat
+        newEitherT $ DBCategory.createCat dbqH title subCat
       case msgE of
         Right _ -> do
           let msg = "Category was created"
-          Logger.logInfo logh msg
+          Logger.logInfo logH msg
           return $ respOk $ TextResponse msg
         Left msg -> return $ respError $ TextResponse msg
     where
@@ -79,26 +79,26 @@ createCatResp handle query = do
 -- | Create removeCategory Response
 removeCatResp :: Monad m => Handle m -> Query -> m Response
 removeCatResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: remove Category record"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: remove Category record"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAdminPerm dbqh token
+    perm <- lift $ DBAccount.checkAdminPerm dbqH token
     guard $ perm == AdminPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
       msgE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idCat] = reqParams
         catId <- newEitherT $ Util.readEitherMa idCat "category_id"
-        newEitherT $ DBCategory.removeCat dbqh catId
+        newEitherT $ DBCategory.removeCat dbqH catId
       case msgE of
         Right _ -> do
           let msg = "Category was removed"
-          Logger.logInfo logh msg
+          Logger.logInfo logH msg
           return $ respOk $ TextResponse msg
         Left msg -> return $ respError $ TextResponse msg
     where
@@ -108,29 +108,29 @@ removeCatResp handle query = do
 -- | Create editCategory Response
 editCatResp :: Monad m => Handle m -> Query -> m Response
 editCatResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: edit Category record"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: edit Category record"
   permE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAdminPerm dbqh token
+    perm <- lift $ DBAccount.checkAdminPerm dbqH token
     guard $ perm == AdminPerm
   case permE of
     Left _ -> return resp404
     Right _ -> do
-      optParams <- Query.extractOptional logh query paramsOpt
+      optParams <- Query.extractOptional logH query paramsOpt
       let [newTitleM, subNewM] = optParams
       catIdE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query paramsReq
+        reqParams <- newEitherT $ Query.extractRequired logH query paramsReq
         let [idCat] = reqParams
         catId <- newEitherT $ Util.readEitherMa idCat "category_id"
-        newEitherT $ DBCategory.editCat dbqh catId newTitleM subNewM
+        newEitherT $ DBCategory.editCat dbqH catId newTitleM subNewM
       case catIdE of
         Left msg -> return $ respError $ TextResponse msg
         Right _ -> do
           let msg = "Category was edited"
-          Logger.logInfo logh msg
+          Logger.logInfo logH msg
           return $ respOk $ TextResponse msg
     where
       authParams = ["token"]

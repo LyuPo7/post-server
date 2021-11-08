@@ -22,29 +22,29 @@ import Post.Server.Responses (respOk, respError, resp404)
 -- | Create getDrafts Response
 getDraftsResp :: Monad m => Handle m -> Query -> m Response
 getDraftsResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: get Draft records"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: get Draft records"
   authorIdE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    userId <- newEitherT $ DBAccount.getUserIdRecordByToken dbqh token
-    newEitherT $ DBUser.getAuthorIdByUserId dbqh userId
+    userId <- newEitherT $ DBAccount.getUserIdRecordByToken dbqH token
+    newEitherT $ DBUser.getAuthorIdByUserId dbqH userId
   case authorIdE of
     Left _ -> return resp404
     Right authorId -> do
       draftsRespE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logH query params
         let [offsetText] = reqParams
         offset <- newEitherT $ Util.readEitherMa offsetText "offset"
-        postIds <- newEitherT $ DBAuthor.getPostIdsByAuthorId dbqh authorId
-        draftIds <- newEitherT $ DBPost.getPostDraftIdsByPostIds dbqh postIds
-        drafts <- newEitherT $ DBDraft.getDraftRecords dbqh draftIds offset
+        postIds <- newEitherT $ DBAuthor.getPostIdsByAuthorId dbqH authorId
+        draftIds <- newEitherT $ DBPost.getPostDraftIdsByPostIds dbqH postIds
+        drafts <- newEitherT $ DBDraft.getDraftRecords dbqH draftIds offset
         return $ DraftResponse drafts offset
       case draftsRespE of
         Left msg -> return $ respError $ TextResponse msg
         Right response -> do
-          Logger.logInfo logh "Drafts were sent"
+          Logger.logInfo logH "Drafts were sent"
           return $ respOk response
   where
     authParams = ["token"]
@@ -53,33 +53,33 @@ getDraftsResp handle query = do
 -- | Create createDraft Response
 createDraftResp :: Monad m => Handle m -> Query -> m Response
 createDraftResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: create Draft record"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: create Draft record"
   writeAuthorPermE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAuthorWritePerm dbqh token
+    perm <- lift $ DBAccount.checkAuthorWritePerm dbqH token
     guard $ perm == AuthorWritePerm
     return token
   case writeAuthorPermE of
     Left _ -> return resp404
     Right token -> do
       readAuthorPermE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idPost, text] = reqParams
         postId <- newEitherT $ Util.readEitherMa idPost "post_id"
-        readAuthorPerm <-lift $ DBAccount.checkAuthorReadPerm dbqh token postId
+        readAuthorPerm <-lift $ DBAccount.checkAuthorReadPerm dbqH token postId
         guard $ readAuthorPerm == AuthorReadPerm
-        _ <- newEitherT $ DBDraft.createDraft dbqh postId text
+        _ <- newEitherT $ DBDraft.createDraft dbqH postId text
         return readAuthorPerm
       case readAuthorPermE of
         Right AuthorReadPerm -> do
           let msg = "Draft was created"
-          Logger.logInfo logh msg
+          Logger.logInfo logH msg
           return $ respOk $ TextResponse msg
         Right _ -> do
-          Logger.logError logh "This Author isn't Author of this Post!"
+          Logger.logError logH "This Author isn't Author of this Post!"
           return $ respError $ TextResponse "You aren't Author of this Post!"
         Left msg -> return $ respError $ TextResponse msg
     where
@@ -89,34 +89,34 @@ createDraftResp handle query = do
 -- | Create removeDrafts Response
 removeDraftResp :: Monad m => Handle m -> Query -> m Response
 removeDraftResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: remove Draft record"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: remove Draft record"
   writeAuthorPermE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAuthorWritePerm dbqh token
+    perm <- lift $ DBAccount.checkAuthorWritePerm dbqH token
     guard $ perm == AuthorWritePerm
     return token
   case writeAuthorPermE of
     Left _ -> return resp404
     Right token -> do
       readAuthorPermE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idPost] = reqParams
         postId <- newEitherT $ Util.readEitherMa idPost "post_id"
-        _ <- newEitherT $ DBPost.getPostRecord dbqh postId
-        readAuthorPerm <- lift $ DBAccount.checkAuthorReadPerm dbqh token postId
+        _ <- newEitherT $ DBPost.getPostRecord dbqH postId
+        readAuthorPerm <- lift $ DBAccount.checkAuthorReadPerm dbqH token postId
         guard $ readAuthorPerm == AuthorReadPerm
-        _ <- newEitherT $ DBDraft.removeDraft dbqh postId
+        _ <- newEitherT $ DBDraft.removeDraft dbqH postId
         return readAuthorPerm
       case readAuthorPermE of
         Right AuthorReadPerm -> do
           let msg = "Draft was removed"
-          Logger.logInfo logh msg
+          Logger.logInfo logH msg
           return $ respOk $ TextResponse msg
         Right _ -> do
-          Logger.logError logh "This Author isn't Author of this Post!"
+          Logger.logError logH "This Author isn't Author of this Post!"
           return $ respError $ TextResponse "You aren't Author of this Post!"
         Left msg -> return $ respError $ TextResponse msg
     where
@@ -126,34 +126,34 @@ removeDraftResp handle query = do
 -- | Create editDrafts Response
 editDraftResp :: Monad m => Handle m -> Query -> m Response
 editDraftResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: edit Draft record"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: edit Draft record"
   writeAuthorPermE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAuthorWritePerm dbqh token
+    perm <- lift $ DBAccount.checkAuthorWritePerm dbqH token
     guard $ perm == AuthorWritePerm
     return token
   case writeAuthorPermE of
     Left _ -> return resp404
     Right token -> do
       readAuthorPermE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idPost, text] = reqParams
         postId <- newEitherT $ Util.readEitherMa idPost "post_id"
-        _ <- newEitherT $ DBPost.getPostRecord dbqh postId
-        readAuthorPerm <-lift $ DBAccount.checkAuthorReadPerm dbqh token postId
+        _ <- newEitherT $ DBPost.getPostRecord dbqH postId
+        readAuthorPerm <-lift $ DBAccount.checkAuthorReadPerm dbqH token postId
         guard $ readAuthorPerm == AuthorReadPerm
-        _ <- newEitherT $ DBDraft.editDraft dbqh postId text
+        _ <- newEitherT $ DBDraft.editDraft dbqH postId text
         return readAuthorPerm
       case readAuthorPermE of
         Right AuthorReadPerm -> do
           let msg = "Draft was edited"
-          Logger.logInfo logh msg
+          Logger.logInfo logH msg
           return $ respOk $ TextResponse msg
         Right _ -> do
-          Logger.logError logh "This Author isn't Author of this Post!"
+          Logger.logError logH "This Author isn't Author of this Post!"
           return $ respError $ TextResponse "You aren't Author of this Post!"
         Left msg -> return $ respError $ TextResponse msg
     where
@@ -163,34 +163,34 @@ editDraftResp handle query = do
 -- | Create publishDrafts Response
 publishDraftResp :: Monad m => Handle m -> Query -> m Response
 publishDraftResp handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logInfo logh "Processing request: publish Draft"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logInfo logH "Processing request: publish Draft"
   writeAuthorPermE <- runEitherT $ do
-    givenToken <- newEitherT $ Query.extractRequired logh query authParams
+    givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAuthorWritePerm dbqh token
+    perm <- lift $ DBAccount.checkAuthorWritePerm dbqH token
     guard $ perm == AuthorWritePerm
     return token
   case writeAuthorPermE of
     Left _ -> return resp404
     Right token -> do
       readAuthorPermE <- runEitherT $ do
-        reqParams <- newEitherT $ Query.extractRequired logh query params
+        reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idPost] = reqParams
         postId <- newEitherT $ Util.readEitherMa idPost "post_id"
-        _ <- newEitherT $ DBPost.getPostRecord dbqh postId
-        readAuthorPerm <-lift $ DBAccount.checkAuthorReadPerm dbqh token postId
+        _ <- newEitherT $ DBPost.getPostRecord dbqH postId
+        readAuthorPerm <-lift $ DBAccount.checkAuthorReadPerm dbqH token postId
         guard $ readAuthorPerm == AuthorReadPerm
-        _ <- newEitherT $ DBDraft.publishDraft dbqh postId
+        _ <- newEitherT $ DBDraft.publishDraft dbqH postId
         return readAuthorPerm
       case readAuthorPermE of
         Right AuthorReadPerm -> do
           let msg = "Draft was published"
-          Logger.logInfo logh msg
+          Logger.logInfo logH msg
           return $ respOk $ TextResponse msg
         Right _ -> do
-          Logger.logError logh "This Author isn't Author of this Post!"
+          Logger.logError logH "This Author isn't Author of this Post!"
           return $ respError $ TextResponse "You aren't Author of this Post!"
         Left msg -> return $ respError $ TextResponse msg
     where

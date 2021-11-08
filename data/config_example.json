@@ -1,11 +1,11 @@
 {
     "logger_settings" : 
         {
-            "verbocity" : "debug"
+            "verbosity" : "debug"
         },
     "db_settings" :
         {
-            "dbname" : "post-server",
+            "dbName" : "post-server",
             "user" : "lyupo",
             "admins" : ["lyupo"]
         },

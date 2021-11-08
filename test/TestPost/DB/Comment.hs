@@ -49,27 +49,27 @@ spec_getLastCommentRecord =
     it "Should successfully return CommentId for array of one element" $ do
       let comId = 101 :: Objects.CommentId
           sqlComA = [[toSql comId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlComA
           }
-          comIdE = DBComment.getLastCommentRecord dbqh'
+          comIdE = DBComment.getLastCommentRecord dbqH'
       comIdE `shouldBe` Identity (Right comId)
     it "Should fail on array of many elements" $ do
       let comId = 101 :: Objects.CommentId
           sqlComA = [
               [toSql comId],
               [toSql comId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlComA
           }
-          comIdE = DBComment.getLastCommentRecord dbqh'
+          comIdE = DBComment.getLastCommentRecord dbqH'
           msg = "Incorrect Comment record!"
       comIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let dbqh' = Handlers.dbqh {
+      let dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          comIdE = DBComment.getLastCommentRecord dbqh'
+          comIdE = DBComment.getLastCommentRecord dbqH'
           msg = "No exist Comments!"
       comIdE `shouldBe` Identity (Left msg)
 
@@ -83,10 +83,10 @@ spec_getCommentRecord =
             toSql comId,
             toSql text
            ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlComA
           }
-          comE = DBComment.getCommentRecord dbqh' comId
+          comE = DBComment.getCommentRecord dbqH' comId
           check = Objects.Comment {
             Objects.comment_id = comId,
             Objects.comment_text = text
@@ -100,18 +100,18 @@ spec_getCommentRecord =
             [toSql comId, toSql text1],
             [toSql comId, toSql text2]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlComA
           }
-          comE = DBComment.getCommentRecord dbqh' comId
+          comE = DBComment.getCommentRecord dbqH' comId
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Comment with Id: 11" 
       comE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let comId = 11 :: Objects.CommentId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          comE = DBComment.getCommentRecord dbqh' comId
+          comE = DBComment.getCommentRecord dbqH' comId
           msg = "No exists Comment with id: 11"
       comE `shouldBe` Identity (Left msg)

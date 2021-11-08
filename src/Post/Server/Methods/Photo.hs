@@ -17,7 +17,7 @@ import Post.Server.Util (convert)
 -- | Upload Photo to Server
 upload :: (MonadThrow m, Monad m) => Handle m -> Text -> m Text
 upload handle pathToFile = do
-  let logh = hLogger handle
+  let logH = hLogger handle
       hostServer = ServerConfig.host $ cServer handle
       portServer = ServerConfig.port $ cServer handle
       server = "http://" <> hostServer <> ":" <> convert portServer
@@ -31,5 +31,5 @@ upload handle pathToFile = do
   file <- openBinaryFile handle tempFileName WriteMode
   hPutStr handle file (L8.unpack $ responseBody response)
   hClose handle file
-  Logger.logDebug logh "Photo uploaded to server"
+  Logger.logDebug logH "Photo uploaded to server"
   return $ T.pack tempFileName

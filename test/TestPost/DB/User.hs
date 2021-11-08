@@ -25,10 +25,10 @@ spec_newUser =
             toSql ln,
             toSql ia
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          userE = DBUser.newUser dbqh' sqlUserA
+          userE = DBUser.newUser dbqH' sqlUserA
           check = Objects.User {
             Objects.user_firstName = fn,
             Objects.user_lastName = ln,
@@ -38,7 +38,7 @@ spec_newUser =
           }
       userE `shouldBe` Identity (Right check)
     it "Should fail with empty input" $ do
-      let userE = DBUser.newUser Handlers.dbqh []
+      let userE = DBUser.newUser Handlers.dbqH []
       userE `shouldBe` Identity (Left "Invalid User!")
     it "Should fail with too many fields in input array" $ do
       let userId = 101 :: Objects.UserId
@@ -53,7 +53,7 @@ spec_newUser =
             toSql ia,
             toSql photoId
            ]
-          userE = DBUser.newUser Handlers.dbqh sqlUserA
+          userE = DBUser.newUser Handlers.dbqH sqlUserA
       userE `shouldBe` Identity (Left "Invalid User!")
 
 spec_getAuthorIdByUserId :: Spec
@@ -63,17 +63,17 @@ spec_getAuthorIdByUserId =
       let userId = 100 :: Objects.UserId
           authorId = 22 :: Objects.AuthorId
           sqlUserA = [[toSql authorId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          authorIdE = DBUser.getAuthorIdByUserId dbqh' userId
+          authorIdE = DBUser.getAuthorIdByUserId dbqH' userId
       authorIdE `shouldBe` Identity (Right authorId)
     it "Should fail on empty array" $ do
       let userId = 100
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          authorIdE = DBUser.getAuthorIdByUserId dbqh' userId
+          authorIdE = DBUser.getAuthorIdByUserId dbqH' userId
           msg = "No exists Author corresponding to User with id: 100"
       authorIdE `shouldBe` Identity (Left msg)
     it "Should fail on array of many elements" $ do
@@ -83,10 +83,10 @@ spec_getAuthorIdByUserId =
           sqlUserA = [
             [toSql authorId1],
             [toSql authorId2]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          authorIdE = DBUser.getAuthorIdByUserId dbqh' userId
+          authorIdE = DBUser.getAuthorIdByUserId dbqH' userId
           msg = "Violation of Unique record Author-User in db: \
                 \exist more than one record for User with Id: \
                 \100"
@@ -107,10 +107,10 @@ spec_getUserRecords =
             toSql ln,
             toSql ia
            ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          usersE = DBUser.getUserRecords dbqh' offset
+          usersE = DBUser.getUserRecords dbqH' offset
           check = Objects.User {
             Objects.user_firstName = fn,
             Objects.user_lastName = ln,
@@ -142,10 +142,10 @@ spec_getUserRecords =
             toSql ia2
             ]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          usersE = DBUser.getUserRecords dbqh' offset
+          usersE = DBUser.getUserRecords dbqH' offset
           user1 = Objects.User {
             Objects.user_firstName = fn1,
             Objects.user_lastName = ln1,
@@ -163,16 +163,16 @@ spec_getUserRecords =
       usersE `shouldBe` Identity (Right [user1, user2])
     it "Should fail on empty array" $ do
       let offset = 10
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          usersE = DBUser.getUserRecords dbqh' offset
+          usersE = DBUser.getUserRecords dbqH' offset
           msg = "No users!"
       usersE `shouldBe` Identity (Left msg)
 
-spec_getUserRecordbyId :: Spec
-spec_getUserRecordbyId =
-  describe "Testing getUserRecordbyId" $ do
+spec_getUserRecordById :: Spec
+spec_getUserRecordById =
+  describe "Testing getUserRecordById" $ do
     it "Should successfully return User for array of one element" $ do
       let userId = 101 :: Objects.UserId
           fn = "Ann" :: Objects.FirstName
@@ -184,10 +184,10 @@ spec_getUserRecordbyId =
             toSql ln,
             toSql ia
            ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          usersE = DBUser.getUserRecordbyId dbqh' userId
+          usersE = DBUser.getUserRecordById dbqH' userId
           check = Objects.User {
             Objects.user_firstName = fn,
             Objects.user_lastName = ln,
@@ -217,19 +217,19 @@ spec_getUserRecordbyId =
             toSql ia2
             ]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          usersE = DBUser.getUserRecordbyId dbqh' userId
+          usersE = DBUser.getUserRecordById dbqH' userId
           msg = "Violation of Unique record in db: \
                 \exist more than one record for User with Id: 101"
       usersE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let userId = 101 :: Objects.UserId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          usersE = DBUser.getUserRecordbyId dbqh' userId
+          usersE = DBUser.getUserRecordById dbqH' userId
           msg = "No exists User with id: 101"
       usersE `shouldBe` Identity (Left msg)
 
@@ -242,10 +242,10 @@ spec_getUserIdByLogin =
           sqlUserA = [[
             toSql userId
            ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          userIdE = DBUser.getUserIdByLogin dbqh' login
+          userIdE = DBUser.getUserIdByLogin dbqH' login
       userIdE `shouldBe` Identity (Right userId)
     it "Should fail on array of many elements" $ do
       let userId1 = 101 :: Objects.UserId
@@ -255,19 +255,19 @@ spec_getUserIdByLogin =
             [toSql userId1],
             [toSql userId2]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          userIdE = DBUser.getUserIdByLogin dbqh' login
+          userIdE = DBUser.getUserIdByLogin dbqH' login
           msg = "Violation of Unique record in db: \
                 \exist more than one record for User with login: \
                 \'22ann22'!"
       userIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let login = "22ann22" :: Objects.Login
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          userIdE = DBUser.getUserIdByLogin dbqh' login
+          userIdE = DBUser.getUserIdByLogin dbqH' login
           msg = "No exists User with login: '22ann22'!"
       userIdE `shouldBe` Identity (Left msg)

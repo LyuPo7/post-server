@@ -40,9 +40,9 @@ getConfig = do
 -- | Check config settings
 checkConfig :: Config -> Either E.PostError Config
 checkConfig config 
-  | T.null $ DBSpec.dbname dbSet = Left E.ConfigDBNameEmptyError
+  | T.null $ DBSpec.dbName dbSet = Left E.ConfigDBNameEmptyError
   | T.null $ ServerConfig.host serverSet = Left E.ConfigServerHostEmptyError
-  | Logger.cVerbocity logSet `notElem` [
+  | Logger.cVerbosity logSet `notElem` [
       Just Logger.Debug,
       Just Logger.Info,
       Just Logger.Warning,

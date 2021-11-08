@@ -17,17 +17,17 @@ import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 -- | Logger Handle
 data Handle m = Handle {
   log :: LogMessage -> Text -> m (),
-  hconfig :: Config
+  hConfig :: Config
 }
 
 -- | Logger Config
 newtype Config = Config {
-  cVerbocity :: Maybe Level
+  cVerbosity :: Maybe Level
 } deriving (Show, Generic, Eq)
 
 instance A.FromJSON Config where
   parseJSON = A.withObject "General Config" $ \o ->
-    Config <$> o A..:? "verbocity"
+    Config <$> o A..:? "verbosity"
 
 -- | create Handle IO
 withHandleIO :: Config -> (Handle IO -> IO a) -> IO a
@@ -35,9 +35,9 @@ withHandleIO config f = f $ newHandleIO config
 
 newHandleIO :: Config -> Handle IO
 newHandleIO config = do
-  let globalLevel = fromMaybe Debug $ cVerbocity config
+  let globalLevel = fromMaybe Debug $ cVerbosity config
   Handle {
-    hconfig = config,
+    hConfig = config,
     log = \logMes str -> 
       when (level logMes >= globalLevel) $ do
         let levelMes = level logMes

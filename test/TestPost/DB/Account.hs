@@ -18,10 +18,10 @@ spec_getPasswordRecordByLogin =
       let login = "22ann22" :: Objects.Login
           password = "1111*1111" :: Objects.Password
           sqlAccA = [[toSql password]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          passE = DBAccount.getPasswordRecordByLogin dbqh' login
+          passE = DBAccount.getPasswordRecordByLogin dbqH' login
       passE `shouldBe` Identity (Right password)
     it "Should fail on array of many elements" $ do
       let login = "22ann22" :: Objects.Login
@@ -31,10 +31,10 @@ spec_getPasswordRecordByLogin =
             [toSql password1],
             [toSql password2]
            ]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          passE = DBAccount.getPasswordRecordByLogin dbqh' login
+          passE = DBAccount.getPasswordRecordByLogin dbqH' login
           msg = "Incorrect login: 22ann22"
       passE `shouldBe` Identity (Left msg)
     it "Should fail on inner array of many elements" $ do
@@ -45,18 +45,18 @@ spec_getPasswordRecordByLogin =
             toSql password1,
             toSql password2
            ]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          passE = DBAccount.getPasswordRecordByLogin dbqh' login
+          passE = DBAccount.getPasswordRecordByLogin dbqH' login
           msg = "Incorrect login: 22ann22"
       passE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let login = "22ann22" :: Objects.Login
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          passE = DBAccount.getPasswordRecordByLogin dbqh' login
+          passE = DBAccount.getPasswordRecordByLogin dbqH' login
           msg = "Incorrect login: 22ann22"
       passE `shouldBe` Identity (Left msg)
 
@@ -67,10 +67,10 @@ spec_getIsAdminRecordByToken =
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
           isAdmin = True
           sqlAccA = [[toSql isAdmin]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          isAdminE = DBAccount.getIsAdminRecordByToken dbqh' token
+          isAdminE = DBAccount.getIsAdminRecordByToken dbqH' token
       isAdminE `shouldBe` Identity (Right isAdmin)
     it "Should fail on array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
@@ -80,10 +80,10 @@ spec_getIsAdminRecordByToken =
             [toSql isAdmin1],
             [toSql isAdmin2]
             ]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          isAdminE = DBAccount.getIsAdminRecordByToken dbqh' token
+          isAdminE = DBAccount.getIsAdminRecordByToken dbqH' token
           msg = "Incorrect token: '32d1c72f-e962-48c5-9b32-5c386e6f0ec9'."
       isAdminE `shouldBe` Identity (Left msg)
     it "Should fail on inner array of many elements" $ do
@@ -94,18 +94,18 @@ spec_getIsAdminRecordByToken =
             toSql isAdmin1,
             toSql isAdmin2
             ]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          isAdminE = DBAccount.getIsAdminRecordByToken dbqh' token
+          isAdminE = DBAccount.getIsAdminRecordByToken dbqH' token
           msg = "Incorrect token: '32d1c72f-e962-48c5-9b32-5c386e6f0ec9'."
       isAdminE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          isAdminE = DBAccount.getIsAdminRecordByToken dbqh' token
+          isAdminE = DBAccount.getIsAdminRecordByToken dbqH' token
           msg = "Incorrect token: '32d1c72f-e962-48c5-9b32-5c386e6f0ec9'."
       isAdminE `shouldBe` Identity (Left msg)
 
@@ -116,10 +116,10 @@ spec_getUserIdRecordByToken =
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
           userId = 12 :: Objects.UserId
           sqlAccA = [[toSql userId]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          isAdminE = DBAccount.getUserIdRecordByToken dbqh' token
+          isAdminE = DBAccount.getUserIdRecordByToken dbqH' token
       isAdminE `shouldBe` Identity (Right userId)
     it "Should fail on array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
@@ -129,10 +129,10 @@ spec_getUserIdRecordByToken =
             [toSql userId1],
             [toSql userId2]
             ]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          isAdminE = DBAccount.getUserIdRecordByToken dbqh' token
+          isAdminE = DBAccount.getUserIdRecordByToken dbqH' token
           msg = "Incorrect token: '32d1c72f-e962-48c5-9b32-5c386e6f0ec9'."
       isAdminE `shouldBe` Identity (Left msg)
     it "Should fail on inner array of many elements" $ do
@@ -143,18 +143,18 @@ spec_getUserIdRecordByToken =
             toSql userId1,
             toSql userId2
             ]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlAccA
           }
-          isAdminE = DBAccount.getUserIdRecordByToken dbqh' token
+          isAdminE = DBAccount.getUserIdRecordByToken dbqH' token
           msg = "Incorrect token: '32d1c72f-e962-48c5-9b32-5c386e6f0ec9'."
       isAdminE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          isAdminE = DBAccount.getUserIdRecordByToken dbqh' token
+          isAdminE = DBAccount.getUserIdRecordByToken dbqH' token
           msg = "Incorrect token: '32d1c72f-e962-48c5-9b32-5c386e6f0ec9'."
       isAdminE `shouldBe` Identity (Left msg)
 
@@ -166,10 +166,10 @@ spec_checkAuthorWritePerm =
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
           authorId = 12 :: Objects.AuthorId
           sqlUserA = [[toSql authorId]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkAuthorWritePerm dbqh' token
+          perm = DBAccount.checkAuthorWritePerm dbqH' token
       perm `shouldBe` Identity Objects.AuthorWritePerm
     it "Should successfully return NoPerm for array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
@@ -179,10 +179,10 @@ spec_checkAuthorWritePerm =
             [toSql authorId1],
             [toSql authorId2]
            ]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkAuthorWritePerm dbqh' token
+          perm = DBAccount.checkAuthorWritePerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
     it "Should successfully return NoPerm for inner array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
@@ -192,17 +192,17 @@ spec_checkAuthorWritePerm =
             toSql authorId1,
             toSql authorId2
            ]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkAuthorWritePerm dbqh' token
+          perm = DBAccount.checkAuthorWritePerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
     it "Should successfully return NoPerm for empty array" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          perm = DBAccount.checkAuthorWritePerm dbqh' token
+          perm = DBAccount.checkAuthorWritePerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
 
 spec_checkUserPerm :: Spec
@@ -212,10 +212,10 @@ spec_checkUserPerm =
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
           userId = 12 :: Objects.UserId
           sqlUserA = [[toSql userId]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkUserPerm dbqh' token
+          perm = DBAccount.checkUserPerm dbqH' token
       perm `shouldBe` Identity Objects.UserPerm
     it "Should successfully return NoPerm for array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
@@ -225,10 +225,10 @@ spec_checkUserPerm =
             [toSql userId1],
             [toSql userId2]
            ]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkUserPerm dbqh' token
+          perm = DBAccount.checkUserPerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
     it "Should successfully return NoPerm for inner array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
@@ -238,17 +238,17 @@ spec_checkUserPerm =
             toSql userId1,
             toSql userId2
            ]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkUserPerm dbqh' token
+          perm = DBAccount.checkUserPerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
     it "Should successfully return NoPerm for empty array" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          perm = DBAccount.checkUserPerm dbqh' token
+          perm = DBAccount.checkUserPerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
 
 spec_checkAdminPerm :: Spec
@@ -258,19 +258,19 @@ spec_checkAdminPerm =
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
           isAdmin = True
           sqlUserA = [[toSql isAdmin]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkAdminPerm dbqh' token
+          perm = DBAccount.checkAdminPerm dbqH' token
       perm `shouldBe` Identity Objects.AdminPerm
     it "Should successfully return NoPerm if 'is_admin'==False" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
           isAdmin = False
           sqlUserA = [[toSql isAdmin]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkAdminPerm dbqh' token
+          perm = DBAccount.checkAdminPerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
     it "Should successfully return NoPerm for array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
@@ -280,10 +280,10 @@ spec_checkAdminPerm =
             [toSql isAdmin1],
             [toSql isAdmin2]
            ]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkAdminPerm dbqh' token
+          perm = DBAccount.checkAdminPerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
     it "Should successfully return NoPerm for inner array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
@@ -293,17 +293,17 @@ spec_checkAdminPerm =
             toSql isAdmin1,
             toSql isAdmin2
            ]]
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlUserA
           }
-          perm = DBAccount.checkAdminPerm dbqh' token
+          perm = DBAccount.checkAdminPerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
     it "Should successfully return NoPerm for empty array" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: Objects.Token
-          dbqh' = H.dbqh {
+          dbqH' = H.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          perm = DBAccount.checkAdminPerm dbqh' token
+          perm = DBAccount.checkAdminPerm dbqH' token
       perm `shouldBe` Identity Objects.NoPerm
 
 spec_checkPassword :: Spec
@@ -312,5 +312,5 @@ spec_checkPassword =
     it "Should fail for different Passwords" $ do
       let truePass = "11112222"
           intentPass = "***"
-          perm = DBAccount.checkPassword H.dbqh truePass intentPass
+          perm = DBAccount.checkPassword H.dbqH truePass intentPass
       perm `shouldBe` Identity (Left "Incorrect password!")

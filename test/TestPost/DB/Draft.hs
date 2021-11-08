@@ -55,10 +55,10 @@ spec_getDraftText =
       let text = "text" :: Text
           draftId = 11 :: Objects.DraftId
           sqlDraftA = [[toSql text]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
-          draftTextE = DBDraft.getDraftText dbqh' draftId
+          draftTextE = DBDraft.getDraftText dbqH' draftId
       draftTextE `shouldBe` Identity (Right text)
     it "Should fail on array of many elements" $ do
       let text1 = "text1" :: Text
@@ -68,19 +68,19 @@ spec_getDraftText =
             [toSql text1],
             [toSql text2]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
-          draftTextE = DBDraft.getDraftText dbqh' photoId
+          draftTextE = DBDraft.getDraftText dbqH' photoId
           msg = "Violation of Unique record in db: \
                 \exist more than one record for Draft with Id: 11"
       draftTextE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
       let draftId = 101 :: Objects.DraftId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          draftTextE = DBDraft.getDraftText dbqh' draftId
+          draftTextE = DBDraft.getDraftText dbqH' draftId
           msg = "Draft with id: 101 hasn't text"
       draftTextE `shouldBe` Identity (Left msg)
 
@@ -90,27 +90,27 @@ spec_getLastDraftRecord =
     it "Should successfully return DraftId for array of one element" $ do
       let draftId = 101 :: Objects.DraftId
           sqlDraftA = [[toSql draftId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
-          draftIdE = DBDraft.getLastDraftRecord dbqh'
+          draftIdE = DBDraft.getLastDraftRecord dbqH'
       draftIdE `shouldBe` Identity (Right draftId)
     it "Should fail on array of many elements" $ do
       let draftId = 101 :: Objects.DraftId
           sqlDraftA = [
               [toSql draftId],
               [toSql draftId]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
-          draftIdE = DBDraft.getLastDraftRecord dbqh'
+          draftIdE = DBDraft.getLastDraftRecord dbqH'
           msg = "Incorrect Draft record!"
       draftIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let dbqh' = Handlers.dbqh {
+      let dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          draftIdE = DBDraft.getLastDraftRecord dbqh'
+          draftIdE = DBDraft.getLastDraftRecord dbqH'
           msg = "No exist Drafts!"
       draftIdE `shouldBe` Identity (Left msg)
 
@@ -127,10 +127,10 @@ spec_getDraftRecords =
             toSql text,
             toSql postId
            ]]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
-          draftsE = DBDraft.getDraftRecords dbqh' [draftId] offset
+          draftsE = DBDraft.getDraftRecords dbqH' [draftId] offset
           check = Objects.Draft {
             Objects.draft_id = draftId,
             Objects.draft_text = text,
@@ -153,10 +153,10 @@ spec_getDraftRecords =
             toSql text2,
             toSql postId2]
            ]
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return sqlDraftA
           }
-          draftsE = DBDraft.getDraftRecords dbqh' [draftId1, draftId2] offset
+          draftsE = DBDraft.getDraftRecords dbqH' [draftId1, draftId2] offset
           draft1 = Objects.Draft {
             Objects.draft_id = draftId1,
             Objects.draft_text = text1,
@@ -171,9 +171,9 @@ spec_getDraftRecords =
     it "Should fail on empty array" $ do
       let offset = 10
           draftId = 11 :: Objects.DraftId
-          dbqh' = Handlers.dbqh {
+          dbqH' = Handlers.dbqH {
             DBQSpec.makeDBRequest = \_ -> return []
           }
-          draftsE = DBDraft.getDraftRecords dbqh' [draftId] offset
+          draftsE = DBDraft.getDraftRecords dbqH' [draftId] offset
           msg = "No Drafts!"
       draftsE `shouldBe` Identity (Left msg)

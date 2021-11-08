@@ -5,7 +5,7 @@ import Data.Text (Text)
 import Database.HDBC (SqlValue(..))
 import Data.List (sort)
 
--- Synonims
+-- Synonyms
 type TableName = Text
 type ColumnName = Text
 type ConstraintName = Text
@@ -41,7 +41,7 @@ instance Show Property where
     - first_name - first name of the User;
     - last_name - last name of the User;
     - login - User's login;
-    - password - User's passwors;
+    - password - User's password;
     - token - User's current token;
 ** Table: authors (table contains info every Author):
     - id - unique identifier for User;
@@ -86,7 +86,7 @@ instance Show Property where
 ** Table: post_tag (defines one-to-many relation between post and tag):
     - post_id - Post id;
     - tag_id - Tag id;
-** Table: post_comment (defines one-to-many relation between post and cpmment):
+** Table: post_comment (defines one-to-many relation between post and comment):
     - post_id - Post id;
     - comment_id - Comment id;
 ** Table: post_draft (defines one-to-one relation between post and draft):
@@ -503,7 +503,7 @@ colIdPhotoPostAddPhoto = Column {
   column_properties = []
 }
 
--- | Author dependencias
+-- | Author dependencies
 tableAuthorUser :: Table
 tableAuthorUser = Table {
   table_name = "author_user",
@@ -524,7 +524,7 @@ colIdUserAuthorUser = Column {
   column_properties = [NotNull, Unique]
 }
 
--- | User dependencias
+-- | User dependencies
 tableUserPhoto :: Table
 tableUserPhoto = Table {
   table_name = "user_photo",

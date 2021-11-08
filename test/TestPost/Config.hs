@@ -15,9 +15,9 @@ spec_checkConfig =
     it "Should successfully return correct Config" $ do
       let draftIdsE = Config.checkConfig H.postC
       draftIdsE `shouldBe` Right H.postC
-    it "Should fail if Config is without 'dbname'" $ do
+    it "Should fail if Config is without 'dbName'" $ do
       let dbC' = H.dbC {
-            DBSpec.dbname = ""
+            DBSpec.dbName = ""
           }
           postC' = H.postC {
             Config.cDB = dbC'

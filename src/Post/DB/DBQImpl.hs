@@ -14,10 +14,10 @@ import Post.DB.Data (DbQuery)
 makeDBRequest :: Handle IO -> DbQuery -> IO [[SqlValue]]
 makeDBRequest handle dbQuery = handleSql errorHandler $ do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
       queryString = fst dbQuery
       queryArgs = snd dbQuery
-  Logger.logDebug logh $ "DBQuery: '"
+  Logger.logDebug logH $ "DBQuery: '"
     <> queryString
     <> "' with args: '"
     <> T.intercalate "," (map fromSql queryArgs)
@@ -31,10 +31,10 @@ makeDBRequest handle dbQuery = handleSql errorHandler $ do
 runDBRequest :: Handle IO -> DbQuery -> IO ()
 runDBRequest handle dbQuery = handleSql errorHandler $ do
   let dbh = conn handle
-      logh = hLogger handle
+      logH = hLogger handle
       queryString = fst dbQuery
       queryArgs = snd dbQuery
-  Logger.logDebug logh $ "DBQuery: '"
+  Logger.logDebug logH $ "DBQuery: '"
     <> queryString
     <> "' with args: '"
     <> T.intercalate "," (map fromSql queryArgs)

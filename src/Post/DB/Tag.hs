@@ -16,7 +16,7 @@ import Post.Server.Util (convert)
 --  | Create new Tag if doesn't already exist Tag with the same Title
 createTag :: Monad m => Handle m -> Title -> m (Either Text Title)
 createTag handle tagTitle = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   tagIdE <- getTagIdByTitle handle tagTitle
   case tagIdE of
     Left _ -> do
@@ -26,17 +26,17 @@ createTag handle tagTitle = do
       let msg = "Tag with title: '"
             <> tagTitle
             <> "' already exists!"
-      Logger.logWarning logh msg 
+      Logger.logWarning logH msg 
       return $ Left msg
 
 -- | Create Tag records by [TagId] if all Tag in [TagId] exist
 getTagRecordsByIds :: Monad m => Handle m -> [TagId] -> m (Either Text [Tag])
 getTagRecordsByIds handle tagIds = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   tagsE <- mapM (getTagRecordsById handle) tagIds
   case sequenceA tagsE of
     Right tags -> do
-      Logger.logInfo logh "Getting Tags from db."
+      Logger.logInfo logH "Getting Tags from db."
       return $ Right tags
     Left msg -> return $ Left msg
 
@@ -52,14 +52,14 @@ removeTag handle tagTitle = runEitherT $ do
        - if doesn't already exist Tag newTitle --}
 editTag :: Monad m => Handle m -> Title -> Title -> m (Either Text Title)
 editTag handle oldTitle newTitle = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   tagIdNewE <- getTagIdByTitle handle newTitle
   case tagIdNewE of
     Right _ -> do
       let msg = "Tag with title: '"
             <> newTitle
             <> "' already exists!"
-      Logger.logWarning logh msg
+      Logger.logWarning logH msg
       return $ Left msg
     Left _ -> runEitherT $ do
       tagIdOld <- newEitherT $ getTagIdByTitle handle oldTitle
@@ -76,7 +76,7 @@ removeTagPostsDeps handle tagId = runEitherT $ do
 -- | Get TagId if exists Tag record with such title
 getTagIdByTitle :: Monad m => Handle m -> Title -> m (Either Text TagId)
 getTagIdByTitle handle tagTitle = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   tagSQL <- DBQSpec.selectFromWhere handle DBData.tableTags
             [DBData.colIdTag]
             [DBData.colTitleTag]
@@ -86,10 +86,10 @@ getTagIdByTitle handle tagTitle = do
       let msg = "No exists Tag with title: '"
            <> tagTitle
            <> "'!"
-      Logger.logWarning logh msg 
+      Logger.logWarning logH msg 
       return $ Left msg
     [[idTag]] -> do
-      Logger.logInfo logh $ "Getting Tag with title: '"
+      Logger.logInfo logH $ "Getting Tag with title: '"
         <> tagTitle
         <> "' from db."
       return $ Right $ fromSql idTag
@@ -98,29 +98,29 @@ getTagIdByTitle handle tagTitle = do
                 \exist more than one record for Tag with title: '"
                   <> tagTitle
                   <> "'!"
-      Logger.logWarning logh msg 
+      Logger.logWarning logH msg 
       return $ Left msg
 
 -- | Get all Tag records
 getAllTagRecords :: Monad m => Handle m -> Offset -> m (Either Text [Tag])
 getAllTagRecords handle offset = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   tagsSQL <- DBQSpec.selectFromOrderLimitOffset  handle DBData.tableTags
              [DBData.colIdTag, DBData.colTitleTag]
               offset
   case tagsSQL of
     [] -> do
-      Logger.logWarning logh "No Tags in db!"
+      Logger.logWarning logH "No Tags in db!"
       return $ Left "No Tags!"
     titleIds -> do
-      Logger.logInfo logh "Getting Tags from db."
+      Logger.logInfo logH "Getting Tags from db."
       tagsE <- mapM newTag titleIds
       return $ sequenceA tagsE
 
 -- | Get Tag record by TagId if exists
 getTagRecordsById :: Monad m => Handle m -> TagId -> m (Either Text Tag)
 getTagRecordsById handle tagId = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   tagsSql <- DBQSpec.selectFromWhere handle DBData.tableTags
               [DBData.colIdTag, DBData.colTitleTag]
               [DBData.colIdTag]
@@ -129,22 +129,22 @@ getTagRecordsById handle tagId = do
     [] -> do
       let msg = "No Tag with id in: "
             <> convert tagId
-      Logger.logWarning logh msg
+      Logger.logWarning logH msg
       return $ Left msg
     [tag] -> do
-      Logger.logInfo logh "Getting Tag from db."
+      Logger.logInfo logH "Getting Tag from db."
       newTag tag
     _ -> do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Tag with Id: "
                   <> convert tagId
-      Logger.logError logh msg
+      Logger.logError logH msg
       return $ Left msg
 
 -- | Get all [PostId] with this TagId
 getTagPostRecords :: Monad m => Handle m -> PostId -> m (Either Text [PostId])
 getTagPostRecords handle tagId = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   postsIdSQL <- DBQSpec.selectFromWhere handle DBData.tablePostTag
                 [DBData.colIdPostPostTag]
                 [DBData.colIdTagPostTag]
@@ -153,10 +153,10 @@ getTagPostRecords handle tagId = do
     [] -> do
       let msg = "No Posts corresponding to Tag with id: "
             <> convert tagId
-      Logger.logWarning logh msg
+      Logger.logWarning logH msg
       return $ Left msg
     postIds -> do
-      Logger.logInfo logh $ "Getting PostId corresponding to Tag with id: "
+      Logger.logInfo logH $ "Getting PostId corresponding to Tag with id: "
         <> convert tagId
         <> " from db."
       return $ Right $ map fromSql $ concat postIds
@@ -164,44 +164,44 @@ getTagPostRecords handle tagId = do
 -- | Delete Tag-Post records
 deleteTagPostsRecords :: Monad m => Handle m -> TagId -> m ()
 deleteTagPostsRecords handle tagId = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   _ <- DBQSpec.deleteWhere handle DBData.tablePostTag
         [DBData.colIdTagPostTag]
         [toSql tagId]
-  Logger.logInfo logh "Removing dependencies between Post and Tag from db."
+  Logger.logInfo logH "Removing dependencies between Post and Tag from db."
 
 -- | Insert Tag record
 insertTagRecord :: Monad m => Handle m -> Title -> m ()
 insertTagRecord handle tagTitle = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   _ <- DBQSpec.insertIntoValues handle DBData.tableTags
         [DBData.colTitleTag]
         [toSql tagTitle]
-  Logger.logInfo logh $ "Tag with title: '"
+  Logger.logInfo logH $ "Tag with title: '"
     <> tagTitle
     <> "' was successfully inserted in db."
 
 -- | Delete Tag record
 deleteTagRecord :: Monad m => Handle m -> TagId -> m ()
 deleteTagRecord handle tagId = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   _ <- DBQSpec.deleteWhere handle DBData.tableTags
         [DBData.colIdTag]
         [toSql tagId]
-  Logger.logInfo logh $ "Removing Tag with id: "
+  Logger.logInfo logH $ "Removing Tag with id: "
     <> convert tagId
     <> " from db."
 
 -- | Update Tag record
 updateTagRecord :: Monad m => Handle m -> TagId -> Title -> m ()
 updateTagRecord handle tagId newTitle = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   _ <- DBQSpec.updateSetWhere handle DBData.tableTags
         [DBData.colTitleTag]
         [DBData.colIdTag]
         [toSql newTitle]
         [toSql tagId]
-  Logger.logInfo logh $ "Updating Tag with id: "
+  Logger.logInfo logH $ "Updating Tag with id: "
     <> convert tagId
     <> " in db."
 

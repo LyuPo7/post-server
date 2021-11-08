@@ -13,18 +13,18 @@ import Post.Server.Responses (respOk, respError)
 -- | Create login Response: Send new token
 login :: Monad m => Handle m -> Query -> m Response
 login handle query = do
-  let logh = hLogger handle
-      dbqh = hDBQ handle
-  Logger.logDebug logh "Login intent"
+  let logH = hLogger handle
+      dbqH = hDBQ handle
+  Logger.logDebug logH "Login intent"
   tokenE <- runEitherT $ do
-    reqParams <- newEitherT $ Query.extractRequired logh query params
+    reqParams <- newEitherT $ Query.extractRequired logH query params
     let [userLogin, password] = reqParams
-    token <- newEitherT $ DBAccount.getToken dbqh userLogin password
+    token <- newEitherT $ DBAccount.getToken dbqH userLogin password
     return (userLogin, token)
   case tokenE of
     Left msg -> return $ respError msg
     Right (userLogin, token) -> do
-      Logger.logInfo logh $ "New token was sent to User: " <> userLogin <> "."
+      Logger.logInfo logH $ "New token was sent to User: " <> userLogin <> "."
       return $ respOk token 
     where
       params = ["login", "password"]

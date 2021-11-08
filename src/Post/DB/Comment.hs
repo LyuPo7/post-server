@@ -26,7 +26,7 @@ createComment handle postId userId text = runEitherT $ do
 -- | Get Comment record if exists
 getCommentRecord :: Monad m => Handle m -> CommentId -> m (Either Text Comment)
 getCommentRecord handle commentId = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   comsSql <- DBQSpec.selectFromWhere handle DBData.tableComs
               [DBData.colIdCom, DBData.colTextCom]
               [DBData.colIdCom]
@@ -35,10 +35,10 @@ getCommentRecord handle commentId = do
     [] -> do
       let msg = "No exists Comment with id: "
             <> convert commentId
-      Logger.logWarning logh msg
+      Logger.logWarning logH msg
       return $ Left msg
     [idTexts] -> do
-      Logger.logInfo logh $ "Comment with id: "
+      Logger.logInfo logH $ "Comment with id: "
         <> convert commentId
         <> " extracted from db."
       return $ newComment idTexts
@@ -46,59 +46,59 @@ getCommentRecord handle commentId = do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Comment with Id: "
                   <> convert commentId
-      Logger.logError logh msg
+      Logger.logError logH msg
       return $ Left msg
 
 -- | Get last Comment record if exists
 getLastCommentRecord :: Monad m => Handle m -> m (Either Text CommentId)
 getLastCommentRecord handle = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   idComSql <- DBQSpec.selectFromOrderLimit handle DBData.tableComs
                [DBData.colIdCom]
                 DBData.colIdCom 1
   case idComSql of
     [] -> do
       let msg = "No exist Comments!"
-      Logger.logWarning logh msg
+      Logger.logWarning logH msg
       return $ Left msg
     [[idCom]] -> do
       let comId = fromSql idCom
-      Logger.logInfo logh $ "Last Comment inserted in db with id: "
+      Logger.logInfo logH $ "Last Comment inserted in db with id: "
         <> convert comId
       return $ Right comId
     _ -> do
       let msg = "Incorrect Comment record!"
-      Logger.logError logh msg
+      Logger.logError logH msg
       return $ Left msg
 
 -- | Insert Comment record
 insertCommentRecord :: Monad m => Handle m -> Text -> m ()
 insertCommentRecord handle text = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   _ <- DBQSpec.insertIntoValues handle DBData.tableComs
         [DBData.colTextCom] 
         [toSql text]
-  Logger.logInfo logh $ "Comment with text: '"
+  Logger.logInfo logH $ "Comment with text: '"
     <> text
     <> "' was successfully inserted in db."
 
 -- | Insert User-Comment record
 createCommentUserRecord :: Monad m => Handle m -> CommentId -> UserId -> m ()
 createCommentUserRecord handle commentId userId = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   _ <- DBQSpec.insertIntoValues handle DBData.tableUserCom
         [DBData.colIdComUserCom, DBData.colIdUserUserCom] 
         [toSql commentId, toSql userId]
-  Logger.logInfo logh "Creating dependency between Comment and User."
+  Logger.logInfo logH "Creating dependency between Comment and User."
 
 -- | Insert Post-Comment record
 createPostCommentRecord :: Monad m => Handle m -> CommentId -> PostId -> m ()
 createPostCommentRecord handle commentId postId = do
-  let logh = hLogger handle
+  let logH = hLogger handle
   _ <- DBQSpec.insertIntoValues handle DBData.tablePostCom
         [DBData.colIdPostPostCom, DBData.colIdComPostCom]
         [toSql postId, toSql commentId]
-  Logger.logInfo logh "Creating dependency between Post and Comment."
+  Logger.logInfo logH "Creating dependency between Post and Comment."
 
 -- | Create Comment from [SqlValue]
 newComment :: [SqlValue] -> Either Text Comment
