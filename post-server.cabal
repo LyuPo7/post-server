@@ -26,21 +26,26 @@ source-repository head
 library
   exposed-modules:
       Post.Config
-      Post.DB.Account
-      Post.DB.Author
-      Post.DB.Category
-      Post.DB.Comment
-      Post.DB.Data
-      Post.DB.DB
-      Post.DB.DBQ
-      Post.DB.DBQImpl
-      Post.DB.DBQSpec
-      Post.DB.DBSpec
-      Post.DB.Draft
-      Post.DB.Photo
-      Post.DB.Post
-      Post.DB.Tag
-      Post.DB.User
+      Post.Db.Account
+      Post.Db.Author
+      Post.Db.Category
+      Post.Db.Comment
+      Post.Db.Db
+      Post.Db.DbQ
+      Post.Db.DbQImpl
+      Post.Db.DbQSpec
+      Post.Db.DbSpec
+      Post.Db.Draft
+      Post.Db.Objects.Column
+      Post.Db.Objects.ColumnType
+      Post.Db.Objects.Property
+      Post.Db.Objects.RequiredParams
+      Post.Db.Objects.Synonyms
+      Post.Db.Objects.Table
+      Post.Db.Photo
+      Post.Db.Post
+      Post.Db.Tag
+      Post.Db.User
       Post.Exception
       Post.Logger
       Post.Server.Methods.Account
@@ -52,7 +57,23 @@ library
       Post.Server.Methods.Post
       Post.Server.Methods.Tag
       Post.Server.Methods.User
-      Post.Server.Objects
+      Post.Server.Objects.Author
+      Post.Server.Objects.AuthorResponse
+      Post.Server.Objects.Category
+      Post.Server.Objects.CatResponse
+      Post.Server.Objects.Comment
+      Post.Server.Objects.Draft
+      Post.Server.Objects.DraftResponse
+      Post.Server.Objects.Permission
+      Post.Server.Objects.Photo
+      Post.Server.Objects.Post
+      Post.Server.Objects.PostResponse
+      Post.Server.Objects.Synonyms
+      Post.Server.Objects.Tag
+      Post.Server.Objects.TagResponse
+      Post.Server.Objects.TextResponse
+      Post.Server.Objects.User
+      Post.Server.Objects.UserResponse
       Post.Server.QueryParameters
       Post.Server.Responses
       Post.Server.Server
@@ -139,16 +160,16 @@ test-suite post-server-test
   main-is: Test.hs
   other-modules:
       TestPost.Handlers
-      TestPost.DB.DBQSpec
-      TestPost.DB.Tag
-      TestPost.DB.User
-      TestPost.DB.Photo
-      TestPost.DB.Draft
-      TestPost.DB.Comment
-      TestPost.DB.Category
-      TestPost.DB.Author
-      TestPost.DB.Account
-      TestPost.DB.Post
+      TestPost.Db.DbQSpec
+      TestPost.Db.Tag
+      TestPost.Db.User
+      TestPost.Db.Photo
+      TestPost.Db.Draft
+      TestPost.Db.Comment
+      TestPost.Db.Category
+      TestPost.Db.Author
+      TestPost.Db.Account
+      TestPost.Db.Post
       TestPost.Server.Util
       TestPost.Server.QueryParameters
       TestPost.Config

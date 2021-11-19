@@ -6,122 +6,131 @@ import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
 import Control.Monad (guard)
 
-import Post.Server.ServerSpec (Handle(..))
+import qualified Post.Server.ServerSpec as ServerSpec
 import qualified Post.Logger as Logger
-import qualified Post.DB.User as DBUser
-import qualified Post.DB.Account as DBAccount
+import qualified Post.Db.User as DbUser
+import qualified Post.Db.Account as DbAccount
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as Query
-import Post.Server.Objects (Permission(..), UserResponse(..),
-                            TextResponse(..))
-import Post.Server.Responses (respOk, respError, resp404)
+import qualified Post.Server.Objects.Permission as ServerPermission
+import qualified Post.Server.Objects.UserResponse as UserResponse
+import qualified Post.Server.Objects.TextResponse as TextResponse
+import qualified Post.Server.Responses as ServerResponses
 
--- | Create getUsers Response
-getUsersResp :: Monad m => Handle m -> Query -> m Response
+getUsersResp :: Monad m =>
+                ServerSpec.Handle m -> 
+                Query ->
+                m Response
 getUsersResp handle query = do
-  let logH = hLogger handle
-      dbqH = hDBQ handle
+  let logH = ServerSpec.hLogger handle
+      dbqH = ServerSpec.hDbQ handle
   Logger.logInfo logH "Processing request: get User records"
   permE <- runEitherT $ do
     givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkUserPerm dbqH token
-    guard $ perm == UserPerm
+    perm <- lift $ DbAccount.checkUserPerm dbqH token
+    guard $ perm == ServerPermission.UserPerm
   case permE of
-    Left _ -> return resp404
+    Left _ -> return ServerResponses.resp404
     Right _ -> do
       usersRespE <- runEitherT $ do
         reqParams <- newEitherT $ Query.extractRequired logH query params
         let [offsetText] = reqParams
-        offset <- newEitherT $ Util.readEitherMa offsetText "offset"
-        users <- newEitherT $ DBUser.getUserRecords dbqH offset
-        return $ UserResponse users offset
+        offset <- newEitherT $ Util.readKey offsetText "offset"
+        users <- newEitherT $ DbUser.getUserRecords dbqH offset
+        return $ UserResponse.UserResponse users offset
       case usersRespE of
-        Left msg -> return $ respError $ TextResponse msg
+        Left msg -> return $ ServerResponses.respError $ TextResponse.TextResponse msg
         Right response -> do
           Logger.logInfo logH "Users sent"
-          return $ respOk response
+          return $ ServerResponses.respOk response
     where
       authParams = ["token"]
       params = ["offset"]
 
--- | Create createUser Response
-createUserResp :: Monad m => Handle m -> Query -> m Response
+createUserResp :: Monad m =>
+                  ServerSpec.Handle m ->
+                  Query ->
+                  m Response
 createUserResp handle query = do
-  let logH = hLogger handle
-      dbqH = hDBQ handle
+  let logH = ServerSpec.hLogger handle
+      dbqH = ServerSpec.hDbQ handle
   Logger.logInfo logH "Processing request: create User record"
   loginE <- runEitherT $ do
     reqParams <- newEitherT $ Query.extractRequired logH query params
     let [firstName, lastName, login, password] = reqParams
-    _ <- newEitherT $ DBUser.createUser dbqH firstName lastName login password
+    _ <- newEitherT $ DbUser.createUser dbqH firstName lastName login password
     return login
   case loginE of
     Right login -> do
       let msg = "User: '" <> login <> "' registered"
       Logger.logInfo logH msg
-      return $ respOk $ TextResponse msg
-    Left msg -> return $ respError $ TextResponse msg
+      return $ ServerResponses.respOk $ TextResponse.TextResponse msg
+    Left msg -> return $ ServerResponses.respError $ TextResponse.TextResponse msg
     where
       params = ["first_name", "last_name", "login", "password"]
 
--- | Create removeUser Response
-removeUserResp :: Monad m => Handle m -> Query -> m Response
+removeUserResp :: Monad m =>
+                  ServerSpec.Handle m ->
+                  Query ->
+                  m Response
 removeUserResp handle query = do
-  let logH = hLogger handle
-      dbqH = hDBQ handle
+  let logH = ServerSpec.hLogger handle
+      dbqH = ServerSpec.hDbQ handle
   Logger.logInfo logH "Processing request: remove User record"
   permE <- runEitherT $ do
     givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAdminPerm dbqH token
-    guard $ perm == AdminPerm
+    perm <- lift $ DbAccount.checkAdminPerm dbqH token
+    guard $ perm == ServerPermission.AdminPerm
   case permE of
-    Left _ -> return resp404
+    Left _ -> return ServerResponses.resp404
     Right _ -> do
       userIdE <- runEitherT $ do
         reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idUser] = reqParams
-        userId <- newEitherT $ Util.readEitherMa idUser "user_id"
-        _ <- newEitherT $ DBUser.removeUser dbqH userId
+        userId <- newEitherT $ Util.readKey idUser "user_id"
+        _ <- newEitherT $ DbUser.removeUser dbqH userId
         return userId
       case userIdE of
         Right userId -> do
-          _ <- DBUser.removeUserPhotoDeps dbqH userId
+          _ <- DbUser.removeUserPhotoDeps dbqH userId
           let msg = "User removed"
           Logger.logInfo logH msg
-          return $ respOk $ TextResponse msg
-        Left msg -> return $ respError $ TextResponse msg
+          return $ ServerResponses.respOk $ TextResponse.TextResponse msg
+        Left msg -> return $ ServerResponses.respError $ TextResponse.TextResponse msg
     where
       authParams = ["token"]
       params = ["id"]
 
--- | Create setUserPhoto Response
-setUserPhotoResp :: Monad m => Handle m -> Query -> m Response
+setUserPhotoResp :: Monad m =>
+                    ServerSpec.Handle m ->
+                    Query ->
+                    m Response
 setUserPhotoResp handle query = do
-  let logH = hLogger handle
-      dbqH = hDBQ handle
+  let logH = ServerSpec.hLogger handle
+      dbqH = ServerSpec.hDbQ handle
   Logger.logInfo logH "Processing request: add Photo to User record"
   permE <- runEitherT $ do
     givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkUserPerm dbqH token
-    guard $ perm == UserPerm
+    perm <- lift $ DbAccount.checkUserPerm dbqH token
+    guard $ perm == ServerPermission.UserPerm
     return token
   case permE of
-    Left _ -> return resp404
+    Left _ -> return ServerResponses.resp404
     Right token -> do
       photoIdE <- runEitherT $ do
         reqParams <- newEitherT $ Query.extractRequired logH query params
         let [path] = reqParams
-        userId <- newEitherT $ DBAccount.getUserIdRecordByToken dbqH token
-        newEitherT $ DBUser.setUserPhoto dbqH userId path
+        userId <- newEitherT $ DbAccount.getUserIdRecordByToken dbqH token
+        newEitherT $ DbUser.setUserPhoto dbqH userId path
       case photoIdE of
         Right _ -> do
           let msg = "User Photo was loaded"
           Logger.logInfo logH msg
-          return $ respOk $ TextResponse msg
-        Left msg -> return $ respError $ TextResponse msg
+          return $ ServerResponses.respOk $ TextResponse.TextResponse msg
+        Left msg -> return $ ServerResponses.respError $ TextResponse.TextResponse msg
     where
       authParams = ["token"]
       params = ["path"]

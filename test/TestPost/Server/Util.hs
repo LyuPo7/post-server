@@ -7,14 +7,14 @@ import Data.Text (Text)
 import Test.Hspec (Spec, shouldBe, it, describe)
 
 import qualified Post.Server.Util as Util
-import qualified Post.Server.Objects as Objects
+import qualified Post.Server.Objects.Synonyms as ServerSynonyms
 
 spec_sqlDAtoText :: Spec
 spec_sqlDAtoText =
   describe "Testing sqlDAtoText" $ do
     it "Should successfully convert [[SqlValue]] to Text" $ do
-      let bob = "Bob" :: Objects.FirstName
-          userId = 11 :: Objects.UserId
+      let bob = "Bob" :: ServerSynonyms.FirstName
+          userId = 11 :: ServerSynonyms.UserId
           isAdmin = True
           sqlList = [[toSql bob], [toSql userId], [toSql isAdmin]]
           text = Util.sqlDAtoText sqlList
@@ -29,8 +29,8 @@ spec_sqlAtoText :: Spec
 spec_sqlAtoText =
   describe "Testing sqlAtoText" $ do
     it "Should successfully convert [SqlValue] to Text" $ do
-      let bob = "Bob" :: Objects.FirstName
-          userId = 11 :: Objects.UserId
+      let bob = "Bob" :: ServerSynonyms.FirstName
+          userId = 11 :: ServerSynonyms.UserId
           isAdmin = True
           sqlList = [toSql bob, toSql userId, toSql isAdmin]
           text = Util.sqlAtoText sqlList
@@ -41,19 +41,19 @@ spec_sqlAtoText =
           check = ""
       text `shouldBe` check
 
-spec_readEitherMa :: Spec
-spec_readEitherMa =
-  describe "Testing readEitherMa" $ do
+spec_readKey :: Spec
+spec_readKey =
+  describe "Testing readKey" $ do
     it "Should successfully read Text with Integer" $ do
       let arg = "1444" :: Text
           argName = "number"
-          argE = Util.readEitherMa arg argName
+          argE = Util.readKey arg argName
           check = 1444 :: Integer
       argE `shouldBe` Identity (Right check)
     it "Should fail with incorrect input" $ do
       let arg = "123A123" :: Text
           argName = "number"
-          argE = Util.readEitherMa arg argName
+          argE = Util.readKey arg argName
                :: Identity (Either Text Integer)
           check = "Incorrect value of key 'number': 123A123"
       argE `shouldBe` Identity (Left check)

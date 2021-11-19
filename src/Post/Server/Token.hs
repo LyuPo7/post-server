@@ -5,10 +5,9 @@ module Post.Server.Token where
 import qualified Data.UUID.V4 as V4
 import qualified Data.Text as T
 
-import Post.Server.Objects (Token)
+import qualified Post.Server.Objects.Synonyms as ServerSynonyms
 
--- | Create Token
-createToken :: IO Token
+createToken :: IO ServerSynonyms.Token
 createToken = do
   token <- fmap show V4.nextRandom
   return $ T.pack token

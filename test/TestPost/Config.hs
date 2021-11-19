@@ -5,7 +5,7 @@ import Test.Hspec (Spec, shouldBe, it, describe)
 import qualified TestPost.Handlers as H
 
 import qualified Post.Config as Config
-import qualified Post.DB.DBSpec as DBSpec
+import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Exception as E
 
@@ -17,13 +17,13 @@ spec_checkConfig =
       draftIdsE `shouldBe` Right H.postC
     it "Should fail if Config is without 'dbName'" $ do
       let dbC' = H.dbC {
-            DBSpec.dbName = ""
+            DbSpec.dbName = ""
           }
           postC' = H.postC {
-            Config.cDB = dbC'
+            Config.cDb = dbC'
           }
           draftIdsE = Config.checkConfig postC'
-      draftIdsE `shouldBe` Left E.ConfigDBNameEmptyError
+      draftIdsE `shouldBe` Left E.ConfigDbNameEmptyError
     it "Should fail if Config is without 'host'" $ do
       let serverC' = H.serverC {
             ServerConfig.host = ""

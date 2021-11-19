@@ -4,10 +4,10 @@ import Network.Wai (Application, pathInfo, queryString)
 import Network.Wai.Handler.Warp (run)
 import Control.Exception.Lifted (handle)
 
-import Post.Server.ServerSpec (Handle(..))
-import Post.Server.ServerConfig (Config(..))
+import qualified Post.Server.ServerSpec as ServerSpec
+import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
-import qualified Post.DB.DBQSpec as DBQSpec
+import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Server.Methods.User as MUser
 import qualified Post.Server.Methods.Author as MAuthor
 import qualified Post.Server.Methods.Tag as MTag
@@ -16,28 +16,31 @@ import qualified Post.Server.Methods.Draft as MDraft
 import qualified Post.Server.Methods.Post as MPost
 import qualified Post.Server.Methods.Comment as MComment
 import qualified Post.Server.Methods.Account as MAccount
-import Post.Server.Responses (resp404, respInvalid)
+import qualified Post.Server.Responses as Responses
 
--- | Server IO Handle
-withHandleIO :: Logger.Handle IO -> DBQSpec.Handle IO -> 
-                Config -> (Handle IO -> IO a) -> IO a
+withHandleIO :: Logger.Handle IO ->
+                DbQSpec.Handle IO -> 
+                ServerConfig.Config ->
+               (ServerSpec.Handle IO -> IO a) ->
+                IO a
 withHandleIO logger dbh config f = do
-  let serverH = Handle {
-    hLogger = logger,
-    hDBQ = dbh,
-    cServer = config
+  let serverH = ServerSpec.Handle {
+    ServerSpec.hLogger = logger,
+    ServerSpec.hDbQ = dbh,
+    ServerSpec.cServer = config
   }
   f serverH
 
--- | Run Server
-runServer :: Handle IO -> IO ()
+runServer :: ServerSpec.Handle IO ->
+             IO ()
 runServer serverH = do
-  let serverPort = port $ cServer serverH
+  let serverPort = ServerConfig.port $ ServerSpec.cServer serverH
   run serverPort (app serverH)
 
--- | Router
-app :: Handle IO -> Application
-app serverH req sendResponse = handle (sendResponse . respInvalid) $ do
+app :: ServerSpec.Handle IO ->
+       Application
+app serverH req sendResponse = handle
+  (sendResponse . Responses.respInvalid) $ do
   let options = queryString req
   case pathInfo req of
     ["login"] -> do MAccount.login serverH options
@@ -96,4 +99,4 @@ app serverH req sendResponse = handle (sendResponse . respInvalid) $ do
                             >>= sendResponse -- only user of this account
     ["createComment"] -> do MComment.createCommentResp serverH options 
                              >>= sendResponse -- all
-    _ -> do sendResponse resp404
+    _ -> do sendResponse Responses.resp404

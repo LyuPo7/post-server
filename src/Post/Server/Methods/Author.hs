@@ -6,134 +6,143 @@ import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad (guard)
 import Control.Monad.Trans (lift)
 
-import Post.Server.ServerSpec (Handle(..))
+import qualified Post.Server.ServerSpec as ServerSpec
 import qualified Post.Logger as Logger
-import qualified Post.DB.Author as DBAuthor
-import qualified Post.DB.User as DBUser
-import qualified Post.DB.Account as DBAccount
+import qualified Post.Db.Author as DbAuthor
+import qualified Post.Db.User as DbUser
+import qualified Post.Db.Account as DbAccount
 import qualified Post.Server.Util as Util
 import qualified Post.Server.QueryParameters as Query
-import Post.Server.Objects (Permission(..), AuthorResponse(..),
-                            TextResponse(..))
-import Post.Server.Responses (respOk, respError, resp404)
+import qualified Post.Server.Objects.Permission as ServerPermission
+import qualified Post.Server.Objects.AuthorResponse as AuthorResponse
+import qualified Post.Server.Objects.TextResponse as TextResponse
+import qualified Post.Server.Responses as ServerResponses
 
--- | Create getAuthors Response
-getAuthorsResp :: Monad m => Handle m -> Query -> m Response
+getAuthorsResp :: Monad m =>
+                  ServerSpec.Handle m ->
+                  Query ->
+                  m Response
 getAuthorsResp handle query = do
-  let logH = hLogger handle
-      dbqH = hDBQ handle
+  let logH = ServerSpec.hLogger handle
+      dbqH = ServerSpec.hDbQ handle
   Logger.logInfo logH "Processing request: get Author records"
   permE <- runEitherT $ do
     givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAdminPerm dbqH token
-    guard $ perm == AdminPerm
+    perm <- lift $ DbAccount.checkAdminPerm dbqH token
+    guard $ perm == ServerPermission.AdminPerm
   case permE of
-    Left _ -> return resp404
+    Left _ -> return ServerResponses.resp404
     Right _ -> do
       authorsRespE <- runEitherT $ do
         reqParams <- newEitherT $ Query.extractRequired logH query params
         let [offsetText] = reqParams
-        offset <- newEitherT $ Util.readEitherMa offsetText "offset"
-        authors <- newEitherT $ DBAuthor.getAuthorRecords dbqH offset
-        return $ AuthorResponse authors offset
+        offset <- newEitherT $ Util.readKey offsetText "offset"
+        authors <- newEitherT $ DbAuthor.getAuthorRecords dbqH offset
+        return $ AuthorResponse.AuthorResponse authors offset
       case authorsRespE of
-        Left msg -> return $ respError $ TextResponse msg
+        Left msg -> return $ ServerResponses.respError $ TextResponse.TextResponse msg
         Right response -> do
           Logger.logInfo logH "Authors were sent"
-          return $ respOk response
+          return $ ServerResponses.respOk response
     where
       authParams = ["token"]
       params = ["offset"]
 
--- | Create createAuthor Response
-createAuthorResp :: Monad m => Handle m -> Query -> m Response
+createAuthorResp :: Monad m =>
+                    ServerSpec.Handle m ->
+                    Query ->
+                    m Response
 createAuthorResp handle query = do
-  let logH = hLogger handle
-      dbqH = hDBQ handle
+  let logH = ServerSpec.hLogger handle
+      dbqH = ServerSpec.hDbQ handle
   Logger.logInfo logH "Processing request: create Author record"
   permE <- runEitherT $ do
     givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAdminPerm dbqH token
-    guard $ perm == AdminPerm
+    perm <- lift $ DbAccount.checkAdminPerm dbqH token
+    guard $ perm == ServerPermission.AdminPerm
   case permE of
-    Left _ -> return resp404
+    Left _ -> return ServerResponses.resp404
     Right _ -> do
       authorIdE <- runEitherT $ do
         reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idUser, description] = reqParams
-        userId <- newEitherT $ Util.readEitherMa idUser "user_id"
-        _ <- newEitherT $ DBUser.getUserRecordById dbqH userId
-        newEitherT $ DBAuthor.createAuthor dbqH userId description
+        userId <- newEitherT $ Util.readKey idUser "user_id"
+        _ <- newEitherT $ DbUser.getUserRecordById dbqH userId
+        newEitherT $ DbAuthor.createAuthor dbqH userId description
       case authorIdE of
         Right _ -> do
           let msg = "Author was created"
           Logger.logInfo logH msg
-          return $ respOk $ TextResponse msg
-        Left msg -> return $ respError $ TextResponse msg
+          return $ ServerResponses.respOk $ TextResponse.TextResponse msg
+        Left msg -> return $ ServerResponses.respError $ TextResponse.TextResponse msg
     where
       authParams = ["token"]
       params = ["id", "description"]
 
--- | Create removeAuthor Response
-removeAuthorResp :: Monad m => Handle m -> Query -> m Response
+removeAuthorResp :: Monad m =>
+                    ServerSpec.Handle m ->
+                    Query ->
+                    m Response
 removeAuthorResp handle query = do
-  let logH = hLogger handle
-      dbqH = hDBQ handle
+  let logH = ServerSpec.hLogger handle
+      dbqH = ServerSpec.hDbQ handle
   Logger.logInfo logH "Processing request: remove Author record"
   permE <- runEitherT $ do
     givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAdminPerm dbqH token
-    guard $ perm == AdminPerm
+    perm <- lift $ DbAccount.checkAdminPerm dbqH token
+    guard $ perm == ServerPermission.AdminPerm
   case permE of
-    Left _ -> return resp404
+    Left _ -> return ServerResponses.resp404
     Right _ -> do
       userIdE <- runEitherT $ do
         reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idUser] = reqParams
-        userId <- newEitherT $ Util.readEitherMa idUser "user_id"
-        _ <- newEitherT $ DBUser.getUserRecordById dbqH userId
-        _ <- newEitherT $ DBAuthor.removeAuthor dbqH userId
+        userId <- newEitherT $ Util.readKey idUser "user_id"
+        _ <- newEitherT $ DbUser.getUserRecordById dbqH userId
+        _ <- newEitherT $ DbAuthor.removeAuthor dbqH userId
         return userId
       case userIdE of
         Right userId -> do
-          _ <- DBAuthor.removeAuthorUserDep dbqH userId
+          _ <- DbAuthor.removeAuthorUserDep dbqH userId
           let msg = "Author was removed"
           Logger.logInfo logH msg
-          return $ respOk $ TextResponse msg
-        Left msg -> return $ respError $ TextResponse msg
+          return $ ServerResponses.respOk $ TextResponse.TextResponse msg
+        Left msg -> return $ ServerResponses.respError $ TextResponse.TextResponse msg
     where
       authParams = ["token"]
       params = ["id"]
 
--- | Create editAuthor Response
-editAuthorResp :: Monad m => Handle m -> Query -> m Response
+editAuthorResp :: Monad m =>
+                  ServerSpec.Handle m ->
+                  Query ->
+                  m Response
 editAuthorResp handle query = do
-  let logH = hLogger handle
-      dbqH = hDBQ handle
+  let logH = ServerSpec.hLogger handle
+      dbqH = ServerSpec.hDbQ handle
   Logger.logInfo logH "Processing request: edit Author record"
   permE <- runEitherT $ do
     givenToken <- newEitherT $ Query.extractRequired logH query authParams
     let [token] = givenToken
-    perm <- lift $ DBAccount.checkAdminPerm dbqH token
-    guard $ perm == AdminPerm
+    perm <- lift $ DbAccount.checkAdminPerm dbqH token
+    guard $ perm == ServerPermission.AdminPerm
   case permE of
-    Left _ -> return resp404
+    Left _ -> return ServerResponses.resp404
     Right _ -> do
       authorIdE <- runEitherT $ do
         reqParams <- newEitherT $ Query.extractRequired logH query params
         let [idUser, newDescription] = reqParams
-        userId <- newEitherT $ Util.readEitherMa idUser "user_id"
-        _ <- newEitherT $ DBUser.getUserRecordById dbqH userId
-        newEitherT $ DBAuthor.editAuthor dbqH userId newDescription
+        userId <- newEitherT $ Util.readKey idUser "user_id"
+        _ <- newEitherT $ DbUser.getUserRecordById dbqH userId
+        newEitherT $ DbAuthor.editAuthor dbqH userId newDescription
       case authorIdE of
         Right _ -> do
           let msg = "Author was edited"
           Logger.logInfo logH msg
-          return $ respOk $ TextResponse msg
-        Left msg -> return $ respError $ TextResponse msg
+          return $ ServerResponses.respOk $ TextResponse.TextResponse msg
+        Left msg -> return $ ServerResponses.respError $ TextResponse.TextResponse msg
     where
       authParams = ["token"]
       params = ["id", "description"]

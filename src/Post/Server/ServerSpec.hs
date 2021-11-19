@@ -1,12 +1,11 @@
 module Post.Server.ServerSpec where
 
-import Post.Server.ServerConfig (Config(..))
+import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
-import qualified Post.DB.DBQSpec as DBQSpec
+import qualified Post.Db.DbQSpec as DbQSpec
 
--- | Server Handle
 data Handle m = Handle {
   hLogger :: Logger.Handle m,
-  hDBQ :: DBQSpec.Handle m,
-  cServer :: Config
+  hDbQ :: DbQSpec.Handle m,
+  cServer :: ServerConfig.Config
 }

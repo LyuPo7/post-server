@@ -3,39 +3,39 @@ module TestPost.Handlers where
 import Control.Monad.Identity (Identity)
 
 import qualified Post.Logger as Logger
-import qualified Post.DB.DBQSpec as DBQSpec
-import qualified Post.DB.DBSpec as DBSpec
+import qualified Post.Db.DbQSpec as DbQSpec
+import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Config as PostConfig
 
-dbqH :: DBQSpec.Handle Identity
-dbqH = DBQSpec.Handle {
-  DBQSpec.hLogger = logH,
-  DBQSpec.hDB = dbH,
-  DBQSpec.cDB = dbC,
+dbqH :: DbQSpec.Handle Identity
+dbqH = DbQSpec.Handle {
+  DbQSpec.hLogger = logH,
+  DbQSpec.hDb = dbH,
+  DbQSpec.cDb = dbC,
 
-  DBQSpec.makeDBRequest = undefined,
-  DBQSpec.runDBRequest = undefined,
-  DBQSpec.encryptPassM = undefined,
-  DBQSpec.createToken = undefined,
-  DBQSpec.upload = undefined,
-  DBQSpec.getCurrentTime = undefined
+  DbQSpec.makeDbRequest = undefined,
+  DbQSpec.runDbRequest = undefined,
+  DbQSpec.encryptPassM = undefined,
+  DbQSpec.createToken = undefined,
+  DbQSpec.upload = undefined,
+  DbQSpec.getCurrentTime = undefined
 }
 
-dbH :: DBSpec.Handle Identity
-dbH = DBSpec.Handle {
-  DBSpec.hLogger = logH,
-  DBSpec.conn = undefined,
-  DBSpec.cDB = dbC,
-  DBSpec.cServer = serverC,
+dbH :: DbSpec.Handle Identity
+dbH = DbSpec.Handle {
+  DbSpec.hLogger = logH,
+  DbSpec.conn = undefined,
+  DbSpec.cDb = dbC,
+  DbSpec.cServer = serverC,
 
-  DBSpec.openTempFile = \_ _ -> return undefined,
-  DBSpec.openBinaryFile = \_ _ -> return undefined,
-  DBSpec.hPutStr =  \_ _ -> return (),
-  DBSpec.hClose =  \_ -> return (),
+  DbSpec.openTempFile = \_ _ -> return undefined,
+  DbSpec.openBinaryFile = \_ _ -> return undefined,
+  DbSpec.hPutStr =  \_ _ -> return (),
+  DbSpec.hClose =  \_ -> return (),
 
-  DBSpec.newManager = \_ -> return undefined,
-  DBSpec.httpLbs = \_ _ -> return undefined
+  DbSpec.newManager = \_ -> return undefined,
+  DbSpec.httpLbs = \_ _ -> return undefined
 }
 
 logH :: Logger.Handle Identity
@@ -49,11 +49,11 @@ logC = Logger.Config {
   Logger.cVerbosity = Nothing
 }
 
-dbC :: DBSpec.Config
-dbC = DBSpec.Config {
-  DBSpec.dbName = "post-server",
-  DBSpec.user = Just "lyupo",
-  DBSpec.admins = ["lyupo"]
+dbC :: DbSpec.Config
+dbC = DbSpec.Config {
+  DbSpec.dbName = "post-server",
+  DbSpec.user = Just "lyupo",
+  DbSpec.admins = ["lyupo"]
 }
 
 serverC :: ServerConfig.Config
@@ -65,6 +65,6 @@ serverC = ServerConfig.Config {
 postC :: PostConfig.Config
 postC = PostConfig.Config {
   PostConfig.cLogger = logC,
-  PostConfig.cDB = dbC,
+  PostConfig.cDb = dbC,
   PostConfig.cServer = serverC
 }

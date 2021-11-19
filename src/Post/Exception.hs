@@ -4,9 +4,8 @@ module Post.Exception where
 
 import Control.Exception (Exception)
 
--- | Post Server Errors
 data PostError = ConfigLoggerRangeError
-               | ConfigDBNameEmptyError
+               | ConfigDbNameEmptyError
                | ConfigServerHostEmptyError
                | CreationObjectError
                | ParseConfigError String 
@@ -16,7 +15,7 @@ data PostError = ConfigLoggerRangeError
 
 instance Show PostError where
   show ConfigLoggerRangeError = "Verbosity must be in ['debug', 'info', 'warning', 'error'] "
-  show ConfigDBNameEmptyError = "DB name can't be empty"
+  show ConfigDbNameEmptyError = "Db name can't be empty"
   show ConfigServerHostEmptyError = "Host server can't be empty"
   show CreationObjectError = "Error while creating Object"
   show (ParseConfigError err) = "Error while parsing config file (config.json): " ++ err

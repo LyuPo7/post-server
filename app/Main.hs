@@ -5,20 +5,19 @@ import qualified Control.Exception as Exc
 import Post.Config
 import qualified Post.Exception as E
 import qualified Post.Logger as Logger
-import qualified Post.DB.DB as DB
-import qualified Post.DB.DBQ as DBQ
+import qualified Post.Db.Db as Db
+import qualified Post.Db.DbQ as DbQ
 import qualified Post.Server.Server as Server
 
 main :: IO ()
 main = Exc.handle errorHandler $ do
-  -- config
   config <- getConfig
   let cnfgLog = cLogger config
-      cnfgDB = cDB config
+      cnfgDb = cDb config
       cnfgServ = cServer config
   Logger.withHandleIO cnfgLog $ \hLogger ->
-    DB.withHandleIO hLogger cnfgDB cnfgServ $ \hDb ->
-    DBQ.withHandleIO hLogger hDb cnfgDB $ \hDbq ->
+    Db.withHandleIO hLogger cnfgDb cnfgServ $ \hDb ->
+    DbQ.withHandleIO hLogger hDb cnfgDb $ \hDbq ->
     Server.withHandleIO hLogger hDbq cnfgServ $ \hServer ->
     Server.runServer hServer
   where

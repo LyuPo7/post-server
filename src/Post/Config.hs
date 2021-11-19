@@ -11,13 +11,12 @@ import qualified Data.Text as T
 import qualified Post.Exception as E
 import qualified Post.Settings as Settings
 import qualified Post.Logger as Logger
-import qualified Post.DB.DBSpec as DBSpec
+import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 
--- | General Post Server Config
 data Config = Config {
   cLogger :: Logger.Config,
-  cDB :: DBSpec.Config,
+  cDb :: DbSpec.Config,
   cServer :: ServerConfig.Config
 } deriving (Show, Generic, Eq)
 
@@ -28,7 +27,6 @@ instance A.FromJSON Config where
       <*> o A..: "db_settings"
       <*> o A..: "server_settings"
 
--- | Get settings from config
 getConfig :: IO Config
 getConfig = do
   conf <- readConfig
@@ -37,10 +35,9 @@ getConfig = do
     Right cnfg -> return cnfg
     Left err -> Exc.throwIO err
 
--- | Check config settings
 checkConfig :: Config -> Either E.PostError Config
 checkConfig config 
-  | T.null $ DBSpec.dbName dbSet = Left E.ConfigDBNameEmptyError
+  | T.null $ DbSpec.dbName dbSet = Left E.ConfigDbNameEmptyError
   | T.null $ ServerConfig.host serverSet = Left E.ConfigServerHostEmptyError
   | Logger.cVerbosity logSet `notElem` [
       Just Logger.Debug,
@@ -51,14 +48,12 @@ checkConfig config
     ] = Left E.ConfigLoggerRangeError
   | otherwise = Right config where
       logSet = cLogger config
-      dbSet = cDB config
+      dbSet = cDb config
       serverSet = cServer config
 
--- | Read the config JSON file.
 readConfig :: IO B.ByteString
 readConfig = B.readFile Settings.configFile
-      
--- | Config parser
+
 parseConfig :: B.ByteString -> Either E.PostError Config
 parseConfig config = do
   let d = A.eitherDecode config :: Either String Config
