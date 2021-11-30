@@ -43,7 +43,7 @@ fi
 
 if [ -z "${id+x}" ]
 then opt="$opt"
-else opt="$opt&id=$id"
+else opt="$opt&category_id=$id"
 fi
 
 url=http://$host:$port/editCategory?$opt

@@ -48,6 +48,7 @@ removeAuthor handle userId = do
       case postsIdE of
         Left _ -> do
           _ <- deleteAuthorRecord handle authorId
+          _ <- removeAuthorUserDep handle userId
           return $ Right authorId
         Right _ -> do
           let msg = "Author with UserId: "

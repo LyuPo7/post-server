@@ -49,14 +49,16 @@ library
       Post.Exception
       Post.Logger
       Post.Server.Methods.Account
-      Post.Server.Methods.Author
-      Post.Server.Methods.Category
-      Post.Server.Methods.Comment
-      Post.Server.Methods.Draft
+      Post.Server.Methods.Instance.Author
+      Post.Server.Methods.Instance.Category
+      Post.Server.Methods.Instance.Comment
+      Post.Server.Methods.Instance.Draft
+      Post.Server.Methods.Instance.Post
+      Post.Server.Methods.Instance.Tag
+      Post.Server.Methods.Instance.User
+      Post.Server.Methods.Permission
       Post.Server.Methods.Photo
-      Post.Server.Methods.Post
-      Post.Server.Methods.Tag
-      Post.Server.Methods.User
+      Post.Server.Methods.TypeClass
       Post.Server.Objects.Author
       Post.Server.Objects.AuthorResponse
       Post.Server.Objects.Category
@@ -64,6 +66,7 @@ library
       Post.Server.Objects.Comment
       Post.Server.Objects.Draft
       Post.Server.Objects.DraftResponse
+      Post.Server.Objects.Marker
       Post.Server.Objects.Permission
       Post.Server.Objects.Photo
       Post.Server.Objects.Post

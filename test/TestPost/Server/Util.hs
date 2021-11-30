@@ -6,6 +6,8 @@ import Data.Text (Text)
 
 import Test.Hspec (Spec, shouldBe, it, describe)
 
+import qualified TestPost.Handlers as H
+
 import qualified Post.Server.Util as Util
 import qualified Post.Server.Objects.Synonyms as ServerSynonyms
 
@@ -47,13 +49,13 @@ spec_readKey =
     it "Should successfully read Text with Integer" $ do
       let arg = "1444" :: Text
           argName = "number"
-          argE = Util.readKey arg argName
+          argE = Util.readKey H.logH arg argName
           check = 1444 :: Integer
       argE `shouldBe` Identity (Right check)
     it "Should fail with incorrect input" $ do
       let arg = "123A123" :: Text
           argName = "number"
-          argE = Util.readKey arg argName
+          argE = Util.readKey H.logH arg argName
                :: Identity (Either Text Integer)
           check = "Incorrect value of key 'number': 123A123"
       argE `shouldBe` Identity (Left check)

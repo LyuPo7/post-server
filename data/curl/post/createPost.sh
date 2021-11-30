@@ -50,7 +50,7 @@ fi
 
 if [ -z "${tagIds+x}" ]
 then opt="$opt"
-else opt="$opt&tag_ids=$tagIds"
+else opt="$opt&tag_id=$tagIds"
 fi
 
 url=http://$host:$port/createPost?$opt

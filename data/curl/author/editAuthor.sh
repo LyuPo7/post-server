@@ -31,7 +31,7 @@ fi
 
 if [ -z "${id+x}" ]
 then opt="$opt"
-else opt="$opt&id=$id"
+else opt="$opt&user_id=$id"
 fi
 
 if [ -z "${newDescription+x}" ]

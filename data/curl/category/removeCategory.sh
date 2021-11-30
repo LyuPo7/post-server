@@ -29,7 +29,7 @@ fi
 
 if [ -z "${id+x}" ]
 then opt="$opt"
-else opt="$opt&id=$tag"
+else opt="$opt&id=$id"
 fi
 
 url=http://$host:$port/removeCategory?$opt

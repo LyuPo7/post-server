@@ -1,7 +1,7 @@
 module Post.Db.Tag where
 
 import Data.Text (Text)
-import Database.HDBC (fromSql, toSql, SqlValue)
+import Database.HDBC (SqlValue, fromSql, toSql)
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Either (newEitherT, runEitherT)
 
@@ -48,10 +48,14 @@ removeTag :: Monad m =>
              DbQSpec.Handle m ->
              ServerSynonyms.Title ->
              m (Either Text ServerSynonyms.TagId)
-removeTag handle tagTitle = runEitherT $ do
-  tagId <- newEitherT $ getTagIdByTitle handle tagTitle
-  lift $ deleteTagRecord handle tagId
-  return tagId
+removeTag handle tagTitle = do
+  tagIdE <- getTagIdByTitle handle tagTitle
+  case tagIdE of
+    Right tagId -> do
+      _ <- deleteTagRecord handle tagId
+      _ <- removeTagPostsDeps handle tagId
+      return $ Right tagId
+    Left _ -> return tagIdE
 
 editTag :: Monad m =>
            DbQSpec.Handle m ->

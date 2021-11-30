@@ -171,7 +171,7 @@ spec_checkAuthorWritePerm =
             DbQSpec.makeDbRequest = \_ -> return sqlUserA
           }
           perm = DbAccount.checkAuthorWritePerm dbqH' token
-      perm `shouldBe` Identity ServerPermission.AuthorWritePerm
+      perm `shouldBe` Identity (ServerPermission.AuthorWritePerm authorId)
     it "Should successfully return NoPerm for array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: ServerSynonyms.Token
           authorId1 = 12 :: ServerSynonyms.AuthorId
@@ -217,7 +217,7 @@ spec_checkUserPerm =
             DbQSpec.makeDbRequest = \_ -> return sqlUserA
           }
           perm = DbAccount.checkUserPerm dbqH' token
-      perm `shouldBe` Identity ServerPermission.UserPerm
+      perm `shouldBe` Identity (ServerPermission.UserPerm userId)
     it "Should successfully return NoPerm for array of many elements" $ do
       let token = "32d1c72f-e962-48c5-9b32-5c386e6f0ec9" :: ServerSynonyms.Token
           userId1 = 12 :: ServerSynonyms.UserId

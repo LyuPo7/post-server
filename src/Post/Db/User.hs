@@ -76,6 +76,7 @@ removeUser handle userId = do
       case idAuthorE of
         Left _ -> do
           _ <- deleteUserRecord handle userId
+          _ <- removeUserPhotoDeps handle userId
           return $ Right userId
         Right _ -> do
           let msg = "User with id: "

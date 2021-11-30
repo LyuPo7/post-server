@@ -5,16 +5,22 @@ import Database.HDBC (SqlValue, fromSql)
 import Data.Text (Text)
 import Text.Read (readEither)
 
+import qualified Post.Logger as Logger
+
 readKey :: (Monad m, Read a) =>
+            Logger.Handle m ->
             Text ->
             Text ->
             m (Either Text a)
-readKey arg argName = case readEither $ T.unpack arg of
+readKey logH arg argName = case readEither $ T.unpack arg of
   Right y -> return $ Right y
-  Left _ -> return $ Left $ "Incorrect value of key '"
-    <> argName
-    <> "': "
-    <> arg
+  Left _ -> do
+    let msg = "Incorrect value of key '"
+          <> argName
+          <> "': "
+          <> arg
+    Logger.logDebug logH msg
+    return $ Left msg
 
 convertValue :: Show a =>
                 a ->

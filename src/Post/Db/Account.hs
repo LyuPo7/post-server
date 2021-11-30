@@ -81,9 +81,9 @@ checkUserPerm handle userToken = do
   userIdE <- getUserIdRecordByToken handle userToken
   case userIdE of
     Left _ -> return ServerPermission.NoPerm
-    Right _ -> do
+    Right userId -> do
       Logger.logInfo logH "User authentication is successful."
-      return ServerPermission.UserPerm
+      return $ ServerPermission.UserPerm userId
 
 checkAuthorWritePerm :: Monad m =>
                         DbQSpec.Handle m ->
@@ -96,20 +96,19 @@ checkAuthorWritePerm handle userToken = do
     Left _ -> do
       Logger.logError logH "This User isn't Author."
       return ServerPermission.NoPerm
-    Right _ -> do
+    Right authorId -> do
       Logger.logInfo logH "Given access for Post creation."
-      return ServerPermission.AuthorWritePerm
+      return $ ServerPermission.AuthorWritePerm authorId
 
 checkAuthorReadPerm :: Monad m =>
                        DbQSpec.Handle m ->
-                       Text ->
+                       ServerSynonyms.AuthorId ->
                        ServerSynonyms.PostId ->
                        m ServerPermission.Permission
-checkAuthorReadPerm handle userToken postId = do
+checkAuthorReadPerm handle authorId postId = do
   let logH = DbQSpec.hLogger handle
   perm <- runEitherT $ do
     authorPostId <- newEitherT $ DbPost.getPostAuthorIdByPostId handle postId
-    authorId <- newEitherT $ getAuthorId handle userToken
     guard $ authorId == authorPostId
   case perm of
     Right _ -> do

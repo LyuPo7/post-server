@@ -8,14 +8,9 @@ import qualified Post.Server.ServerSpec as ServerSpec
 import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
 import qualified Post.Db.DbQSpec as DbQSpec
-import qualified Post.Server.Methods.User as MUser
-import qualified Post.Server.Methods.Author as MAuthor
-import qualified Post.Server.Methods.Tag as MTag
-import qualified Post.Server.Methods.Category as MCategory
-import qualified Post.Server.Methods.Draft as MDraft
-import qualified Post.Server.Methods.Post as MPost
-import qualified Post.Server.Methods.Comment as MComment
 import qualified Post.Server.Methods.Account as MAccount
+import qualified Post.Server.Methods.TypeClass as ServerMethod
+import qualified Post.Server.Objects.Marker as ServerMarker
 import qualified Post.Server.Responses as Responses
 
 withHandleIO :: Logger.Handle IO ->
@@ -45,58 +40,58 @@ app serverH req sendResponse = handle
   case pathInfo req of
     ["login"] -> do MAccount.login serverH options
                      >>= sendResponse -- all
-    ["getPosts"] -> do MPost.getPostsResp serverH options
+    ["getPosts"] -> do ServerMethod.getResp ServerMarker.Post serverH options
                         >>= sendResponse -- all
-    ["createPost"] -> do MPost.createPostResp serverH options
+    ["createPost"] -> do ServerMethod.createResp ServerMarker.Post serverH options
                           >>= sendResponse -- author only
-    ["removePost"] -> do MPost.removePostResp serverH options 
+    ["removePost"] -> do ServerMethod.removeResp ServerMarker.Post serverH options 
                           >>= sendResponse -- admins only
-    ["setPostMainPhoto"] -> do MPost.setPostMainPhotoResp serverH options
+    ["setPostMainPhoto"] -> do ServerMethod.setMainPhotoResp ServerMarker.Post serverH options
                                 >>= sendResponse -- author only
-    ["setPostAddPhoto"] -> do MPost.setPostAddPhotoResp serverH options 
+    ["setPostAddPhoto"] -> do ServerMethod.setAddPhotoResp ServerMarker.Post serverH options 
                                >>= sendResponse -- author only
-    ["getAuthors"] -> do MAuthor.getAuthorsResp serverH options
+    ["getAuthors"] -> do ServerMethod.getResp ServerMarker.Author serverH options
                           >>= sendResponse -- admins only
-    ["createAuthor"] -> do MAuthor.createAuthorResp serverH options 
+    ["createAuthor"] -> do ServerMethod.createResp ServerMarker.Author serverH options 
                             >>= sendResponse -- admins only
-    ["editAuthor"] -> do MAuthor.editAuthorResp serverH options 
+    ["editAuthor"] -> do ServerMethod.editResp ServerMarker.Author serverH options 
                           >>= sendResponse -- admins only
-    ["removeAuthor"] -> do MAuthor.removeAuthorResp serverH options 
+    ["removeAuthor"] -> do ServerMethod.removeResp ServerMarker.Author serverH options 
                             >>= sendResponse -- admins only
-    ["getCategories"] -> do MCategory.getCatsResp serverH options
+    ["getCategories"] -> do ServerMethod.getResp ServerMarker.Category serverH options
                              >>= sendResponse -- all
-    ["createCategory"] -> do MCategory.createCatResp serverH options 
+    ["createCategory"] -> do ServerMethod.createResp ServerMarker.Category serverH options 
                               >>= sendResponse -- admins only
-    ["editCategory"] -> do MCategory.editCatResp serverH options
+    ["editCategory"] -> do ServerMethod.editResp ServerMarker.Category serverH options
                             >>= sendResponse -- admins only
-    ["removeCategory"] -> do MCategory.removeCatResp serverH options
+    ["removeCategory"] -> do ServerMethod.removeResp ServerMarker.Category serverH options
                               >>= sendResponse -- admins only
-    ["getTags"] -> do MTag.getTagsResp serverH options
+    ["getTags"] -> do ServerMethod.getResp ServerMarker.Tag serverH options
                        >>= sendResponse -- all
-    ["createTag"] -> do MTag.createTagResp serverH options 
+    ["createTag"] -> do ServerMethod.createResp ServerMarker.Tag serverH options 
                          >>= sendResponse -- admins only
-    ["editTag"] -> do MTag.editTagResp serverH options 
+    ["editTag"] -> do ServerMethod.editResp ServerMarker.Tag serverH options 
                        >>= sendResponse -- admins only
-    ["removeTag"] -> do MTag.removeTagResp serverH options 
+    ["removeTag"] -> do ServerMethod.removeResp ServerMarker.Tag serverH options 
                          >>= sendResponse -- admins only
-    ["getDrafts"] -> do MDraft.getDraftsResp serverH options 
+    ["getDrafts"] -> do ServerMethod.getResp ServerMarker.Draft serverH options 
                          >>= sendResponse-- authors only (theirs drafts)
-    ["createDraft"] -> do MDraft.createDraftResp serverH options 
+    ["createDraft"] -> do ServerMethod.createResp ServerMarker.Draft serverH options 
                            >>= sendResponse -- authors only (theirs drafts)
-    ["editDraft"] -> do MDraft.editDraftResp serverH options 
+    ["editDraft"] -> do ServerMethod.editResp ServerMarker.Draft serverH options 
                          >>= sendResponse -- authors only (theirs drafts)
-    ["removeDraft"] -> do MDraft.removeDraftResp serverH options 
+    ["removeDraft"] -> do ServerMethod.removeResp ServerMarker.Draft serverH options 
                            >>= sendResponse -- authors only (theirs drafts)
-    ["publishDraft"] -> do MDraft.publishDraftResp serverH options
+    ["publishDraft"] -> do ServerMethod.publishResp ServerMarker.Draft serverH options
                             >>= sendResponse -- authors only (theirs drafts)
-    ["getUsers"] -> do MUser.getUsersResp serverH options 
+    ["getUsers"] -> do ServerMethod.getResp ServerMarker.User serverH options 
                         >>= sendResponse -- all
-    ["createUser"] -> do MUser.createUserResp serverH options 
+    ["createUser"] -> do ServerMethod.createResp ServerMarker.User serverH options 
                           >>= sendResponse -- all
-    ["removeUser"] -> do MUser.removeUserResp serverH options
+    ["removeUser"] -> do ServerMethod.removeResp ServerMarker.User serverH options
                           >>= sendResponse -- admins only
-    ["setUserPhoto"] -> do MUser.setUserPhotoResp serverH options
+    ["setUserPhoto"] -> do ServerMethod.setMainPhotoResp ServerMarker.User serverH options
                             >>= sendResponse -- only user of this account
-    ["createComment"] -> do MComment.createCommentResp serverH options 
+    ["createComment"] -> do ServerMethod.createResp ServerMarker.Comment serverH options 
                              >>= sendResponse -- all
     _ -> do sendResponse Responses.resp404
