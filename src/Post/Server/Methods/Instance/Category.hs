@@ -7,6 +7,7 @@ import Control.Monad.Catch (MonadThrow)
 import Control.Monad.Trans.Either (EitherT, newEitherT)
 import Control.Monad.Trans (lift)
 import Data.Aeson (encode)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Server.ServerSpec as ServerSpec
 import qualified Post.Db.Category as DbCategory
@@ -33,7 +34,9 @@ createRecord handle query = do
       dbqH = ServerSpec.hDbQ handle
   subCat <- lift $ Query.lookupOptional logH query "subcategory"
   title <- newEitherT $ Query.lookupRequired logH query "title"
-  _ <- newEitherT $ DbCategory.createCat dbqH title subCat
+  _ <- newEitherT $ DbCategory.createCat dbqH
+         (convert title)
+         (convert <$> subCat)
   return ()
 
 removeRecord :: (Monad m, MonadThrow m) =>
@@ -57,5 +60,7 @@ editRecord handle query = do
   newTitleM <- lift $ Query.lookupOptional logH query "title"
   subNewM <- lift $ Query.lookupOptional logH query "subcategory"
   catId <- Query.readRequired logH query "category_id"
-  _ <- newEitherT $ DbCategory.editCat dbqH catId newTitleM subNewM
+  _ <- newEitherT $ DbCategory.editCat dbqH catId
+         (convert <$> newTitleM) 
+         (convert <$> subNewM)
   return ()

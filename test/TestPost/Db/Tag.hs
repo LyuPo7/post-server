@@ -17,8 +17,8 @@ spec_newTag :: Spec
 spec_newTag =
   describe "Testing newTag" $ do
     it "Should successfully create Tag from [sqlValue]" $ do
-      let title = "sport" :: ServerSynonyms.Title
-          tagId = 11 :: ServerSynonyms.TagId
+      let title = ServerSynonyms.Title "sport"
+          tagId = ServerSynonyms.TagId 1
           sqlTagA = [
             toSql tagId,
             toSql title
@@ -33,8 +33,8 @@ spec_newTag =
       let tagE = DbTag.newTag []
       tagE `shouldBe` Identity (Left "Invalid Tag!")
     it "Should fail with too many fields in input array" $ do
-      let title = "sport" :: ServerSynonyms.Title
-          tagId = 11 :: ServerSynonyms.TagId
+      let title = ServerSynonyms.Title "sport"
+          tagId = ServerSynonyms.TagId 1
           text = "text" :: Text
           sqlTagA = [
             toSql tagId,
@@ -49,7 +49,7 @@ spec_getTagPostRecords =
   describe "Testing getTagPostRecords" $ do
     it "Should successfully return TagId for array of one element" $ do
       let tagId = 100
-          idP1 = 1 :: ServerSynonyms.PostId
+          idP1 = ServerSynonyms.PostId 1
           sqlTagA = [[toSql idP1]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlTagA
@@ -59,9 +59,9 @@ spec_getTagPostRecords =
       tagIdsE `shouldBe` Identity (Right check)
     it "Should successfully return TagId for array of many elements" $ do
       let tagId = 100
-          idP1 = 1 :: ServerSynonyms.PostId
-          idP2 = 10 :: ServerSynonyms.PostId
-          idP3 = 36 :: ServerSynonyms.PostId
+          idP1 = ServerSynonyms.PostId 1
+          idP2 = ServerSynonyms.PostId 10
+          idP3 = ServerSynonyms.PostId 36
           sqlTagA = [[toSql idP1],[toSql idP2],[toSql idP3]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlTagA
@@ -82,8 +82,8 @@ spec_getTagRecordsById :: Spec
 spec_getTagRecordsById =
   describe "Testing getTagRecordsById" $ do
     it "Should successfully return TagId for array of one element" $ do
-      let tagId = 1 :: ServerSynonyms.TagId
-          title = "sport" :: ServerSynonyms.Title
+      let tagId = ServerSynonyms.TagId 1
+          title = ServerSynonyms.Title "sport"
           sqlTagA = [[toSql tagId, toSql title]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlTagA
@@ -95,8 +95,8 @@ spec_getTagRecordsById =
           }
       tagE `shouldBe` Identity (Right check)
     it "Should fail on array of one element" $ do
-      let tagId = 1 :: ServerSynonyms.TagId
-          title = "sport" :: ServerSynonyms.Title
+      let tagId = ServerSynonyms.TagId 1
+          title = ServerSynonyms.Title "sport"
           sqlTagA = [[toSql tagId, toSql title],
                      [toSql tagId, toSql title]]
           dbqH' = Handlers.dbqH {
@@ -107,7 +107,7 @@ spec_getTagRecordsById =
                 \exist more than one record for Tag with Id: 1"
       tagE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let tagId = 1 :: ServerSynonyms.TagId
+      let tagId = ServerSynonyms.TagId 1
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -119,9 +119,9 @@ spec_getAllTagRecords :: Spec
 spec_getAllTagRecords =
   describe "Testing getAllTagRecords" $ do
     it "Should successfully return Tags for array of one element" $ do
-      let offset = 10
-          tagId = 1 :: ServerSynonyms.TagId
-          title = "sport" :: ServerSynonyms.Title
+      let offset = ServerSynonyms.Offset 10
+          tagId = ServerSynonyms.TagId 1
+          title = ServerSynonyms.Title "sport"
           sqlTagA = [[toSql tagId, toSql title]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlTagA
@@ -133,11 +133,11 @@ spec_getAllTagRecords =
           }
       tagsE `shouldBe` Identity (Right [check])
     it "Should successfully return Tags for array of many elements" $ do
-      let offset = 10
-          tagId1 = 1 :: ServerSynonyms.TagId
-          tagId2 = 50 :: ServerSynonyms.TagId
-          title1 = "sport" :: ServerSynonyms.Title
-          title2 = "crossfit" :: ServerSynonyms.Title
+      let offset = ServerSynonyms.Offset 10
+          tagId1 = ServerSynonyms.TagId 1
+          tagId2 = ServerSynonyms.TagId 50
+          title1 = ServerSynonyms.Title "sport"
+          title2 = ServerSynonyms.Title "crossfit"
           sqlTagA = [
               [toSql tagId1, toSql title1],
               [toSql tagId2, toSql title2]
@@ -156,7 +156,7 @@ spec_getAllTagRecords =
           }
       tagsE `shouldBe` Identity (Right [tag1, tag2])
     it "Should fail on empty array" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -168,8 +168,8 @@ spec_getTagIdByTitle :: Spec
 spec_getTagIdByTitle =
   describe "Testing getTagIdByTitle" $ do
     it "Should successfully return TagId for array of one element" $ do
-      let tagId = 12 :: ServerSynonyms.TagId
-          tagTitle = "sport" :: ServerSynonyms.Title
+      let tagId = ServerSynonyms.TagId 12
+          tagTitle = ServerSynonyms.Title "sport"
           sqlTagA = [[toSql tagId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlTagA
@@ -177,8 +177,8 @@ spec_getTagIdByTitle =
           tagIdE = DbTag.getTagIdByTitle dbqH' tagTitle
       tagIdE `shouldBe` Identity (Right tagId)
     it "Should fail on array of many elements" $ do
-      let tagId = 12 :: ServerSynonyms.TagId
-          tagTitle = "sport" :: ServerSynonyms.Title
+      let tagId = ServerSynonyms.TagId 12
+          tagTitle = ServerSynonyms.Title "sport"
           sqlTagA = [[toSql tagId], [toSql tagId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlTagA
@@ -189,7 +189,7 @@ spec_getTagIdByTitle =
                 \Tag with title: 'sport'!"
       tagIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let tagTitle = "sport" :: ServerSynonyms.Title
+      let tagTitle = ServerSynonyms.Title "sport"
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }

@@ -17,7 +17,7 @@ import qualified Post.Server.Objects.Synonyms as ServerSynonyms
 data Config = Config {
   dbName :: Text,
   user :: Maybe Text,
-  admins :: [ServerSynonyms.Admin]
+  admins :: [ServerSynonyms.Login]
 } deriving (Show, Generic, Eq, FromJSON, ToJSON)
 
 data Handle m = Handle {

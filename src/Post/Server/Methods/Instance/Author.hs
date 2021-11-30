@@ -6,6 +6,7 @@ import Network.HTTP.Types (Query)
 import Control.Monad.Trans.Either (EitherT, newEitherT)
 import Control.Monad.Catch (MonadThrow)
 import Data.Aeson (encode)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Server.ServerSpec as ServerSpec
 import qualified Post.Db.Author as DbAuthor
@@ -34,7 +35,7 @@ createRecord handle query = do
   userId <- Query.readRequired logH query "id"
   description <- newEitherT $ Query.lookupRequired logH query "description"
   _ <- newEitherT $ DbUser.getUserRecordById dbqH userId
-  _ <- newEitherT $ DbAuthor.createAuthor dbqH userId description
+  _ <- newEitherT $ DbAuthor.createAuthor dbqH userId $ convert description
   return ()
 
 removeRecord :: (Monad m, MonadThrow m) =>
@@ -58,5 +59,5 @@ editRecord handle query = do
       dbqH = ServerSpec.hDbQ handle
   userId <- Query.readRequired logH query "user_id"
   newDescription <- newEitherT $ Query.lookupRequired logH query "description"
-  _ <- newEitherT $ DbAuthor.editAuthor dbqH userId newDescription
+  _ <- newEitherT $ DbAuthor.editAuthor dbqH userId $ convert newDescription
   return ()

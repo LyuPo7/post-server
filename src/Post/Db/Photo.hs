@@ -4,6 +4,7 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import Database.HDBC (fromSql, toSql, SqlValue)
 import System.FilePath ((</>))
+import Data.Convertible.Base (convert)
 
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Db.DbSpec as DbSpec
@@ -136,6 +137,6 @@ newPhoto handle [idPhoto, link] = do
       fullLink = T.unpack server </> fromSql link
   return $ Right $ ServerPhoto.Photo {
     ServerPhoto.id = fromSql idPhoto,
-    ServerPhoto.link = T.pack fullLink
+    ServerPhoto.link = convert $ T.pack fullLink
   }
 newPhoto _ _ = return $ Left "Invalid Photo!"

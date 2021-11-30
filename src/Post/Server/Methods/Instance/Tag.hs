@@ -3,9 +3,10 @@ module Post.Server.Methods.Instance.Tag where
 import qualified Data.ByteString.Lazy as B
 import Data.Text (Text)
 import Network.HTTP.Types (Query)
-import Control.Monad.Trans.Either (newEitherT, EitherT)
+import Control.Monad.Trans.Either (EitherT, newEitherT)
 import Control.Monad.Catch (MonadThrow)
 import Data.Aeson (encode)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Server.ServerSpec as ServerSpec
 import qualified Post.Db.Tag as DbTag
@@ -31,7 +32,7 @@ createRecord handle query = do
   let logH = ServerSpec.hLogger handle
       dbqH = ServerSpec.hDbQ handle
   title <- newEitherT $ Query.lookupRequired logH query "title"
-  _ <- newEitherT $ DbTag.createTag dbqH title
+  _ <- newEitherT $ DbTag.createTag dbqH $ convert title
   return ()
 
 removeRecord :: (Monad m, MonadThrow m) =>
@@ -42,7 +43,7 @@ removeRecord handle query = do
   let logH = ServerSpec.hLogger handle
       dbqH = ServerSpec.hDbQ handle
   title <- newEitherT $ Query.lookupRequired logH query "title"
-  _ <- newEitherT $ DbTag.removeTag dbqH title
+  _ <- newEitherT $ DbTag.removeTag dbqH $ convert title
   return ()
 
 editRecord :: (Monad m, MonadThrow m) =>
@@ -54,5 +55,7 @@ editRecord handle query = do
       dbqH = ServerSpec.hDbQ handle
   oldTitle <- newEitherT $ Query.lookupRequired logH query "old_title"
   newTitle <- newEitherT $ Query.lookupRequired logH query "new_title"
-  _ <- newEitherT $ DbTag.editTag dbqH oldTitle newTitle
+  _ <- newEitherT $ DbTag.editTag dbqH 
+         (convert oldTitle)
+         (convert newTitle)
   return ()

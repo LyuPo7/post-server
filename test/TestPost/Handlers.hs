@@ -6,6 +6,7 @@ import qualified Post.Logger as Logger
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Server.ServerConfig as ServerConfig
+import qualified Post.Server.Objects.Synonyms as ServerSynonyms
 import qualified Post.Config as PostConfig
 
 dbqH :: DbQSpec.Handle Identity
@@ -53,7 +54,7 @@ dbC :: DbSpec.Config
 dbC = DbSpec.Config {
   DbSpec.dbName = "post-server",
   DbSpec.user = Just "lyupo",
-  DbSpec.admins = ["lyupo"]
+  DbSpec.admins = fmap ServerSynonyms.Login ["lyupo"]
 }
 
 serverC :: ServerConfig.Config

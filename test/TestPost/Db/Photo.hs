@@ -17,8 +17,8 @@ spec_newPhoto :: Spec
 spec_newPhoto =
   describe "Testing newPhoto" $ do
     it "Should successfully create Photo from [sqlValue]" $ do
-      let photoLink = "image/new-11.png" :: ServerSynonyms.Link
-          photoId = 11 :: ServerSynonyms.PhotoId
+      let photoLink = ServerSynonyms.Link "image/new-11.png"
+          photoId = ServerSynonyms.PhotoId 11
           sqlPhotoA = [
             toSql photoId,
             toSql photoLink
@@ -26,15 +26,16 @@ spec_newPhoto =
           photoE = DbPhoto.newPhoto Handlers.dbqH sqlPhotoA
           check = ServerPhoto.Photo {
             ServerPhoto.id = photoId,
-            ServerPhoto.link = "http://localhost:3000/" <> photoLink
+            ServerPhoto.link =
+              ServerSynonyms.Link "http://localhost:3000/image/new-11.png"
           }
       photoE `shouldBe` Identity (Right check)
     it "Should fail with empty input" $ do
       let photoE = DbPhoto.newPhoto Handlers.dbqH []
       photoE `shouldBe` Identity (Left "Invalid Photo!")
     it "Should fail with too many fields in input array" $ do
-      let photoLink = "image/new-11.png" :: ServerSynonyms.Link
-          photoId = 11 :: ServerSynonyms.PhotoId
+      let photoLink = ServerSynonyms.Link "image/new-11.png"
+          photoId = ServerSynonyms.PhotoId 11
           text = "text" :: Text
           sqlPhotoA = [
             toSql photoId,
@@ -48,7 +49,7 @@ spec_getLastPhotoRecord :: Spec
 spec_getLastPhotoRecord =
   describe "Testing getLastPhotoRecord" $ do
     it "Should successfully return PhotoId for array of one element" $ do
-      let photoId = 101 :: ServerSynonyms.PhotoId
+      let photoId = ServerSynonyms.PhotoId 101
           sqlPhotoA = [[toSql photoId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlPhotoA
@@ -56,7 +57,7 @@ spec_getLastPhotoRecord =
           photoIdE = DbPhoto.getLastPhotoRecord dbqH'
       photoIdE `shouldBe` Identity (Right photoId)
     it "Should fail on array of many elements" $ do
-      let photoId = 101 :: ServerSynonyms.PhotoId
+      let photoId = ServerSynonyms.PhotoId 101
           sqlPhotoA = [
               [toSql photoId],
               [toSql photoId]]
@@ -78,8 +79,8 @@ spec_getPhotoRecordById :: Spec
 spec_getPhotoRecordById =
   describe "Testing getPhotoRecordById" $ do
     it "Should successfully return Photo for array of one element" $ do
-      let photoLink = "image/new-11.png" :: ServerSynonyms.Link
-          photoId = 11 :: ServerSynonyms.PhotoId
+      let photoLink = ServerSynonyms.Link "image/new-11.png"
+          photoId = ServerSynonyms.PhotoId 11
           sqlPhotoA = [[
             toSql photoId,
             toSql photoLink
@@ -90,13 +91,14 @@ spec_getPhotoRecordById =
           photoE = DbPhoto.getPhotoRecordById dbqH' photoId
           check = ServerPhoto.Photo {
             ServerPhoto.id = photoId,
-            ServerPhoto.link = "http://localhost:3000/" <> photoLink
+            ServerPhoto.link = 
+              ServerSynonyms.Link "http://localhost:3000/image/new-11.png"
           }
       photoE `shouldBe` Identity (Right check)
     it "Should fail on array of many elements" $ do
-      let photoLink1 = "image/new-11.png" :: ServerSynonyms.Link
-          photoLink2 = "image/old-11.png" :: ServerSynonyms.Link
-          photoId = 11 :: ServerSynonyms.PhotoId
+      let photoLink1 = ServerSynonyms.Link "image/new-11.png"
+          photoLink2 = ServerSynonyms.Link "image/old-11.png"
+          photoId = ServerSynonyms.PhotoId 11
           sqlPhotoA = [
             [toSql photoId,
             toSql photoLink1],
@@ -111,7 +113,7 @@ spec_getPhotoRecordById =
                 \exist more than one record for Photo with Id: 11"
       photoE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let photoId = 101 :: ServerSynonyms.PhotoId
+      let photoId = ServerSynonyms.PhotoId 101
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -123,8 +125,8 @@ spec_getPhotoIdByName :: Spec
 spec_getPhotoIdByName =
   describe "Testing getPhotoIdByName" $ do
     it "Should successfully return PhotoId for array of one element" $ do
-      let photoLink = "image/new-11.png" :: ServerSynonyms.Link
-          photoId = 11 :: ServerSynonyms.PhotoId
+      let photoLink = "image/new-11.png"
+          photoId = ServerSynonyms.PhotoId 11
           sqlPhotoA = [[toSql photoId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlPhotoA
@@ -132,8 +134,8 @@ spec_getPhotoIdByName =
           photoIdE = DbPhoto.getPhotoIdByName dbqH' photoLink
       photoIdE `shouldBe` Identity (Right photoId)
     it "Should fail on array of many elements" $ do
-      let photoLink = "image/new-11.png" :: ServerSynonyms.Link
-          photoId1 = 11 :: ServerSynonyms.PhotoId
+      let photoLink = "image/new-11.png"
+          photoId1 = ServerSynonyms.PhotoId 11
           photoId2 = 21 :: ServerSynonyms.PhotoId
           sqlPhotoA = [
             [toSql photoId1],
@@ -148,7 +150,7 @@ spec_getPhotoIdByName =
                 \'image/new-11.png'"
       photoIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let photoLink = "image/new-11.png" :: ServerSynonyms.Link
+      let photoLink = "image/new-11.png"
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }

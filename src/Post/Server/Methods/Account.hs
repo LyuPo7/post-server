@@ -3,6 +3,7 @@ module Post.Server.Methods.Account where
 import Network.HTTP.Types (Query)
 import Network.Wai (Response)
 import Control.Monad.Trans.Either (newEitherT, runEitherT)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Server.ServerSpec as ServerSpec
 import qualified Post.Logger as Logger
@@ -21,7 +22,9 @@ login handle query = do
   tokenE <- runEitherT $ do
     userLogin <- newEitherT $ Query.lookupRequired logH query "login"
     password <- newEitherT $ Query.lookupRequired logH query "password"
-    token <- newEitherT $ DbAccount.getToken dbqH userLogin password
+    token <- newEitherT $ DbAccount.getToken dbqH 
+              (convert userLogin) 
+              (convert password)
     return (userLogin, token)
   case tokenE of
     Left msg -> return $ ServerResponses.respError msg

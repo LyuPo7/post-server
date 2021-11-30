@@ -8,6 +8,7 @@ import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad (guard)
 import Data.Aeson (encode)
 import Control.Monad.Trans (lift)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Exception as E
 import qualified Post.Server.ServerSpec as ServerSpec
@@ -58,7 +59,8 @@ createRecord handle (ServerPermission.AuthorWritePerm authorId) query = do
   text <- newEitherT $ Query.lookupRequired logH query "text"
   catId <- Query.readRequired logH query "category_id"
   tagIds <- Query.readRequired logH query "tag_id"
-  _ <- newEitherT $ DbPost.createPost dbqH title text authorId catId tagIds
+  _ <- newEitherT $ DbPost.createPost dbqH 
+         (convert title) text authorId catId tagIds
   return ()
 createRecord _ _ _ = throwM E.IncorrectMethodError
 

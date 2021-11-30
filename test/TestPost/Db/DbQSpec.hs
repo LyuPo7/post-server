@@ -18,7 +18,7 @@ spec_queryFromWhere :: Spec
 spec_queryFromWhere =
   describe "Testing queryFromWhere" $ do
     it "Should successfully create DbQuery for 1/1 columns" $ do
-      let bob = "Bob" :: ServerSynonyms.Login
+      let bob = ServerSynonyms.Login "Bob"
           sqlList = [toSql bob]
       query <- DbQSpec.queryFromWhere DbTable.tableUsers
                    [DbColumn.colIdUser]
@@ -30,7 +30,7 @@ spec_queryFromWhere =
                    sqlList)
       query `shouldBe` Right check
     it "Should successfully create DbQuery for many/1 columns" $ do
-      let userId = 10 :: ServerSynonyms.UserId
+      let userId = ServerSynonyms.UserId 10
           sqlList = [toSql userId]
       query <- DbQSpec.queryFromWhere DbTable.tableUsers 
                   [
@@ -47,8 +47,8 @@ spec_queryFromWhere =
                    sqlList)
       query `shouldBe` Right check
     it "Should successfully create DbQuery for 1/many columns" $ do
-      let userId = 10 :: ServerSynonyms.UserId
-          bob = "Bob" :: ServerSynonyms.Login
+      let userId = ServerSynonyms.UserId 10
+          bob = ServerSynonyms.Login "Bob"
           sqlList = [toSql userId, toSql bob]
       query <- DbQSpec.queryFromWhere DbTable.tableUsers 
                 [DbColumn.colIdUser] 
@@ -61,8 +61,8 @@ spec_queryFromWhere =
                    sqlList)
       query `shouldBe` Right check
     it "Should successfully create DbQuery for many/many columns" $ do
-      let userId = 10 :: ServerSynonyms.UserId
-          bob = "Bob" :: ServerSynonyms.Login
+      let userId = ServerSynonyms.UserId 10
+          bob = ServerSynonyms.Login "Bob"
           sqlList = [toSql userId, toSql bob]
       query <- DbQSpec.queryFromWhere DbTable.tableUsers 
                 [
@@ -80,8 +80,8 @@ spec_queryFromWhere =
                    sqlList)
       query `shouldBe` Right check
     it "Should fail if 'SELECT' column is empty" $ do
-      let userId = 10 :: ServerSynonyms.UserId
-          bob = "Bob" :: ServerSynonyms.Login
+      let userId = ServerSynonyms.UserId 10
+          bob = ServerSynonyms.Login "Bob"
           sqlList = [toSql userId, toSql bob]
       query <- DbQSpec.queryFromWhere DbTable.tableUsers 
                 [] 
@@ -90,8 +90,8 @@ spec_queryFromWhere =
       let check = "'colSelect'/'colWhere'/'values' can't be empty"
       query `shouldBe` Left check
     it "Should fail if 'WHERE' column is empty" $ do
-      let userId = 10 :: ServerSynonyms.UserId
-          bob = "Bob" :: ServerSynonyms.Login
+      let userId = ServerSynonyms.UserId 10
+          bob = ServerSynonyms.Login "Bob"
           sqlList = [toSql userId, toSql bob]
       query <- DbQSpec.queryFromWhere DbTable.tableUsers 
                 [DbColumn.colIdUser, DbColumn.colLoginUser] 
@@ -153,7 +153,7 @@ spec_queryFromWhereInLimit :: Spec
 spec_queryFromWhereInLimit =
   describe "Testing queryFromWhereInLimit" $ do
     it "Should successfully create DbQuery for 1/1 columns" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           sqlList = map toSql ([4,11,20,50] :: [ServerSynonyms.TagId])
       query <- DbQSpec.queryFromWhereInLimit DbTable.tableTags
                 [DbColumn.colTitleTag]
@@ -170,7 +170,7 @@ spec_queryFromWhereInLimit =
                    sqlList)
       query `shouldBe` Right check
     it "Should successfully create DbQuery for many/1 columns" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           sqlList = map toSql ([4,11,20,50] :: [ServerSynonyms.TagId])
       query <- DbQSpec.queryFromWhereInLimit DbTable.tableTags
                 [DbColumn.colIdTag, DbColumn.colTitleTag]
@@ -187,7 +187,7 @@ spec_queryFromWhereInLimit =
                    sqlList)
       query `shouldBe` Right check
     it "Should fail if 'SELECT' column is empty" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           sqlList = map toSql ([4,11,20,50] :: [ServerSynonyms.TagId])
       query <- DbQSpec.queryFromWhereInLimit DbTable.tableTags
                 []
@@ -197,7 +197,7 @@ spec_queryFromWhereInLimit =
       let check = "'colSelect'/values' can't be empty"
       query `shouldBe` Left check
     it "Should fail if 'values' is empty" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
       query <- DbQSpec.queryFromWhereInLimit DbTable.tableTags
                 [DbColumn.colIdTag]
                  DbColumn.colIdTag
@@ -210,7 +210,7 @@ spec_queryFromOrderLimitOffset :: Spec
 spec_queryFromOrderLimitOffset =
   describe "Testing queryFrom" $ do
     it "Should successfully create DbQuery for 1/1 columns" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
       query <- DbQSpec.queryFromOrderLimitOffset DbTable.tableUsers
                 [
                   DbColumn.colIdUser,
@@ -226,7 +226,7 @@ spec_queryFromOrderLimitOffset =
                    \OFFSET 10", [])
       query `shouldBe` Right check
     it "Should fail if 'colSelect' is empty" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
       query <- DbQSpec.queryFromOrderLimitOffset DbTable.tableUsers [] offset
       let check = "'colSelect' can't be empty"
       query `shouldBe` Left check
@@ -255,7 +255,7 @@ spec_queryFromOrderLimit =
 spec_queryDeleteWhere :: Spec
 spec_queryDeleteWhere = describe "Testing queryDeleteWhere" $ do
     it "Should successfully create DbQuery for 1 column" $ do
-      let draftId = 101 :: ServerSynonyms.DraftId
+      let draftId = ServerSynonyms.DraftId 101
       query <- DbQSpec.queryDeleteWhere DbTable.tableDrafts
                [DbColumn.colIdDraft]
                [toSql draftId]
@@ -264,9 +264,9 @@ spec_queryDeleteWhere = describe "Testing queryDeleteWhere" $ do
       query `shouldBe` Right check
     it "Should successfully create DbQuery for many columns" $ do
       let sqlList = [
-            toSql (101 :: ServerSynonyms.UserId),
-            toSql ("Bob" :: ServerSynonyms.FirstName),
-            toSql ("Charton" :: ServerSynonyms.LastName)]
+            toSql (ServerSynonyms.UserId 101),
+            toSql (ServerSynonyms.FirstName "Bob"),
+            toSql (ServerSynonyms.LastName "Charton")]
       query <- DbQSpec.queryDeleteWhere DbTable.tableUsers
                [DbColumn.colIdUser, DbColumn.colFNUser, DbColumn.colLNUser]
                 sqlList
@@ -278,9 +278,9 @@ spec_queryDeleteWhere = describe "Testing queryDeleteWhere" $ do
       query `shouldBe` Right check
     it "Should fail if 'WHERE' column is empty" $ do
       let sqlList = [
-            toSql (101 :: ServerSynonyms.UserId),
-            toSql ("Bob" :: ServerSynonyms.FirstName),
-            toSql ("Charton" :: ServerSynonyms.LastName)]
+            toSql (ServerSynonyms.UserId 101),
+            toSql (ServerSynonyms.FirstName "Bob"),
+            toSql (ServerSynonyms.LastName "Charton")]
       query <- DbQSpec.queryDeleteWhere DbTable.tableUsers
                 []
                 sqlList
@@ -294,8 +294,8 @@ spec_queryDeleteWhere = describe "Testing queryDeleteWhere" $ do
       query `shouldBe` Left check
     it "Should fail if 'WHERE' column and 'values' have different size" $ do
       let sqlList = [
-            toSql (101 :: ServerSynonyms.UserId),
-            toSql ("Bob" :: ServerSynonyms.FirstName)]
+            toSql (ServerSynonyms.UserId 101),
+            toSql (ServerSynonyms.FirstName "Bob")]
       query <- DbQSpec.queryDeleteWhere DbTable.tableUsers
                 [DbColumn.colIdUser, DbColumn.colFNUser, DbColumn.colLNUser]
                 sqlList
@@ -306,7 +306,7 @@ spec_queryInsertIntoValues :: Spec
 spec_queryInsertIntoValues =
   describe "Testing queryInsertIntoValues" $ do
     it "Should successfully create DbQuery for 1 column" $ do
-      let sqlList = [toSql ("new author" :: ServerSynonyms.Description)]
+      let sqlList = [toSql (ServerSynonyms.Description "new author")]
       query <- DbQSpec.queryInsertIntoValues DbTable.tableAuthors
                [DbColumn.colDescAuthor] 
                 sqlList
@@ -349,9 +349,9 @@ spec_queryUpdateSetWhere =
   describe "Testing queryUpdateSetWhere" $ do
     it "Should successfully create DbQuery for 1 'WHERE' column" $ do
       let sqlList1 = [
-            toSql ("sport" :: ServerSynonyms.Title),
-            toSql (3 :: ServerSynonyms.CategoryId)]
-          sqlList2 = [toSql (10 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "sport"),
+            toSql (ServerSynonyms.CategoryId 3)]
+          sqlList2 = [toSql (ServerSynonyms.CategoryId 10)]
           sqlList = sqlList1 ++ sqlList2
       query <- DbQSpec.queryUpdateSetWhere DbTable.tableCats
                [DbColumn.colTitleCat, DbColumn.colSubCatCat]
@@ -365,11 +365,11 @@ spec_queryUpdateSetWhere =
       query `shouldBe` Right check
     it "Should successfully create DbQuery for many 'WHERE' column" $ do
       let sqlList1 = [
-            toSql ("sport" :: ServerSynonyms.Title),
-            toSql (3 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "sport"),
+            toSql (ServerSynonyms.CategoryId 3)]
           sqlList2 = [
-            toSql ("box" :: ServerSynonyms.Title),
-            toSql (10 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "box"),
+            toSql (ServerSynonyms.CategoryId 10)]
           sqlList = sqlList1 ++ sqlList2
       query <- DbQSpec.queryUpdateSetWhere DbTable.tableCats
                [DbColumn.colTitleCat, DbColumn.colSubCatCat]
@@ -384,11 +384,11 @@ spec_queryUpdateSetWhere =
       query `shouldBe` Right check
     it "Should fail if 'colSet' is emty" $ do
       let sqlList1 = [
-            toSql ("sport" :: ServerSynonyms.Title),
-            toSql (3 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "sport"),
+            toSql (ServerSynonyms.CategoryId 3)]
           sqlList2 = [
-            toSql ("box" :: ServerSynonyms.Title),
-            toSql (10 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "box"),
+            toSql (ServerSynonyms.CategoryId 10)]
       query <- DbQSpec.queryUpdateSetWhere DbTable.tableCats
                []
                [DbColumn.colTitleCat, DbColumn.colIdCat]
@@ -398,11 +398,11 @@ spec_queryUpdateSetWhere =
       query `shouldBe` Left check
     it "Should fail if 'colWhere' is emty" $ do
       let sqlList1 = [
-            toSql ("sport" :: ServerSynonyms.Title),
-            toSql (3 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "sport"),
+            toSql (ServerSynonyms.CategoryId 3)]
           sqlList2 = [
-            toSql ("box" :: ServerSynonyms.Title),
-            toSql (10 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "box"),
+            toSql (ServerSynonyms.CategoryId 10)]
       query <- DbQSpec.queryUpdateSetWhere DbTable.tableCats
                [DbColumn.colTitleCat, DbColumn.colIdCat]
                []
@@ -412,8 +412,8 @@ spec_queryUpdateSetWhere =
       query `shouldBe` Left check
     it "Should fail if 'valSet' is emty" $ do
       let sqlList = [
-            toSql ("box" :: ServerSynonyms.Title),
-            toSql (10 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "box"),
+            toSql (ServerSynonyms.CategoryId 10)]
       query <- DbQSpec.queryUpdateSetWhere DbTable.tableCats
                [DbColumn.colTitleCat, DbColumn.colIdCat]
                [DbColumn.colTitleCat, DbColumn.colIdCat]
@@ -423,8 +423,8 @@ spec_queryUpdateSetWhere =
       query `shouldBe` Left check
     it "Should fail if 'valWhere' is emty" $ do
       let sqlList = [
-            toSql ("box" :: ServerSynonyms.Title),
-            toSql (10 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "box"),
+            toSql (ServerSynonyms.CategoryId 10)]
       query <- DbQSpec.queryUpdateSetWhere DbTable.tableCats
                [DbColumn.colTitleCat, DbColumn.colIdCat]
                [DbColumn.colTitleCat, DbColumn.colIdCat]
@@ -434,11 +434,11 @@ spec_queryUpdateSetWhere =
       query `shouldBe` Left check
     it "Should fail if 'colSet' and 'valSet' have different size" $ do
       let sqlList1 = [
-            toSql ("sport" :: ServerSynonyms.Title),
-            toSql (3 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "sport"),
+            toSql (ServerSynonyms.CategoryId 3)]
           sqlList2 = [
-            toSql ("box" :: ServerSynonyms.Title),
-            toSql (10 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "box"),
+            toSql (ServerSynonyms.CategoryId 10)]
       query <- DbQSpec.queryUpdateSetWhere DbTable.tableCats
                [DbColumn.colTitleCat]
                [DbColumn.colTitleCat, DbColumn.colIdCat]
@@ -448,11 +448,11 @@ spec_queryUpdateSetWhere =
       query `shouldBe` Left check
     it "Should fail if 'colWhere' and 'valWhere' have different size" $ do
       let sqlList1 = [
-            toSql ("sport" :: ServerSynonyms.Title),
-            toSql (3 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "sport"),
+            toSql (ServerSynonyms.CategoryId 3)]
           sqlList2 = [
-            toSql ("box" :: ServerSynonyms.Title),
-            toSql (10 :: ServerSynonyms.CategoryId)]
+            toSql (ServerSynonyms.Title "box"),
+            toSql (ServerSynonyms.CategoryId 10)]
       query <- DbQSpec.queryUpdateSetWhere DbTable.tableCats
                [DbColumn.colTitleCat, DbColumn.colIdCat]
                [DbColumn.colTitleCat]
@@ -503,7 +503,7 @@ spec_querySearchPost =
       let createdAt = "10.10.10" :: Text
           createdAtGt = "15.10.10" :: Text
           createdAtLt = "20.10.10" :: Text
-          inTitle = "new" :: ServerSynonyms.Title
+          inTitle = "new" :: Text
           inText = "old" :: Text
           args = [("created_at", Just createdAt),
                   ("created_at__lt", Just createdAtLt),
@@ -761,7 +761,7 @@ spec_querySort :: Spec
 spec_querySort =
   describe "Testing querySort" $ do
     it "Should successfully create default Sort DbQuery" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           args = []
           ids = map toSql ([1,10,25] :: [Integer])
           query = DbQSpec.querySort Handlers.dbqH args ids offset
@@ -775,7 +775,7 @@ spec_querySort =
       query `shouldBe` Identity (Right check)
     it "Should successfully create default Sort DbQuery \
        \with 'order_by_date'" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           args = [("order_by_date", Just "True")]
           ids = map toSql ([1,10,25] :: [Integer])
           query = DbQSpec.querySort Handlers.dbqH args ids offset
@@ -788,7 +788,7 @@ spec_querySort =
       query `shouldBe` Identity (Right check)
     it "Should successfully create default Sort DbQuery \
        \with 'order_by_category'" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           args = [("order_by_category", Just "True")]
           ids = map toSql ([1,10,25] :: [Integer])
           query = DbQSpec.querySort Handlers.dbqH args ids offset
@@ -804,7 +804,7 @@ spec_querySort =
       query `shouldBe` Identity (Right check)
     it "Should successfully create default Sort DbQuery \
        \with 'order_by_photos'" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           args = [("order_by_photos", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
           query = DbQSpec.querySort Handlers.dbqH args ids offset
@@ -821,7 +821,7 @@ spec_querySort =
       query `shouldBe` Identity (Right check)
     it "Should successfully create default Sort DbQuery \
        \with 'order_by_author'" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           args = [("order_by_author", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
           query = DbQSpec.querySort Handlers.dbqH args ids offset
@@ -836,14 +836,14 @@ spec_querySort =
                    \OFFSET 10", ids)
       query `shouldBe` Identity (Right check)
     it "Should fail with unsupported key" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           args = [("order_by_tag", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])
           query = DbQSpec.querySort Handlers.dbqH args ids offset
           check = "querySort function: Incorrect key: order_by_tag"
       query `shouldBe` Identity (Left check)
     it "Should fail with more than one key" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           args = [("order_by_category", Just "True"),
                   ("order_by_author", Just "True")]
           ids = map toSql ([1,10,25,2,7] :: [Integer])

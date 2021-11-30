@@ -5,6 +5,7 @@ import Data.Text (Text)
 import Data.Either.Combinators (rightToMaybe)
 import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Logger as Logger
@@ -26,7 +27,7 @@ createCat handle title subCat = do
     Left _ -> insertCat handle title subCat
     Right _ -> do
       let msg = "Category with title: '"
-            <> title 
+            <> convert title 
             <> "' already exists!"
       Logger.logInfo logH msg
       return $ Left msg
@@ -69,7 +70,7 @@ updateCatTitle handle catId newTitleM = do
       case catIdNewE of
         Right _ -> do
           let msg = "Category with title: '"
-                <> newTitle
+                <> convert newTitle
                 <> "' already exists!"
           Logger.logError logH msg
           return $ Left msg
@@ -119,19 +120,19 @@ getCatId handle title = do
   case catIdSql of
     [] -> do
       let msg = "No exists Category with title: '"
-            <> title
+            <> convert title
             <> "'!"
       Logger.logWarning logH msg
       return $ Left msg
     [[catId]] -> do
       Logger.logInfo logH $ "Category with title: '"
-        <> title 
+        <> convert title 
         <> "' exists in db!"
       return $ Right $ fromSql catId
     _ -> do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Category with title: '"
-                  <> title
+                  <> convert title
                   <> "'!"
       Logger.logError logH msg
       return $ Left msg

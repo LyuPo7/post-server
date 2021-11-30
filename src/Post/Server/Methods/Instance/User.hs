@@ -6,6 +6,7 @@ import Network.HTTP.Types (Query)
 import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad.Trans.Either (EitherT, newEitherT)
 import Data.Aeson (encode)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Exception as E
 import qualified Post.Server.ServerSpec as ServerSpec
@@ -36,7 +37,11 @@ createRecord handle query = do
   lastName <- newEitherT $ Query.lookupRequired logH query "last_name"
   login <- newEitherT $ Query.lookupRequired logH query "login"
   password <- newEitherT $ Query.lookupRequired logH query "password"
-  _ <- newEitherT $ DbUser.createUser dbqH firstName lastName login password
+  _ <- newEitherT $ DbUser.createUser dbqH 
+        (convert firstName)
+        (convert lastName)
+        (convert login)
+        (convert password)
   return ()
 
 removeRecord :: (Monad m, MonadThrow m) =>

@@ -17,10 +17,10 @@ spec_getSub:: Spec
 spec_getSub =
   describe "Testing getSub" $ do
     it "Should successfully create Category with SubCategory" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          subTitle = "sport" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
-          subCatId = 5 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          subTitle = ServerSynonyms.Title "sport"
+          catId = ServerSynonyms.CategoryId 11
+          subCatId = ServerSynonyms.CategoryId 5
           sqlCatA = [
             toSql catId,
             toSql title,
@@ -47,8 +47,8 @@ spec_getSub =
           }
       catE `shouldBe` Identity (Right check)
     it "Should successfully create Category without SubCategory" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          catId = ServerSynonyms.CategoryId 11
           sqlCatA = [
             toSql catId,
             toSql title,
@@ -66,8 +66,8 @@ spec_getSub =
           msg = "Invalid Category!"
       catE `shouldBe` Identity (Left msg)
     it "Should fail on array with too many elements" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          catId = ServerSynonyms.CategoryId 11
           text = "text" :: Text
           sqlCatA = [
             toSql catId,
@@ -83,8 +83,8 @@ spec_newCatNull:: Spec
 spec_newCatNull =
   describe "Testing newCatNull" $ do
     it "Should successfully create Category without SubCategory" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          catId = ServerSynonyms.CategoryId 11
           sqlCatA = [
             toSql catId,
             toSql title,
@@ -102,8 +102,8 @@ spec_newCatNull =
           msg = "Invalid Category!"
       catE `shouldBe` Left msg
     it "Should fail on array with too many elements" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          catId = ServerSynonyms.CategoryId 11
           text = "text" :: Text
           sqlCatA = [
             toSql catId,
@@ -119,10 +119,10 @@ spec_newCat:: Spec
 spec_newCat =
   describe "Testing newCat" $ do
     it "Should successfully create Category without SubCategory" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          subTitle = "sport" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
-          subCatId = 5 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          subTitle = ServerSynonyms.Title "sport"
+          catId = ServerSynonyms.CategoryId 11
+          subCatId = ServerSynonyms.CategoryId 5
           sqlCatA = [
             toSql catId,
             toSql title,
@@ -153,8 +153,8 @@ spec_newCat =
           msg = "Invalid Category!"
       catE `shouldBe` Identity (Left msg)
     it "Should fail on array with too many elements" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          catId = ServerSynonyms.CategoryId 11
           text = "text" :: Text
           sqlCatA = [
             toSql catId,
@@ -170,10 +170,10 @@ spec_getChildCatIdsByCatId :: Spec
 spec_getChildCatIdsByCatId =
   describe "Testing getChildCatIdsByCatId" $ do
     it "Should successfully return [CategoryId]" $ do
-      let catId = 11 :: ServerSynonyms.CategoryId
-          childCatId1 = 18 :: ServerSynonyms.CategoryId
-          childCatId2 = 23 :: ServerSynonyms.CategoryId
-          childCatId3 = 37 :: ServerSynonyms.CategoryId
+      let catId = ServerSynonyms.CategoryId 11
+          childCatId1 = ServerSynonyms.CategoryId 18
+          childCatId2 = ServerSynonyms.CategoryId 23
+          childCatId3 = ServerSynonyms.CategoryId 7
           sqlCatA = [
             [toSql childCatId1],
             [toSql childCatId2],
@@ -189,7 +189,7 @@ spec_getChildCatIdsByCatId =
           childCatId2,
           childCatId3])
     it "Should fail on empty array" $ do
-      let catId = 11 :: ServerSynonyms.CommentId
+      let catId = ServerSynonyms.CategoryId 11
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -201,8 +201,8 @@ spec_getCatPostIdsByCatId :: Spec
 spec_getCatPostIdsByCatId =
   describe "Testing getCatPostIdsByCatId" $ do
     it "Should successfully return [PostId] for array of one element" $ do
-      let catId = 11 :: ServerSynonyms.DraftId
-          postId = 15 :: ServerSynonyms.PostId
+      let catId = ServerSynonyms.CategoryId 11
+          postId = ServerSynonyms.PostId 15
           sqlCatA = [[toSql postId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlCatA
@@ -210,10 +210,10 @@ spec_getCatPostIdsByCatId =
           postIdsE = DbCategory.getCatPostIdsByCatId dbqH' catId
       postIdsE `shouldBe` Identity (Right [postId])
     it "Should successfully return [PostId] for array of many elements" $ do
-      let catId = 11 :: ServerSynonyms.DraftId
-          postId1 = 15 :: ServerSynonyms.PostId
-          postId2 = 1 :: ServerSynonyms.PostId
-          postId3 = 150 :: ServerSynonyms.PostId
+      let catId = ServerSynonyms.CategoryId 11
+          postId1 = ServerSynonyms.PostId 15
+          postId2 = ServerSynonyms.PostId 1
+          postId3 = ServerSynonyms.PostId 150
           sqlCatA = [
             [toSql postId1],
             [toSql postId2],
@@ -225,7 +225,7 @@ spec_getCatPostIdsByCatId =
           postIdsE = DbCategory.getCatPostIdsByCatId dbqH' catId
       postIdsE `shouldBe` Identity (Right [postId1, postId2, postId3])
     it "Should fail on empty array" $ do
-      let catId = 11 :: ServerSynonyms.CategoryId
+      let catId = ServerSynonyms.CategoryId 11
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -237,8 +237,8 @@ spec_getCatRecordByCatId:: Spec
 spec_getCatRecordByCatId =
   describe "Testing getCatRecordByCatId" $ do
     it "Should successfully create Category without SubCategory" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          catId = ServerSynonyms.CategoryId 11
           sqlCatA = [[
             toSql catId,
             toSql title,
@@ -255,7 +255,7 @@ spec_getCatRecordByCatId =
           }
       catE `shouldBe` Identity (Right check)
     it "Should fail on empty array" $ do
-      let catId = 11 :: ServerSynonyms.CategoryId
+      let catId = ServerSynonyms.CategoryId 11
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -263,9 +263,9 @@ spec_getCatRecordByCatId =
           msg = "No Category with id: 11"
       catE `shouldBe` Identity (Left msg)
     it "Should fail on array on array with many elements" $ do
-      let title1 = "crossfit" :: ServerSynonyms.Title
-          title2 = "football" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let title1 = ServerSynonyms.Title "crossfit"
+          title2 = ServerSynonyms.Title "football"
+          catId = ServerSynonyms.CategoryId 11
           sqlCatA = [
             [toSql catId,
             toSql title1,
@@ -287,13 +287,13 @@ spec_checkIfChildCatIsValid :: Spec
 spec_checkIfChildCatIsValid =
   describe "Testing checkIfChildCatIsValid" $ do
     it "Should successfully pass check if title /= subTitle" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          subTitle = "sport" :: ServerSynonyms.Title
+      let title = ServerSynonyms.Title "crossfit"
+          subTitle = ServerSynonyms.Title "sport"
           valid = DbCategory.checkIfChildCatIsValid Handlers.dbqH title subTitle
       valid `shouldBe` Identity (Right ())
     it "Should fail if title == subTitle" $ do
-      let title = "sport" :: ServerSynonyms.Title
-          subTitle = "sport" :: ServerSynonyms.Title
+      let title = ServerSynonyms.Title "sport"
+          subTitle = ServerSynonyms.Title "sport"
           valid = DbCategory.checkIfChildCatIsValid Handlers.dbqH title subTitle
           msg = "Category and SubCategory can't have the same title!"
       valid `shouldBe` Identity (Left msg)
@@ -302,9 +302,9 @@ spec_getCats :: Spec
 spec_getCats =
   describe "Testing getCats" $ do
     it "Should successfully create [Category] of one Category record" $ do
-      let offset = 10
-          title = "crossfit" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let offset = ServerSynonyms.Offset 10
+          title = ServerSynonyms.Title "crossfit"
+          catId = ServerSynonyms.CategoryId 11
           sqlCatA = [[
             toSql catId,
             toSql title,
@@ -321,11 +321,11 @@ spec_getCats =
           catsE = DbCategory.getCats dbqH' offset
       catsE `shouldBe` Identity (Right [check])
     it "Should successfully create [Category] of many Category record" $ do
-      let offset = 10
-          title1 = "crossfit" :: ServerSynonyms.Title
-          catId1 = 11 :: ServerSynonyms.CategoryId
-          title2 = "sport" :: ServerSynonyms.Title
-          catId2 = 3 :: ServerSynonyms.CategoryId
+      let offset = ServerSynonyms.Offset 10
+          title1 = ServerSynonyms.Title "crossfit"
+          catId1 = ServerSynonyms.CategoryId 11
+          title2 = ServerSynonyms.Title "sport"
+          catId2 = ServerSynonyms.CategoryId 3
           sqlCatA = [
             [toSql catId1,
             toSql title1,
@@ -350,7 +350,7 @@ spec_getCats =
           catsE = DbCategory.getCats dbqH' offset
       catsE `shouldBe` Identity (Right [cat1, cat2])
     it "Should fail on empty Category record" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -362,8 +362,8 @@ spec_getCatId :: Spec
 spec_getCatId =
   describe "Testing getCatId" $ do
     it "Should successfully return CategoryId for array of one element" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          catId = 11 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          catId = ServerSynonyms.CategoryId 11
           sqlCatA = [[toSql catId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlCatA
@@ -371,9 +371,9 @@ spec_getCatId =
           photoIdE = DbCategory.getCatId dbqH' title
       photoIdE `shouldBe` Identity (Right catId)
     it "Should fail on array of many elements" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
-          catId1 = 11 :: ServerSynonyms.CategoryId
-          catId2 = 7 :: ServerSynonyms.CategoryId
+      let title = ServerSynonyms.Title "crossfit"
+          catId1 = ServerSynonyms.CategoryId 11
+          catId2 = ServerSynonyms.CategoryId 7
           sqlCatA = [
             [toSql catId1],
             [toSql catId2]
@@ -387,7 +387,7 @@ spec_getCatId =
                 \'crossfit'!"
       photoIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let title = "crossfit" :: ServerSynonyms.Title
+      let title = ServerSynonyms.Title "crossfit"
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }

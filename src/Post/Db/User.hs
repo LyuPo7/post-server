@@ -4,10 +4,12 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
 import Data.Text (Text)
 import Database.HDBC (SqlValue, fromSql, toSql)
-import Control.Monad.Trans.Either
+import Crypto.Scrypt (Pass(..), defaultParams, getEncryptedPass)
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
+import Data.Convertible.Base (convert)
 import Data.Either.Combinators (rightToMaybe)
-import Crypto.Scrypt (defaultParams, getEncryptedPass, Pass(..))
+
 
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Db.DbSpec as DbSpec
@@ -34,7 +36,7 @@ createUser handle firstName lastName login password = do
   case userIdE of
     Left _ -> do
       encrypted <- DbQSpec.encryptPassM handle defaultParams (
-        Pass $ BC.pack $ T.unpack password)
+        Pass $ BC.pack $ T.unpack $ convert password)
       let encryptedPass = getEncryptedPass encrypted
       newToken <- DbQSpec.createToken handle
       let isAdmin = login `elem` adminList
@@ -52,12 +54,12 @@ createUser handle firstName lastName login password = do
             toSql encryptedPass,
             toSql newToken]
       Logger.logInfo logH $ "User with login: '"
-        <> login
+        <> convert login
         <> "' was successfully inserted in db."
       return $ Right login
     Right _ -> do
       let msg = "User with login: '"
-            <> login
+            <> convert login
             <> "' already exists."
       Logger.logWarning logH msg
       return $ Left msg
@@ -111,11 +113,13 @@ removeUserPhotoDeps :: Monad m =>
                        ServerSynonyms.UserId ->
                        m (Either Text ServerSynonyms.PhotoId)
 removeUserPhotoDeps handle userId = runEitherT $ do
-  photo <- EitherT $ getUserPhotoRecord handle userId
+  photo <- newEitherT $ getUserPhotoRecord handle userId
   lift $ deleteUserPhotoRecord handle userId
   return $ ServerPhoto.id photo
 
-getUserIdByLogin :: Monad m => DbQSpec.Handle m -> ServerSynonyms.Login ->
+getUserIdByLogin :: Monad m =>
+                    DbQSpec.Handle m ->
+                    ServerSynonyms.Login ->
                     m (Either Text ServerSynonyms.UserId)
 getUserIdByLogin handle login = do
   let logH = DbQSpec.hLogger handle
@@ -126,19 +130,19 @@ getUserIdByLogin handle login = do
   case userIdSql of
     [] -> do
       let msg = "No exists User with login: '"
-            <> login
+            <> convert login
             <> "'!"
       Logger.logInfo logH msg
       return $ Left msg
     [[idUser]] -> do
       Logger.logInfo logH $ "Getting UserId corresponding to login: '"
-        <> login
+        <> convert login
         <> "' from db."
       return $ Right $ fromSql idUser
     _ -> do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for User with login: '"
-                  <> login
+                  <> convert login
                   <> "'!"
       Logger.logError logH msg
       return $ Left msg

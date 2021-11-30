@@ -18,7 +18,7 @@ spec_newComment =
   describe "Testing newComment" $ do
     it "Should successfully create Comment from [sqlValue]" $ do
       let text = "comment text" :: Text
-          comId = 11 :: ServerSynonyms.CommentId
+          comId = ServerSynonyms.CommentId 11
           sqlComA = [
             toSql comId,
             toSql text
@@ -34,8 +34,8 @@ spec_newComment =
       comE `shouldBe` Left "Invalid Comment!"
     it "Should fail with too many fields in input array" $ do
       let text = "comment text" :: Text
-          title = "Title" :: ServerSynonyms.Title
-          comId = 11 :: ServerSynonyms.CommentId
+          title = ServerSynonyms.Title "Title"
+          comId = ServerSynonyms.CommentId 11
           sqlComA = [
             toSql comId,
             toSql title,
@@ -48,7 +48,7 @@ spec_getLastCommentRecord :: Spec
 spec_getLastCommentRecord =
   describe "Testing getLastCommentRecord" $ do
     it "Should successfully return CommentId for array of one element" $ do
-      let comId = 101 :: ServerSynonyms.CommentId
+      let comId = ServerSynonyms.CommentId 101
           sqlComA = [[toSql comId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlComA
@@ -56,7 +56,7 @@ spec_getLastCommentRecord =
           comIdE = DbComment.getLastCommentRecord dbqH'
       comIdE `shouldBe` Identity (Right comId)
     it "Should fail on array of many elements" $ do
-      let comId = 101 :: ServerSynonyms.CommentId
+      let comId = ServerSynonyms.CommentId 101
           sqlComA = [
               [toSql comId],
               [toSql comId]]
@@ -79,7 +79,7 @@ spec_getCommentRecord =
   describe "Testing getCommentRecord" $ do
     it "Should successfully return [Comment] for array of one element" $ do
       let text = "comment text" :: Text
-          comId = 11 :: ServerSynonyms.CommentId
+          comId = ServerSynonyms.CommentId 11
           sqlComA = [[
             toSql comId,
             toSql text
@@ -96,7 +96,7 @@ spec_getCommentRecord =
     it "Should fail on array of many elements" $ do
       let text1 = "comment text" :: Text
           text2 = "comment text 2" :: Text
-          comId = 11 :: ServerSynonyms.CommentId
+          comId = ServerSynonyms.CommentId 11
           sqlComA = [
             [toSql comId, toSql text1],
             [toSql comId, toSql text2]
@@ -109,7 +109,7 @@ spec_getCommentRecord =
                 \exist more than one record for Comment with Id: 11" 
       comE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let comId = 11 :: ServerSynonyms.CommentId
+      let comId = ServerSynonyms.CommentId 11
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }

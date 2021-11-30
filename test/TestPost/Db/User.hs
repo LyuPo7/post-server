@@ -16,9 +16,9 @@ spec_newUser :: Spec
 spec_newUser =
   describe "Testing newUser" $ do
     it "Should successfully create Tag from [sqlValue]" $ do
-      let userId = 101 :: ServerSynonyms.UserId
-          fn = "Ann" :: ServerSynonyms.FirstName
-          ln = "Bomnet" :: ServerSynonyms.LastName
+      let userId = ServerSynonyms.UserId 101
+          fn = ServerSynonyms.FirstName "Ann"
+          ln = ServerSynonyms.LastName "Bomnet"
           ia = False
           sqlUserA = [
             toSql userId,
@@ -42,9 +42,9 @@ spec_newUser =
       let userE = DbUser.newUser Handlers.dbqH []
       userE `shouldBe` Identity (Left "Invalid User!")
     it "Should fail with too many fields in input array" $ do
-      let userId = 101 :: ServerSynonyms.UserId
-          fn = "Ann" :: ServerSynonyms.FirstName
-          ln = "Bomnet" :: ServerSynonyms.LastName
+      let userId = ServerSynonyms.UserId 101
+          fn = ServerSynonyms.FirstName "Ann"
+          ln = ServerSynonyms.LastName "Bomnet"
           ia = False
           photoId = 1 :: ServerSynonyms.PhotoId
           sqlUserA = [
@@ -61,8 +61,8 @@ spec_getAuthorIdByUserId :: Spec
 spec_getAuthorIdByUserId =
   describe "Testing getAuthorIdByUserId" $ do
     it "Should successfully return AuthorId for array of one element" $ do
-      let userId = 100 :: ServerSynonyms.UserId
-          authorId = 22 :: ServerSynonyms.AuthorId
+      let userId = ServerSynonyms.UserId 100
+          authorId = ServerSynonyms.AuthorId 22
           sqlUserA = [[toSql authorId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlUserA
@@ -78,9 +78,9 @@ spec_getAuthorIdByUserId =
           msg = "No exists Author corresponding to User with id: 100"
       authorIdE `shouldBe` Identity (Left msg)
     it "Should fail on array of many elements" $ do
-      let userId = 100 :: ServerSynonyms.UserId
-          authorId1 = 22 :: ServerSynonyms.AuthorId
-          authorId2 = 30 :: ServerSynonyms.AuthorId
+      let userId = ServerSynonyms.UserId 100
+          authorId1 = ServerSynonyms.AuthorId 22
+          authorId2 = ServerSynonyms.AuthorId 30
           sqlUserA = [
             [toSql authorId1],
             [toSql authorId2]]
@@ -97,10 +97,10 @@ spec_getUserRecords :: Spec
 spec_getUserRecords =
   describe "Testing getUserRecords" $ do
     it "Should successfully return [User] for array of one element" $ do
-      let offset = 10
-          userId = 101 :: ServerSynonyms.UserId
-          fn = "Ann" :: ServerSynonyms.FirstName
-          ln = "Bomnet" :: ServerSynonyms.LastName
+      let offset = ServerSynonyms.Offset 10
+          userId = ServerSynonyms.UserId 101
+          fn = ServerSynonyms.FirstName "Ann"
+          ln = ServerSynonyms.LastName "Bomnet"
           ia = False
           sqlUserA = [[
             toSql userId,
@@ -121,14 +121,14 @@ spec_getUserRecords =
           }
       usersE `shouldBe` Identity (Right [check])
     it "Should successfully return [User] for array of many elements" $ do
-      let offset = 10
-          userId1 = 101 :: ServerSynonyms.UserId
-          fn1 = "Ann" :: ServerSynonyms.FirstName
-          ln1 = "Bomnet" :: ServerSynonyms.LastName
+      let offset = ServerSynonyms.Offset 10
+          userId1 = ServerSynonyms.UserId 101
+          fn1 = ServerSynonyms.FirstName "Ann"
+          ln1 = ServerSynonyms.LastName "Bomnet"
           ia1 = False
-          userId2 = 10 :: ServerSynonyms.UserId
-          fn2 = "Bob" :: ServerSynonyms.FirstName
-          ln2 = "Charton" :: ServerSynonyms.LastName
+          userId2 = ServerSynonyms.UserId 10
+          fn2 = ServerSynonyms.FirstName "Bob"
+          ln2 = ServerSynonyms.LastName "Charton"
           ia2 = True
           sqlUserA = [[
             toSql userId1,
@@ -163,7 +163,7 @@ spec_getUserRecords =
           }
       usersE `shouldBe` Identity (Right [user1, user2])
     it "Should fail on empty array" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -175,9 +175,9 @@ spec_getUserRecordById :: Spec
 spec_getUserRecordById =
   describe "Testing getUserRecordById" $ do
     it "Should successfully return User for array of one element" $ do
-      let userId = 101 :: ServerSynonyms.UserId
-          fn = "Ann" :: ServerSynonyms.FirstName
-          ln = "Bomnet" :: ServerSynonyms.LastName
+      let userId = ServerSynonyms.UserId 101
+          fn = ServerSynonyms.FirstName "Ann"
+          ln = ServerSynonyms.LastName "Bomnet"
           ia = False
           sqlUserA = [[
             toSql userId,
@@ -198,12 +198,12 @@ spec_getUserRecordById =
           }
       usersE `shouldBe` Identity (Right check)
     it "Should fail on array of many elements" $ do
-      let userId = 101 :: ServerSynonyms.UserId
-          fn1 = "Ann" :: ServerSynonyms.FirstName
-          ln1 = "Bomnet" :: ServerSynonyms.LastName
+      let userId = ServerSynonyms.UserId 101
+          fn1 = ServerSynonyms.FirstName "Ann"
+          ln1 = ServerSynonyms.LastName "Bomnet"
           ia1 = False
-          fn2 = "Bob" :: ServerSynonyms.FirstName
-          ln2 = "Charton" :: ServerSynonyms.LastName
+          fn2 = ServerSynonyms.FirstName "Bob"
+          ln2 = ServerSynonyms.LastName "Charton"
           ia2 = True
           sqlUserA = [[
             toSql userId,
@@ -226,7 +226,7 @@ spec_getUserRecordById =
                 \exist more than one record for User with Id: 101"
       usersE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let userId = 101 :: ServerSynonyms.UserId
+      let userId = ServerSynonyms.UserId 101
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -238,8 +238,8 @@ spec_getUserIdByLogin :: Spec
 spec_getUserIdByLogin =
   describe "Testing getUserIdByLogin" $ do
     it "Should successfully return UserId for array of one element" $ do
-      let userId = 101 :: ServerSynonyms.UserId
-          login = "22ann22" :: ServerSynonyms.Login
+      let userId = ServerSynonyms.UserId 101
+          login = ServerSynonyms.Login "22ann22"
           sqlUserA = [[
             toSql userId
            ]]
@@ -249,9 +249,9 @@ spec_getUserIdByLogin =
           userIdE = DbUser.getUserIdByLogin dbqH' login
       userIdE `shouldBe` Identity (Right userId)
     it "Should fail on array of many elements" $ do
-      let userId1 = 101 :: ServerSynonyms.UserId
-          userId2 = 102 :: ServerSynonyms.UserId
-          login = "22ann22" :: ServerSynonyms.Login
+      let userId1 = ServerSynonyms.UserId 101
+          userId2 = ServerSynonyms.UserId 102 
+          login = ServerSynonyms.Login "22ann22"
           sqlUserA = [
             [toSql userId1],
             [toSql userId2]
@@ -265,7 +265,7 @@ spec_getUserIdByLogin =
                 \'22ann22'!"
       userIdE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let login = "22ann22" :: ServerSynonyms.Login
+      let login = ServerSynonyms.Login "22ann22"
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }

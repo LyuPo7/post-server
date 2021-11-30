@@ -8,6 +8,7 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import Crypto.Scrypt (Pass(..), EncryptedPass(..),
                       verifyPass, defaultParams, getEncryptedPass)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Logger as Logger
@@ -33,7 +34,7 @@ getToken handle login password = do
       newUserToken <- DbQSpec.createToken handle
       _ <- updateTokenRecord handle login newUserToken
       Logger.logInfo logH $ "User with login: '"
-        <> login
+        <> convert login
         <> "' entered."
       return $ Right newUserToken
     Left msg -> return $ Left msg
@@ -46,10 +47,10 @@ checkPassword :: Monad m =>
 checkPassword handle truePass intentPass = do
   let logH = DbQSpec.hLogger handle
       encrypted = EncryptedPass {
-          getEncryptedPass = BC.pack $ T.unpack intentPass
+          getEncryptedPass = BC.pack $ T.unpack $ convert intentPass
       }
       (res, _) = verifyPass defaultParams (
-          Pass $ BC.pack $ T.unpack truePass) encrypted
+          Pass $ BC.pack $ T.unpack $ convert truePass) encrypted
   if res
     then return $ Right ()
     else do
@@ -183,11 +184,12 @@ getPasswordRecordByLogin handle login = do
   case passSql of
     [[passwordDb]] -> do
       Logger.logInfo logH $ "Getting 'password' corresponding to login: '"
-        <> login
+        <> convert login
         <> "' from db."
       return $ Right $ fromSql passwordDb
     _ -> do
-      let msg = "Incorrect login: " <> login
+      let msg = "Incorrect login: "
+            <> convert login
       Logger.logError logH msg 
       return $ Left msg
 
@@ -204,5 +206,5 @@ updateTokenRecord handle login userToken = do
         [toSql userToken]
         [toSql login]
   Logger.logInfo logH $ "Updating Token for User with login: '"
-    <> login
+    <> convert login
     <> "' in db."

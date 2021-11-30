@@ -17,9 +17,9 @@ spec_newDraft :: Spec
 spec_newDraft =
   describe "Testing newDraft" $ do
     it "Should successfully create Draft from [sqlValue]" $ do
-      let text = "draft text" :: ServerSynonyms.Link
-          draftId = 11 :: ServerSynonyms.DraftId
-          postId = 15 :: ServerSynonyms.PostId
+      let text = "draft text" :: Text
+          draftId = ServerSynonyms.DraftId 11
+          postId = ServerSynonyms.PostId 15
           sqlDraftA = [
             toSql draftId,
             toSql text,
@@ -36,10 +36,10 @@ spec_newDraft =
       let draftE = DbDraft.newDraft []
       draftE `shouldBe` Left "Invalid Draft!"
     it "Should fail with too many fields in input array" $ do
-      let text = "draft text" :: ServerSynonyms.Link
-          title = "Title" :: ServerSynonyms.Title
-          draftId = 11 :: ServerSynonyms.DraftId
-          postId = 15 :: ServerSynonyms.PostId
+      let text = "draft text" :: Text
+          title = ServerSynonyms.Title "Title"
+          draftId = ServerSynonyms.DraftId 11
+          postId = ServerSynonyms.PostId 15
           sqlDraftA = [
             toSql draftId,
             toSql title,
@@ -54,7 +54,7 @@ spec_getDraftText =
   describe "Testing getDraftText" $ do
     it "Should successfully return DraftText for array of one element" $ do
       let text = "text" :: Text
-          draftId = 11 :: ServerSynonyms.DraftId
+          draftId = ServerSynonyms.DraftId 11
           sqlDraftA = [[toSql text]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlDraftA
@@ -64,7 +64,7 @@ spec_getDraftText =
     it "Should fail on array of many elements" $ do
       let text1 = "text1" :: Text
           text2 = "text2" :: Text
-          photoId = 11 :: ServerSynonyms.DraftId
+          photoId = ServerSynonyms.DraftId 11
           sqlDraftA = [
             [toSql text1],
             [toSql text2]
@@ -77,7 +77,7 @@ spec_getDraftText =
                 \exist more than one record for Draft with Id: 11"
       draftTextE `shouldBe` Identity (Left msg)
     it "Should fail on empty array" $ do
-      let draftId = 101 :: ServerSynonyms.DraftId
+      let draftId = ServerSynonyms.DraftId 101
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }
@@ -89,7 +89,7 @@ spec_getLastDraftRecord :: Spec
 spec_getLastDraftRecord =
   describe "Testing getLastDraftRecord" $ do
     it "Should successfully return DraftId for array of one element" $ do
-      let draftId = 101 :: ServerSynonyms.DraftId
+      let draftId = ServerSynonyms.DraftId 101
           sqlDraftA = [[toSql draftId]]
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return sqlDraftA
@@ -97,7 +97,7 @@ spec_getLastDraftRecord =
           draftIdE = DbDraft.getLastDraftRecord dbqH'
       draftIdE `shouldBe` Identity (Right draftId)
     it "Should fail on array of many elements" $ do
-      let draftId = 101 :: ServerSynonyms.DraftId
+      let draftId = ServerSynonyms.DraftId 101
           sqlDraftA = [
               [toSql draftId],
               [toSql draftId]]
@@ -119,10 +119,10 @@ spec_getDraftRecords :: Spec
 spec_getDraftRecords =
   describe "Testing getDraftRecords" $ do
     it "Should successfully return [Draft] for array of one element" $ do
-      let offset = 10
-          text = "draft text" :: ServerSynonyms.Link
-          draftId = 11 :: ServerSynonyms.DraftId
-          postId = 15 :: ServerSynonyms.PostId
+      let offset = ServerSynonyms.Offset 10
+          text = "draft text" :: Text
+          draftId = ServerSynonyms.DraftId 11
+          postId = ServerSynonyms.PostId 15
           sqlDraftA = [[
             toSql draftId,
             toSql text,
@@ -139,13 +139,13 @@ spec_getDraftRecords =
           }
       draftsE `shouldBe` Identity (Right [check])
     it "Should successfully return [Draft] for array of many elements" $ do
-      let offset = 10
+      let offset = ServerSynonyms.Offset 10
           text1 = "draft text" :: Text
-          draftId1 = 11 :: ServerSynonyms.DraftId
-          postId1 = 15 :: ServerSynonyms.PostId
+          draftId1 = ServerSynonyms.DraftId 11
+          postId1 = ServerSynonyms.PostId 15
           text2 = "draft text new" :: Text
-          draftId2 = 211 :: ServerSynonyms.DraftId
-          postId2 = 15 :: ServerSynonyms.PostId
+          draftId2 = ServerSynonyms.DraftId 11
+          postId2 = ServerSynonyms.PostId 15
           sqlDraftA = [
             [toSql draftId1,
             toSql text1,
@@ -170,8 +170,8 @@ spec_getDraftRecords =
           }
       draftsE `shouldBe` Identity (Right [draft1, draft2])
     it "Should fail on empty array" $ do
-      let offset = 10
-          draftId = 11 :: ServerSynonyms.DraftId
+      let offset = ServerSynonyms.Offset 10
+          draftId = ServerSynonyms.DraftId 11
           dbqH' = Handlers.dbqH {
             DbQSpec.makeDbRequest = \_ -> return []
           }

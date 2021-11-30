@@ -15,8 +15,8 @@ spec_sqlDAtoText :: Spec
 spec_sqlDAtoText =
   describe "Testing sqlDAtoText" $ do
     it "Should successfully convert [[SqlValue]] to Text" $ do
-      let bob = "Bob" :: ServerSynonyms.FirstName
-          userId = 11 :: ServerSynonyms.UserId
+      let bob = ServerSynonyms.FirstName "Bob"
+          userId = ServerSynonyms.UserId 11
           isAdmin = True
           sqlList = [[toSql bob], [toSql userId], [toSql isAdmin]]
           text = Util.sqlDAtoText sqlList
@@ -31,8 +31,8 @@ spec_sqlAtoText :: Spec
 spec_sqlAtoText =
   describe "Testing sqlAtoText" $ do
     it "Should successfully convert [SqlValue] to Text" $ do
-      let bob = "Bob" :: ServerSynonyms.FirstName
-          userId = 11 :: ServerSynonyms.UserId
+      let bob = ServerSynonyms.FirstName "Bob"
+          userId = ServerSynonyms.UserId 11
           isAdmin = True
           sqlList = [toSql bob, toSql userId, toSql isAdmin]
           text = Util.sqlAtoText sqlList

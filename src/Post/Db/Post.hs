@@ -8,6 +8,7 @@ import Data.List (intersect)
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Data.Either.Combinators (rightToMaybe)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Logger as Logger
@@ -48,7 +49,7 @@ createPost handle title text authorId catId tagIds = do
       return postId
     Right _ -> do
       let msg = "Post with title: '"
-            <> title
+            <> convert title
             <> "' already exists."
       Logger.logWarning logH msg
       return $ Left msg
@@ -263,7 +264,7 @@ removePostAddPhotoDep handle postId = runEitherT $ do
 removePostCommentDep :: Monad m =>
                         DbQSpec.Handle m ->
                         ServerSynonyms.PostId ->
-                        m (Either Text [ServerSynonyms.PhotoId])
+                        m (Either Text [ServerSynonyms.CommentId])
 removePostCommentDep handle postId = runEitherT $ do
   comments <- newEitherT $ getPostCommentRecords handle postId
   lift $ deletePostComRecords handle postId
@@ -345,19 +346,19 @@ getPostIdByTitle handle title = do
   case postIdSQL of
     [] -> do
       let msg = "No exists Post with title: '"
-            <> title
+            <> convert title
             <> "'!"
       Logger.logError logH msg
       return $ Left msg
     [[idPost]] -> do
       Logger.logInfo logH $ "Getting PostId corresponding to title: '"
-        <> title
+        <> convert title
         <> "' from db."
       return $ Right $ fromSql idPost
     _ -> do
       let msg = "Violation of Unique record Post in db: \
                 \exist more than one record for Post with title: '"
-                  <> title
+                  <> convert title
                   <> "'!"
       Logger.logWarning logH msg
       return $ Left msg
@@ -576,7 +577,7 @@ insertPostRecord handle title text = do
         [DbColumn.colTitlePost, DbColumn.colTextPost, DbColumn.colCreatedAtPost]
         [toSql title, toSql text, toSql day]
   Logger.logInfo logH $ "Post with title: '"
-    <> title
+    <> convert title
     <> "' was successfully inserted in db."
 
 updatePostMainPhotoRecord :: Monad m =>

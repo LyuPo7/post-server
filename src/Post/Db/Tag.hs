@@ -4,6 +4,7 @@ import Data.Text (Text)
 import Database.HDBC (SqlValue, fromSql, toSql)
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Either (newEitherT, runEitherT)
+import Data.Convertible.Base (convert)
 
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Logger as Logger
@@ -26,7 +27,7 @@ createTag handle tagTitle = do
       return $ Right tagTitle
     Right _ -> do
       let msg = "Tag with title: '"
-            <> tagTitle
+            <> convert tagTitle
             <> "' already exists!"
       Logger.logWarning logH msg 
       return $ Left msg
@@ -68,7 +69,7 @@ editTag handle oldTitle newTitle = do
   case tagIdNewE of
     Right _ -> do
       let msg = "Tag with title: '"
-            <> newTitle
+            <> convert newTitle
             <> "' already exists!"
       Logger.logWarning logH msg
       return $ Left msg
@@ -99,19 +100,19 @@ getTagIdByTitle handle tagTitle = do
   case tagSQL of
     [] -> do
       let msg = "No exists Tag with title: '"
-           <> tagTitle
+           <> convert tagTitle
            <> "'!"
       Logger.logWarning logH msg 
       return $ Left msg
     [[idTag]] -> do
       Logger.logInfo logH $ "Getting Tag with title: '"
-        <> tagTitle
+        <> convert tagTitle
         <> "' from db."
       return $ Right $ fromSql idTag
     _ -> do
       let msg = "Violation of Unique record in db: \
                 \exist more than one record for Tag with title: '"
-                  <> tagTitle
+                  <> convert tagTitle
                   <> "'!"
       Logger.logWarning logH msg 
       return $ Left msg
@@ -162,7 +163,7 @@ getTagRecordsById handle tagId = do
 
 getTagPostRecords :: Monad m =>
                      DbQSpec.Handle m ->
-                     ServerSynonyms.PostId ->
+                     ServerSynonyms.TagId ->
                      m (Either Text [ServerSynonyms.PostId])
 getTagPostRecords handle tagId = do
   let logH = DbQSpec.hLogger handle
@@ -203,7 +204,7 @@ insertTagRecord handle tagTitle = do
         [DbColumn.colTitleTag]
         [toSql tagTitle]
   Logger.logInfo logH $ "Tag with title: '"
-    <> tagTitle
+    <> convert tagTitle
     <> "' was successfully inserted in db."
 
 deleteTagRecord :: Monad m =>
