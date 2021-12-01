@@ -31,9 +31,8 @@ library
       Post.Db.Category
       Post.Db.Comment
       Post.Db.Db
-      Post.Db.DbQ
-      Post.Db.DbQImpl
-      Post.Db.DbQSpec
+      Post.Db.DbQuery
+      Post.Db.DbQueryIO
       Post.Db.DbSpec
       Post.Db.Draft
       Post.Db.Objects.Column
@@ -163,7 +162,7 @@ test-suite post-server-test
   main-is: Test.hs
   other-modules:
       TestPost.Handlers
-      TestPost.Db.DbQSpec
+      TestPost.Db.DbQuery
       TestPost.Db.Tag
       TestPost.Db.User
       TestPost.Db.Photo

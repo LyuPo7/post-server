@@ -1,15 +1,15 @@
 module TestPost.Server.Util where
 
-import Control.Monad.Identity (Identity(..))
-import Database.HDBC (toSql)
+import Control.Monad.Identity (Identity (..))
 import Data.Text (Text)
+import Database.HDBC (toSql)
 
-import Test.Hspec (Spec, shouldBe, it, describe)
+import Test.Hspec (Spec, describe, it, shouldBe)
 
 import qualified TestPost.Handlers as H
 
-import qualified Post.Server.Util as Util
 import qualified Post.Server.Objects.Synonyms as ServerSynonyms
+import qualified Post.Server.Util as Util
 
 spec_sqlDAtoText :: Spec
 spec_sqlDAtoText =
@@ -55,7 +55,8 @@ spec_readKey =
     it "Should fail with incorrect input" $ do
       let arg = "123A123" :: Text
           argName = "number"
-          argE = Util.readKey H.logH arg argName
-               :: Identity (Either Text Integer)
+          argE =
+            Util.readKey H.logH arg argName ::
+              Identity (Either Text Integer)
           check = "Incorrect value of key 'number': 123A123"
       argE `shouldBe` Identity (Left check)

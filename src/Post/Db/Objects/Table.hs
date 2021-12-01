@@ -4,10 +4,11 @@ import Data.Text (Text)
 
 import qualified Post.Db.Objects.Column as DbColumn
 
-data Table = Table {
-  name :: Text,
-  columns :: [DbColumn.Column]
-} deriving (Show)
+data Table = Table
+  { name :: Text,
+    columns :: [DbColumn.Column]
+  }
+  deriving (Show)
 
 {- Tables:
 ** Table: users (table contains info every User):
@@ -51,7 +52,7 @@ data Table = Table {
     - user_id - User id;
 ** Table: comment_user (defines many-to-one relation between comment and user):
     - comment_id - Comment id;
-    - user_id - User id;  
+    - user_id - User id;
 ** Table: post_author (defines many-to-one relation between post and author):
     - post_id - Post id;
     - author_id - Author id;
@@ -72,176 +73,194 @@ data Table = Table {
     - photo_id - Photo id;
 ** Table: post_add_photo (defines one-to-many relation between post and additional photos):
     - post_id - Post id;
-    - photo_id - Photo id;    
+    - photo_id - Photo id;
 -}
 
 tablePosts :: Table
-tablePosts = Table {
-  name = "posts",
-  columns = [
-    DbColumn.colIdPost,
-    DbColumn.colTitlePost,
-    DbColumn.colCreatedAtPost,
-    DbColumn.colTextPost
-    ]
-}
+tablePosts =
+  Table
+    { name = "posts",
+      columns =
+        [ DbColumn.colIdPost,
+          DbColumn.colTitlePost,
+          DbColumn.colCreatedAtPost,
+          DbColumn.colTextPost
+        ]
+    }
 
 tableCats :: Table
-tableCats = Table {
-  name = "categories",
-  columns = [
-    DbColumn.colIdCat,
-    DbColumn.colTitleCat,
-    DbColumn.colSubCatCat
-    ]
-}
+tableCats =
+  Table
+    { name = "categories",
+      columns =
+        [ DbColumn.colIdCat,
+          DbColumn.colTitleCat,
+          DbColumn.colSubCatCat
+        ]
+    }
 
 tableTags :: Table
-tableTags = Table {
-  name = "tags",
-  columns = [
-    DbColumn.colIdTag,
-    DbColumn.colTitleTag
-  ]
-}
+tableTags =
+  Table
+    { name = "tags",
+      columns =
+        [ DbColumn.colIdTag,
+          DbColumn.colTitleTag
+        ]
+    }
 
 tableComs :: Table
-tableComs = Table {
-  name = "comments",
-  columns = [
-    DbColumn.colIdCom,
-    DbColumn.colTextCom
-  ]
-}
+tableComs =
+  Table
+    { name = "comments",
+      columns =
+        [ DbColumn.colIdCom,
+          DbColumn.colTextCom
+        ]
+    }
 
 tableDrafts :: Table
-tableDrafts = Table {
-  name = "drafts",
-  columns = [
-    DbColumn.colIdDraft,
-    DbColumn.colTextDraft,
-    DbColumn.colIdPostDraft
-  ]
-}
+tableDrafts =
+  Table
+    { name = "drafts",
+      columns =
+        [ DbColumn.colIdDraft,
+          DbColumn.colTextDraft,
+          DbColumn.colIdPostDraft
+        ]
+    }
 
 tableUsers :: Table
-tableUsers = Table {
-  name = "users",
-  columns = [
-    DbColumn.colIdUser,
-    DbColumn.colIsAdminUser,
-    DbColumn.colFNUser,
-    DbColumn.colLNUser,
-    DbColumn.colLoginUser,
-    DbColumn.colPassUser,
-    DbColumn.colTokenUser
-  ]
-}
+tableUsers =
+  Table
+    { name = "users",
+      columns =
+        [ DbColumn.colIdUser,
+          DbColumn.colIsAdminUser,
+          DbColumn.colFNUser,
+          DbColumn.colLNUser,
+          DbColumn.colLoginUser,
+          DbColumn.colPassUser,
+          DbColumn.colTokenUser
+        ]
+    }
 
 tableAuthors :: Table
-tableAuthors = Table {
-  name = "authors",
-  columns = [
-    DbColumn.colIdAuthor,
-    DbColumn.colDescAuthor
-  ]
-}
+tableAuthors =
+  Table
+    { name = "authors",
+      columns =
+        [ DbColumn.colIdAuthor,
+          DbColumn.colDescAuthor
+        ]
+    }
 
 tablePhotos :: Table
-tablePhotos = Table {
-  name = "photos",
-  columns = [
-    DbColumn.colIdPhoto,
-    DbColumn.colLinkPhoto
-  ]
-}
+tablePhotos =
+  Table
+    { name = "photos",
+      columns =
+        [ DbColumn.colIdPhoto,
+          DbColumn.colLinkPhoto
+        ]
+    }
 
 tablePostTag :: Table
-tablePostTag = Table {
-  name = "post_tag",
-  columns = [
-    DbColumn.colIdTagPostTag,
-    DbColumn.colIdPostPostTag
-  ]
-}
+tablePostTag =
+  Table
+    { name = "post_tag",
+      columns =
+        [ DbColumn.colIdTagPostTag,
+          DbColumn.colIdPostPostTag
+        ]
+    }
 
 tablePostAuthor :: Table
-tablePostAuthor = Table {
-  name = "post_author",
-  columns = [
-    DbColumn.colIdAuthorPostAuthor,
-    DbColumn.colIdPostPostAuthor
-  ]
-}
+tablePostAuthor =
+  Table
+    { name = "post_author",
+      columns =
+        [ DbColumn.colIdAuthorPostAuthor,
+          DbColumn.colIdPostPostAuthor
+        ]
+    }
 
 tablePostCat :: Table
-tablePostCat = Table {
-  name = "post_category",
-  columns = [
-    DbColumn.colIdCatPostCat,
-    DbColumn.colIdPostPostCat
-  ]
-}
+tablePostCat =
+  Table
+    { name = "post_category",
+      columns =
+        [ DbColumn.colIdCatPostCat,
+          DbColumn.colIdPostPostCat
+        ]
+    }
 
 tablePostCom :: Table
-tablePostCom = Table {
-  name = "post_comment",
-  columns = [
-    DbColumn.colIdPostPostCom,
-    DbColumn.colIdComPostCom
-  ]
-}
+tablePostCom =
+  Table
+    { name = "post_comment",
+      columns =
+        [ DbColumn.colIdPostPostCom,
+          DbColumn.colIdComPostCom
+        ]
+    }
 
 tablePostDraft :: Table
-tablePostDraft = Table {
-  name = "post_draft",
-  columns = [
-    DbColumn.colIdPostPostDraft,
-    DbColumn.colIdDraftPostDraft
-  ]
-}
+tablePostDraft =
+  Table
+    { name = "post_draft",
+      columns =
+        [ DbColumn.colIdPostPostDraft,
+          DbColumn.colIdDraftPostDraft
+        ]
+    }
 
 tablePostMainPhoto :: Table
-tablePostMainPhoto = Table {
-  name = "post_main_photo",
-  columns = [
-    DbColumn.colIdPostPostMainPhoto,
-    DbColumn.colIdPhotoPostMainPhoto
-  ]
-}
+tablePostMainPhoto =
+  Table
+    { name = "post_main_photo",
+      columns =
+        [ DbColumn.colIdPostPostMainPhoto,
+          DbColumn.colIdPhotoPostMainPhoto
+        ]
+    }
 
 tablePostAddPhoto :: Table
-tablePostAddPhoto = Table {
-  name = "post_add_photo",
-  columns = [
-    DbColumn.colIdPostPostAddPhoto,
-    DbColumn.colIdPhotoPostAddPhoto
-  ]
-}
+tablePostAddPhoto =
+  Table
+    { name = "post_add_photo",
+      columns =
+        [ DbColumn.colIdPostPostAddPhoto,
+          DbColumn.colIdPhotoPostAddPhoto
+        ]
+    }
 
 tableAuthorUser :: Table
-tableAuthorUser = Table {
-  name = "author_user",
-  columns = [
-    DbColumn.colIdAuthorAuthorUser,
-    DbColumn.colIdUserAuthorUser
-  ]
-}
+tableAuthorUser =
+  Table
+    { name = "author_user",
+      columns =
+        [ DbColumn.colIdAuthorAuthorUser,
+          DbColumn.colIdUserAuthorUser
+        ]
+    }
 
 tableUserPhoto :: Table
-tableUserPhoto = Table {
-  name = "user_photo",
-  columns = [
-    DbColumn.colIdUserUserPhoto,
-    DbColumn.colIdPhotoUserPhoto
-  ]
-}
+tableUserPhoto =
+  Table
+    { name = "user_photo",
+      columns =
+        [ DbColumn.colIdUserUserPhoto,
+          DbColumn.colIdPhotoUserPhoto
+        ]
+    }
 
 tableUserCom :: Table
-tableUserCom = Table {
-  name = "comment_user",
-  columns = [
-    DbColumn.colIdUserUserCom,
-    DbColumn.colIdComUserCom
-  ]
-}
+tableUserCom =
+  Table
+    { name = "comment_user",
+      columns =
+        [ DbColumn.colIdUserUserCom,
+          DbColumn.colIdComUserCom
+        ]
+    }

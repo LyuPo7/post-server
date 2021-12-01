@@ -2,9 +2,9 @@
 
 module Post.Server.Token where
 
-import qualified Data.UUID.V4 as V4
-import qualified Data.Text as T
 import Data.Convertible.Base (convert)
+import qualified Data.Text as T
+import qualified Data.UUID.V4 as V4
 
 import qualified Post.Server.Objects.Synonyms as ServerSynonyms
 

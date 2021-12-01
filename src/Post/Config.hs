@@ -2,23 +2,24 @@
 
 module Post.Config where
 
+import qualified Control.Exception as Exc
+import qualified Data.Aeson as A
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Text as T
-import qualified Data.Aeson as A
-import qualified Control.Exception as Exc
 import GHC.Generics (Generic)
 
-import qualified Post.Exception as E
-import qualified Post.Settings as Settings
-import qualified Post.Logger as Logger
 import qualified Post.Db.DbSpec as DbSpec
+import qualified Post.Exception as E
+import qualified Post.Logger as Logger
 import qualified Post.Server.ServerConfig as ServerConfig
+import qualified Post.Settings as Settings
 
-data Config = Config {
-  cLogger :: Logger.Config,
-  cDb :: DbSpec.Config,
-  cServer :: ServerConfig.Config
-} deriving (Show, Generic, Eq)
+data Config = Config
+  { cLogger :: Logger.Config,
+    cDb :: DbSpec.Config,
+    cServer :: ServerConfig.Config
+  }
+  deriving (Show, Generic, Eq)
 
 instance A.FromJSON Config where
   parseJSON = A.withObject "General Config" $ \o ->
@@ -36,20 +37,22 @@ getConfig = do
     Left err -> Exc.throwIO err
 
 checkConfig :: Config -> Either E.PostError Config
-checkConfig config 
+checkConfig config
   | T.null $ DbSpec.dbName dbSet = Left E.ConfigDbNameEmptyError
   | T.null $ ServerConfig.host serverSet = Left E.ConfigServerHostEmptyError
-  | Logger.cVerbosity logSet `notElem` [
-      Just Logger.Debug,
-      Just Logger.Info,
-      Just Logger.Warning,
-      Just Logger.Error,
-      Nothing
-    ] = Left E.ConfigLoggerRangeError
-  | otherwise = Right config where
-      logSet = cLogger config
-      dbSet = cDb config
-      serverSet = cServer config
+  | Logger.cVerbosity logSet
+      `notElem` [ Just Logger.Debug,
+                  Just Logger.Info,
+                  Just Logger.Warning,
+                  Just Logger.Error,
+                  Nothing
+                ] =
+    Left E.ConfigLoggerRangeError
+  | otherwise = Right config
+ where
+  logSet = cLogger config
+  dbSet = cDb config
+  serverSet = cServer config
 
 readConfig :: IO B.ByteString
 readConfig = B.readFile Settings.configFile

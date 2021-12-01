@@ -73,7 +73,7 @@ tests:
     source-dirs:         test
     other-modules: [
       TestPost.Handlers,
-      TestPost.Db.DbQSpec,
+      TestPost.Db.DbQuery,
       TestPost.Db.Tag,
       TestPost.Db.User,
       TestPost.Db.Photo,

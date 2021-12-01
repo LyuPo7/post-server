@@ -1,26 +1,28 @@
-{-# LANGUAGE DeriveGeneric, LambdaCase #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Post.Logger where
 
-import Prelude hiding (log)
-import qualified Data.Text as T
+import Control.Monad (mzero, when)
 import qualified Data.Aeson as A
-import GHC.Generics (Generic)
-import Data.Text (Text)
 import Data.Aeson.Types (FromJSON)
-import TextShow (TextShow, showb, showt)
-import Control.Monad (when, mzero)
-import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 import Data.Maybe (fromMaybe)
+import Data.Text (Text)
+import qualified Data.Text as T
+import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
+import GHC.Generics (Generic)
+import TextShow (TextShow, showb, showt)
+import Prelude hiding (log)
 
-data Handle m = Handle {
-  log :: LogMessage -> Text -> m (),
-  hConfig :: Config
-}
+data Handle m = Handle
+  { log :: LogMessage -> Text -> m (),
+    hConfig :: Config
+  }
 
-newtype Config = Config {
-  cVerbosity :: Maybe Level
-} deriving (Show, Generic, Eq)
+newtype Config = Config
+  { cVerbosity :: Maybe Level
+  }
+  deriving (Show, Generic, Eq)
 
 instance A.FromJSON Config where
   parseJSON = A.withObject "General Config" $ \o ->
@@ -32,27 +34,31 @@ withHandleIO config f = f $ newHandleIO config
 newHandleIO :: Config -> Handle IO
 newHandleIO config = do
   let globalLevel = fromMaybe Debug $ cVerbosity config
-  Handle {
-    hConfig = config,
-    log = \logMes str -> 
-      when (level logMes >= globalLevel) $ do
-        let levelMes = level logMes
-        currentTime <- getTime
-        putStrLn $ T.unpack (
-          (renderColor levelMes 
-            <> showt levelMes 
-            <> resetColor) 
-            <> " | " 
-            <> currentTime 
-            <> " | " 
-            <> str)
-  }
+  Handle
+    { hConfig = config,
+      log = \logMes str ->
+        when (level logMes >= globalLevel) $ do
+          let levelMes = level logMes
+          currentTime <- getTime
+          putStrLn $
+            T.unpack
+              ( ( renderColor levelMes
+                    <> showt levelMes
+                    <> resetColor
+                )
+                  <> " | "
+                  <> currentTime
+                  <> " | "
+                  <> str
+              )
+    }
 
-data Level = Debug
-           | Info
-           | Warning
-           | Error
-           deriving (Eq, Ord, Enum, Bounded, Read, Generic)
+data Level
+  = Debug
+  | Info
+  | Warning
+  | Error
+  deriving (Eq, Ord, Enum, Bounded, Read, Generic)
 
 instance Show Level where
   show Debug = "[DEBUG]"
@@ -67,7 +73,7 @@ instance TextShow Level where
   showb Error = "[ERROR]"
 
 instance FromJSON Level where
-  parseJSON = A.withText "Level Logger" $ 
+  parseJSON = A.withText "Level Logger" $
     \case
       "debug" -> pure Debug
       "info" -> pure Info
@@ -75,9 +81,9 @@ instance FromJSON Level where
       "error" -> pure Error
       _ -> mzero
 
-newtype LogMessage = LogMessage { 
-  level :: Level
-}
+newtype LogMessage = LogMessage
+  { level :: Level
+  }
 
 logDebug, logInfo, logWarning, logError :: Handle m -> Text -> m ()
 logDebug = (`log` LogMessage {level = Debug})
@@ -86,7 +92,7 @@ logWarning = (`log` LogMessage {level = Warning})
 logError = (`log` LogMessage {level = Error})
 
 getTime :: IO Text
-getTime = do 
+getTime = do
   T.pack . formatTime defaultTimeLocale (T.unpack defaultTimeFormat)
     <$> getZonedTime
 

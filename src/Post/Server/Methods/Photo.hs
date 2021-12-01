@@ -1,23 +1,24 @@
 module Post.Server.Methods.Photo where
 
+import Control.Monad.Catch (MonadThrow)
 import qualified Data.ByteString.Lazy.Char8 as L8
-import qualified Data.Text as T
 import Data.Text (Text)
+import qualified Data.Text as T
 import Network.HTTP.Client (parseRequest, responseBody)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import System.FilePath.Posix (takeFileName)
-import System.IO (IOMode(..))
-import Control.Monad.Catch (MonadThrow)
+import System.IO (IOMode (..))
 
 import qualified Post.Db.DbSpec as DbSpec
-import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Logger as Logger
+import qualified Post.Server.ServerConfig as ServerConfig
 import qualified Post.Server.Util as ServerUtil
 
-upload :: (MonadThrow m, Monad m) =>
-           DbSpec.Handle m ->
-           Text ->
-           m Text
+upload ::
+  (MonadThrow m, Monad m) =>
+  DbSpec.Handle m ->
+  Text ->
+  m Text
 upload handle pathToFile = do
   let logH = DbSpec.hLogger handle
       hostServer = ServerConfig.host $ DbSpec.cServer handle

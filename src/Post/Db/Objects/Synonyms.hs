@@ -1,7 +1,7 @@
 module Post.Db.Objects.Synonyms where
 
 import Data.Text (Text)
-import Database.HDBC (SqlValue(..))
+import Database.HDBC (SqlValue (..))
 
 type TableName = Text
 type ColumnName = Text

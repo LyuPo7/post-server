@@ -1,14 +1,16 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Post.Server.Objects.Category where
 
+import Data.Aeson.Types (FromJSON (..), ToJSON (..))
 import GHC.Generics (Generic)
-import Data.Aeson.Types (ToJSON(..), FromJSON(..))
 
 import qualified Post.Server.Objects.Synonyms as ServerSynonyms
 
-data Category = Category {
-  id :: ServerSynonyms.CategoryId,
-  title :: ServerSynonyms.Title,
-  subcategory :: Maybe Category
-} deriving (Show, Eq, Generic, FromJSON, ToJSON)
+data Category = Category
+  { id :: ServerSynonyms.CategoryId,
+    title :: ServerSynonyms.Title,
+    subcategory :: Maybe Category
+  }
+  deriving (Show, Eq, Generic, FromJSON, ToJSON)
