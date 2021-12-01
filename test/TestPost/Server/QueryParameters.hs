@@ -1,18 +1,20 @@
 module TestPost.Server.QueryParameters where
 
-import Control.Monad.Identity (Identity(..))
 import qualified Data.ByteString.Char8 as BC
+import Control.Monad.Identity (Identity(..))
 import Data.Text (Text)
+import Control.Monad.Trans.Either (runEitherT)
 
 import Test.Hspec (Spec, shouldBe, it, describe)
 
 import qualified TestPost.Handlers as Handlers
 
 import qualified Post.Server.QueryParameters as Query
+import qualified Post.Server.Objects.Synonyms as ServerSynonyms
 
-spec_lookupOptionalParam :: Spec
-spec_lookupOptionalParam =
-  describe "Testing lookupOptionalParam" $ do
+spec_lookupOptional :: Spec
+spec_lookupOptional =
+  describe "Testing lookupOptional" $ do
     it "Should successfully extract value of the key" $ do
       let paramName = "time" :: Text
           query = [
@@ -20,7 +22,7 @@ spec_lookupOptionalParam =
             ("createdAt", Just "12.10.21"),
             ("text", Just "Hi!")
            ]
-          paramE = Query.lookupOptionalParam Handlers.logH query paramName
+          paramE = Query.lookupOptional Handlers.logH query paramName
                  :: Identity (Maybe Text)
       paramE `shouldBe` Identity (Just "123")
     it "Should successfully return Nothing if value is Nothing" $ do
@@ -30,7 +32,7 @@ spec_lookupOptionalParam =
             ("createdAt", Just "12.10.21"),
             ("text", Just "Hi!")
            ]
-          paramE = Query.lookupOptionalParam Handlers.logH query paramName
+          paramE = Query.lookupOptional Handlers.logH query paramName
                  :: Identity (Maybe Text)
       paramE `shouldBe` Identity Nothing
     it "Should successfully return Nothing if key doesn't exist in query" $ do
@@ -39,13 +41,13 @@ spec_lookupOptionalParam =
             ("createdAt", Just "12.10.21"),
             ("text", Just "Hi!")
            ]
-          paramE = Query.lookupOptionalParam Handlers.logH query paramName
+          paramE = Query.lookupOptional Handlers.logH query paramName
                  :: Identity (Maybe Text)
       paramE `shouldBe` Identity Nothing
     it "Should successfully return Nothing if query is empty" $ do
       let paramName = "time" :: Text
           query = []
-          paramE = Query.lookupOptionalParam Handlers.logH query paramName
+          paramE = Query.lookupOptional Handlers.logH query paramName
                  :: Identity (Maybe Text)
       paramE `shouldBe` Identity Nothing
     it "Should successfully return Nothing if value is empty" $ do
@@ -55,7 +57,7 @@ spec_lookupOptionalParam =
             ("createdAt", Just "12.10.21"),
             ("text", Just "Hi!")
            ]
-          paramE = Query.lookupOptionalParam Handlers.logH query paramName
+          paramE = Query.lookupOptional Handlers.logH query paramName
                  :: Identity (Maybe Text)
       paramE `shouldBe` Identity Nothing
 
@@ -165,9 +167,9 @@ spec_createOptionalDict =
           check = []
       dict `shouldBe` Identity check
 
-spec_lookupReqParam :: Spec
-spec_lookupReqParam =
-  describe "Testing lookupReqParam" $ do
+spec_lookupRequired :: Spec
+spec_lookupRequired =
+  describe "Testing lookupRequired" $ do
     it "Should successfully extract value of the key" $ do
       let paramName = "time" :: Text
           query = [
@@ -175,7 +177,7 @@ spec_lookupReqParam =
             ("createdAt", Just "12.10.21"),
             ("text", Just "Hi!")
            ]
-          paramE = Query.lookupReqParam Handlers.logH query paramName
+          paramE = Query.lookupRequired Handlers.logH query paramName
                  :: Identity (Either Text Text)
       paramE `shouldBe` Identity (Right "123")
     it "Should fail if value is Nothing" $ do
@@ -185,7 +187,7 @@ spec_lookupReqParam =
             ("createdAt", Just "12.10.21"),
             ("text", Just "Hi!")
            ]
-          paramE = Query.lookupReqParam Handlers.logH query paramName
+          paramE = Query.lookupRequired Handlers.logH query paramName
                  :: Identity (Either Text Text)
           msg = "Incorrect request. Empty arg: \"time\""
       paramE `shouldBe` Identity (Left msg)
@@ -195,65 +197,40 @@ spec_lookupReqParam =
             ("createdAt", Just "12.10.21"),
             ("text", Just "Hi!")
            ]
-          paramE = Query.lookupReqParam Handlers.logH query paramName
+          paramE = Query.lookupRequired Handlers.logH query paramName
                  :: Identity (Either Text Text)
           msg = "Incorrect request. Missing arg: \"time\""
       paramE `shouldBe` Identity (Left msg)
     it "Should fail if query is empty" $ do
       let paramName = "time" :: Text
           query = []
-          paramE = Query.lookupReqParam Handlers.logH query paramName
+          paramE = Query.lookupRequired Handlers.logH query paramName
                  :: Identity (Either Text Text)
           msg = "Incorrect request. Missing arg: \"time\""
       paramE `shouldBe` Identity (Left msg)
 
-spec_extractRequired :: Spec
-spec_extractRequired =
-  describe "Testing extractRequired" $ do
+spec_readRequired :: Spec
+spec_readRequired =
+  describe "Testing readRequired" $ do
     it "Should successfully extract required values from query" $ do
-      let paramNames = ["time","createdAt","text"] :: [BC.ByteString]
+      let paramName = "id" :: BC.ByteString
           query = [
-            ("time", Just "123"),
+            ("id", Just "123"),
             ("createdAt", Just "12.10.21"),
             ("text", Just "Hi!")
            ]
-          paramE = Query.extractRequired Handlers.logH query paramNames
-                 :: Identity (Either Text [Text])
-          check = ["123","12.10.21","Hi!"]
+          paramE = (runEitherT $ Query.readRequired Handlers.logH query paramName)
+                 :: Identity (Either Text ServerSynonyms.UserId)
+          check = ServerSynonyms.UserId 123
       paramE `shouldBe` Identity (Right check)
-    it "Should fail if one of required values is empty" $ do
-      let paramNames = ["time","createdAt","text"] :: [BC.ByteString]
+    it "Should fail if doesn't exist required value in query" $ do
+      let paramName = "id" :: BC.ByteString
           query = [
             ("time", Just "123"),
             ("createdAt", Just "12.10.21"),
             ("text", Nothing)
            ]
-          paramE = Query.extractRequired Handlers.logH query paramNames
-                 :: Identity (Either Text [Text])
-          msg = "Incorrect request. Empty arg: \"text\""
+          paramE = (runEitherT $ Query.readRequired Handlers.logH query paramName)
+                 :: Identity (Either Text ServerSynonyms.UserId)
+          msg = "Incorrect request. Missing arg: \"id\""
       paramE `shouldBe` Identity (Left msg)
-    it "Should fail if one of required values isn't in query" $ do
-      let paramNames = ["time","createdAt","text"] :: [BC.ByteString]
-          query = [
-            ("time", Just "123"),
-            ("text", Nothing)
-           ]
-          paramE = Query.extractRequired Handlers.logH query paramNames
-                 :: Identity (Either Text [Text])
-          msg = "Incorrect request. Missing arg: \"createdAt\""
-      paramE `shouldBe` Identity (Left msg)
-    it "Should fail on nonEmpty 'paramNames' and empty query" $ do
-      let paramNames = ["createdAt","time","text"] :: [BC.ByteString]
-          query = []
-          paramE = Query.extractRequired Handlers.logH query paramNames
-                 :: Identity (Either Text [Text])
-          msg = "Incorrect request. Missing arg: \"createdAt\""
-      paramE `shouldBe` Identity (Left msg)
-    it "Should successfully extract required values \
-       \when empty query and empty 'paramNames'" $ do
-      let paramNames = []
-          query = []
-          paramE = Query.extractRequired Handlers.logH query paramNames
-                 :: Identity (Either Text [Text])
-          check = []
-      paramE `shouldBe` Identity (Right check)

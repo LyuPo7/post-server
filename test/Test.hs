@@ -92,11 +92,11 @@ main = do
       Util.spec_sqlDAtoText,
       Util.spec_sqlAtoText,
       Util.spec_readKey,
-      Query.spec_lookupOptionalParam,
+      Query.spec_lookupOptional,
       Query.spec_extractOptional,
       Query.spec_createOptionalDict,
-      Query.spec_lookupReqParam,
-      Query.spec_extractRequired,
+      Query.spec_lookupRequired,
+      Query.spec_readRequired,
       Config.spec_checkConfig
     ]
   defaultMain (testGroup "All Tests" [
