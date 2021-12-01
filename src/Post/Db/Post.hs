@@ -1,9 +1,9 @@
 module Post.Db.Post where
 
 import qualified Data.Text as T
-import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.Time.Clock (UTCTime(..))
 import Data.Text (Text)
+import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.List (intersect)
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Either (newEitherT, runEitherT)

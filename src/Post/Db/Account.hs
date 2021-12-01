@@ -1,13 +1,13 @@
 module Post.Db.Account where
 
 import qualified Data.ByteString.Char8 as BC
-import Control.Monad.Trans.Either (newEitherT, runEitherT)
-import Control.Monad (guard)
-import Database.HDBC (fromSql, toSql)
 import qualified Data.Text as T
 import Data.Text (Text)
 import Crypto.Scrypt (Pass(..), EncryptedPass(..),
                       verifyPass, defaultParams, getEncryptedPass)
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
+import Control.Monad (guard)
+import Database.HDBC (fromSql, toSql)
 import Data.Convertible.Base (convert)
 
 import qualified Post.Db.DbQSpec as DbQSpec

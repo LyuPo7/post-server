@@ -1,16 +1,16 @@
 module Post.Db.DbQSpec where
 
-import Database.HDBC (SqlValue, fromSql, toSql)
-import Data.Text (Text)
-import Crypto.Scrypt (ScryptParams, Pass, EncryptedPass)
-import Data.Time.Clock (UTCTime)
-import Data.List (intercalate, union)
-import Text.Read (readEither)
-import Control.Monad.Trans.Either (newEitherT, runEitherT)
-import Control.Monad.Trans (lift)
-import Distribution.Simple.Utils (safeHead)
 import qualified Data.Text as T
 import qualified Control.Exception as Exc
+import Data.Text (Text)
+import Data.Time.Clock (UTCTime)
+import Crypto.Scrypt (ScryptParams, Pass, EncryptedPass)
+import Database.HDBC (SqlValue, fromSql, toSql)
+import Data.List (intercalate, union)
+import Control.Monad.Trans.Either (newEitherT, runEitherT)
+import Text.Read (readEither)
+import Control.Monad.Trans (lift)
+import Distribution.Simple.Utils (safeHead)
 
 import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Logger as Logger

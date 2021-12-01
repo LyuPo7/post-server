@@ -3,10 +3,10 @@
 module Post.Config where
 
 import qualified Data.ByteString.Lazy as B
+import qualified Data.Text as T
 import qualified Data.Aeson as A
 import qualified Control.Exception as Exc
 import GHC.Generics (Generic)
-import qualified Data.Text as T
 
 import qualified Post.Exception as E
 import qualified Post.Settings as Settings

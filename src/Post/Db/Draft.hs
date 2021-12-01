@@ -81,7 +81,10 @@ getDraftRecords :: Monad m =>
 getDraftRecords handle draftIds offset = do
   let logH = DbQSpec.hLogger handle
   draftsSql <- DbQSpec.selectFromWhereInLimit handle DbTable.tableDrafts
-                [DbColumn.colIdDraft, DbColumn.colTextDraft, DbColumn.colIdPostDraft]
+                [DbColumn.colIdDraft, 
+                 DbColumn.colTextDraft,
+                 DbColumn.colIdPostDraft
+                ]
                  DbColumn.colIdDraft
                  (map toSql draftIds)
                  offset

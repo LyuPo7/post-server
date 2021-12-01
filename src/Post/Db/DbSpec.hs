@@ -5,9 +5,9 @@ module Post.Db.DbSpec where
 import qualified System.IO as SIO
 import qualified Network.HTTP.Client as HTTP
 import qualified Data.ByteString.Lazy.Char8 as L8
+import Data.Aeson.Types (ToJSON, FromJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Data.Aeson.Types (ToJSON, FromJSON)
 import Database.HDBC.PostgreSQL (Connection)
 
 import qualified Post.Logger as Logger

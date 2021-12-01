@@ -1,7 +1,7 @@
 module Post.Db.Comment where
 
-import Database.HDBC (SqlValue, fromSql, toSql)
 import Data.Text (Text)
+import Database.HDBC (SqlValue, fromSql, toSql)
 import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
 

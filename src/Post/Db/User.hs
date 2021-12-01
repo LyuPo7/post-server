@@ -10,7 +10,6 @@ import Control.Monad.Trans (lift)
 import Data.Convertible.Base (convert)
 import Data.Either.Combinators (rightToMaybe)
 
-
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Logger as Logger

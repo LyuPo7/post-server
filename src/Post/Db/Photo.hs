@@ -2,7 +2,7 @@ module Post.Db.Photo where
 
 import qualified Data.Text as T
 import Data.Text (Text)
-import Database.HDBC (fromSql, toSql, SqlValue)
+import Database.HDBC (SqlValue, fromSql, toSql)
 import System.FilePath ((</>))
 import Data.Convertible.Base (convert)
 
@@ -133,7 +133,10 @@ newPhoto :: Monad m =>
 newPhoto handle [idPhoto, link] = do
   let hostServer = ServerConfig.host $ DbSpec.cServer $ DbQSpec.hDb handle
       portServer = ServerConfig.port $ DbSpec.cServer $ DbQSpec.hDb handle
-      server = "http://" <> hostServer <> ":" <> ServerUtil.convertValue portServer
+      server = "http://"
+             <> hostServer
+             <> ":"
+             <> ServerUtil.convertValue portServer
       fullLink = T.unpack server </> fromSql link
   return $ Right $ ServerPhoto.Photo {
     ServerPhoto.id = fromSql idPhoto,

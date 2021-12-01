@@ -7,11 +7,11 @@ import qualified Data.Text as T
 import qualified Data.Aeson as A
 import GHC.Generics (Generic)
 import Data.Text (Text)
-import Data.Maybe (fromMaybe)
 import Data.Aeson.Types (FromJSON)
 import TextShow (TextShow, showb, showt)
 import Control.Monad (when, mzero)
 import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
+import Data.Maybe (fromMaybe)
 
 data Handle m = Handle {
   log :: LogMessage -> Text -> m (),
@@ -87,7 +87,7 @@ logError = (`log` LogMessage {level = Error})
 
 getTime :: IO Text
 getTime = do 
-  T.pack . formatTime defaultTimeLocale (T.unpack defaultTimeFormat) 
+  T.pack . formatTime defaultTimeLocale (T.unpack defaultTimeFormat)
     <$> getZonedTime
 
 defaultTimeFormat :: Text

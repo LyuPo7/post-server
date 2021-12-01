@@ -1,9 +1,9 @@
 module Post.Db.Author where
 
+import Data.Text (Text)
 import Database.HDBC (SqlValue, fromSql, toSql)
 import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Control.Monad.Trans (lift)
-import Data.Text (Text)
 
 import qualified Post.Db.DbQSpec as DbQSpec
 import qualified Post.Logger as Logger

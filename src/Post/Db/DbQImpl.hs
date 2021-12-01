@@ -1,8 +1,9 @@
 module Post.Db.DbQImpl where
 
-import Database.HDBC (run, commit, handleSql, quickQuery', SqlValue, fromSql)
 import qualified Control.Exception as Exc
 import qualified Data.Text as T
+import Database.HDBC (SqlValue, run, commit, handleSql,
+                      quickQuery', fromSql)
 
 import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Logger as Logger

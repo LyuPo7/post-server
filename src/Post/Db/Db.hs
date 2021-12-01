@@ -1,13 +1,13 @@
 module Post.Db.Db where
 
-import Control.Monad (when)
-import Database.HDBC (getTables, run, commit, quickQuery')
-import Database.HDBC.PostgreSQL (Connection, connectPostgreSQL)
-import Data.Text (Text)
-import Data.List (intercalate)
 import qualified Data.Text as T
 import qualified System.IO as SIO
 import qualified Network.HTTP.Client as HTTP
+import Data.Text (Text)
+import Database.HDBC.PostgreSQL (Connection, connectPostgreSQL)
+import Control.Monad (when)
+import Database.HDBC (getTables, run, commit, quickQuery')
+import Data.List (intercalate)
 
 import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Logger as Logger
