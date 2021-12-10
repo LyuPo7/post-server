@@ -37,25 +37,24 @@ connect db = connectPostgreSQL (T.unpack db)
 
 prepDb :: DbSpec.Handle IO -> IO ()
 prepDb handle = do
-  _ <- createTable handle DbTable.tableUsers
-  _ <- createTable handle DbTable.tableAuthors
-  _ <- createTable handle DbTable.tableCats
-  _ <- createTable handle DbTable.tableTags
-  _ <- createTable handle DbTable.tablePosts
-  _ <- createTable handle DbTable.tableComs
-  _ <- createTable handle DbTable.tableDrafts
-  _ <- createTable handle DbTable.tablePhotos
-  _ <- createTable handle DbTable.tableUserPhoto
-  _ <- createTable handle DbTable.tableAuthorUser
-  _ <- createTable handle DbTable.tableUserCom
-  _ <- createTable handle DbTable.tablePostAuthor
-  _ <- createTable handle DbTable.tablePostCat
-  _ <- createTable handle DbTable.tablePostCom
-  _ <- createTable handle DbTable.tablePostDraft
-  _ <- createTable handle DbTable.tablePostTag
-  _ <- createTable handle DbTable.tablePostMainPhoto
-  _ <- createTable handle DbTable.tablePostAddPhoto
-  return ()
+  createTable handle DbTable.tableUsers
+  createTable handle DbTable.tableAuthors
+  createTable handle DbTable.tableCats
+  createTable handle DbTable.tableTags
+  createTable handle DbTable.tablePosts
+  createTable handle DbTable.tableComs
+  createTable handle DbTable.tableDrafts
+  createTable handle DbTable.tablePhotos
+  createTable handle DbTable.tableUserPhoto
+  createTable handle DbTable.tableAuthorUser
+  createTable handle DbTable.tableUserCom
+  createTable handle DbTable.tablePostAuthor
+  createTable handle DbTable.tablePostCat
+  createTable handle DbTable.tablePostCom
+  createTable handle DbTable.tablePostDraft
+  createTable handle DbTable.tablePostTag
+  createTable handle DbTable.tablePostMainPhoto
+  createTable handle DbTable.tablePostAddPhoto
 
 createTable ::
   DbSpec.Handle IO ->
