@@ -26,6 +26,24 @@ instance Show Column where
         ++ " "
         ++ unwords (map show $ sort xs)
 
+colNumberMigration :: Column
+colNumberMigration =
+  Column
+    { name = "number",
+      columnType = DbColumnType.INTEGER,
+      properties =
+        [ DbProperty.PrimaryKey
+        ]
+    }
+
+colDescMigration :: Column
+colDescMigration =
+  Column
+    { name = "description",
+      columnType = DbColumnType.TEXT,
+      properties = []
+    }
+
 colIdPost :: Column
 colIdPost =
   Column

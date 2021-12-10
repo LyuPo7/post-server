@@ -11,6 +11,9 @@ data Table = Table
   deriving (Show)
 
 {- Tables:
+** Table: migrations (table contains info about every migration):
+    - number - number of migration;
+    - description - description of migration;
 ** Table: users (table contains info every User):
     - id - unique identifier for this User;
     - is_admin - True, if this user is a Admin;
@@ -75,6 +78,16 @@ data Table = Table
     - post_id - Post id;
     - photo_id - Photo id;
 -}
+
+tableMigrations :: Table
+tableMigrations =
+  Table
+    { name = "migrations",
+      columns =
+        [ DbColumn.colNumberMigration,
+          DbColumn.colDescMigration
+        ]
+    }
 
 tablePosts :: Table
 tablePosts =
