@@ -20,7 +20,28 @@
 <h3>Installation:</h3>
     <p>You may clone GitHub repository</p>
         <p><b>git clone https://github.com/LyuPo7/post-server.git</b></p>
- 
+
+<h3>Create BD:</h3>
+    <p>Project uses <b>PostgreSQL</b> as BD. Before use server you'll need to setup BD;</p>
+    <ol>
+        <li>Install PostgreSQL BD (https://www.postgresqltutorial.com/install-postgresql-linux/)</li>
+        <li>Create PostgreSQL BD user:</li>
+            <ul>
+                <li><b>sudo su - postgres</b> # create super user postgres;</li>
+                <li><b>psql</b> #connect the database;</li>
+                <li><b>CREATE USER 'user' CREATEDB;</b> #create user without password (option CREATEDB enable to create dbbase); </li>
+            </ul>
+        <li>Create PostgreSQL BD:</li>
+            <ul>
+                <li><b>su 'user'</b> # switch to user account (for which was created PostgreSQL user in previous step);</li>
+                <li><b>createdb 'dbName'</b> #connect the database;</li>
+            </ul>
+        <li>Using PostgreSQL BD in data/config.json:</li>
+            <ul>
+                <li>Use <b>'user'</b> for field <b>db_settings.user</b>;</li>
+                <li>Use <b>'dbName'</b> for field <b>db_settings.dbName</b>;</li>
+            </ul>
+    </ol>
 <h3>How to use?</h3>
     <ol>
         <li> <h4>Setup 'data/config.json'</h4> (for example see config-json-file: 'data/config_example.json')
