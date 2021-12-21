@@ -26,9 +26,9 @@ createAuthor handle userId description = do
   authorIdE <- getAuthorIdByUserId handle userId
   case authorIdE of
     Left _ -> runEitherT $ do
-      _ <- lift $ insertAuthorRecord handle description
+      lift $ insertAuthorRecord handle description
       authorId <- newEitherT $ getLastAuthorRecord handle
-      _ <- lift $ createAuthorUserDep handle authorId userId
+      lift $ createAuthorUserDep handle authorId userId
       return authorId
     Right _ -> do
       let msg =
@@ -51,7 +51,7 @@ removeAuthor handle userId = do
       postsIdE <- getPostIdsByAuthorId handle authorId
       case postsIdE of
         Left _ -> do
-          _ <- deleteAuthorRecord handle authorId
+          deleteAuthorRecord handle authorId
           _ <- removeAuthorUserDep handle userId
           return $ Right authorId
         Right _ -> do
@@ -283,12 +283,11 @@ insertAuthorRecord ::
   m ()
 insertAuthorRecord handle description = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableAuthors
-      [DbColumn.colDescAuthor]
-      [toSql description]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableAuthors
+    [DbColumn.colDescAuthor]
+    [toSql description]
   Logger.logInfo logH "Author was successfully inserted in db."
 
 updateAuthorRecord ::
@@ -299,14 +298,13 @@ updateAuthorRecord ::
   m ()
 updateAuthorRecord handle authorId newDescription = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tableAuthors
-      [DbColumn.colDescAuthor]
-      [DbColumn.colIdAuthor]
-      [toSql newDescription]
-      [toSql authorId]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tableAuthors
+    [DbColumn.colDescAuthor]
+    [DbColumn.colIdAuthor]
+    [toSql newDescription]
+    [toSql authorId]
   Logger.logInfo logH $
     "Updating Author with id: "
       <> ServerUtil.convertValue authorId
@@ -319,12 +317,11 @@ deleteAuthorRecord ::
   m ()
 deleteAuthorRecord handle authorId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tableAuthors
-      [DbColumn.colIdAuthor]
-      [toSql authorId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tableAuthors
+    [DbColumn.colIdAuthor]
+    [toSql authorId]
   Logger.logInfo logH $
     "Removing Author with id: "
       <> ServerUtil.convertValue authorId
@@ -338,12 +335,11 @@ insertAuthorUserRecord ::
   m ()
 insertAuthorUserRecord handle authorId userId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableAuthorUser
-      [DbColumn.colIdAuthorAuthorUser, DbColumn.colIdUserAuthorUser]
-      [toSql authorId, toSql userId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableAuthorUser
+    [DbColumn.colIdAuthorAuthorUser, DbColumn.colIdUserAuthorUser]
+    [toSql authorId, toSql userId]
   Logger.logInfo logH "Creating dependency between Author and User."
 
 deleteAuthorUserRecord ::
@@ -353,12 +349,11 @@ deleteAuthorUserRecord ::
   m ()
 deleteAuthorUserRecord handle userId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tableAuthorUser
-      [DbColumn.colIdUserAuthorUser]
-      [toSql userId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tableAuthorUser
+    [DbColumn.colIdUserAuthorUser]
+    [toSql userId]
   Logger.logInfo logH "Removing dependency between Author and User."
 
 newAuthor ::

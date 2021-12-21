@@ -251,7 +251,7 @@ removeCat handle catId = do
       postIdsE <- getCatPostIdsByCatId handle catId
       case postIdsE of
         Left _ -> do
-          _ <- deleteCatRecord handle catId
+          deleteCatRecord handle catId
           return $ Right catId
         Right _ -> do
           let msg =
@@ -327,12 +327,11 @@ insertCatWSubRecord ::
   m ()
 insertCatWSubRecord handle title subCatId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableCats
-      [DbColumn.colTitleCat, DbColumn.colSubCatCat]
-      [toSql title, toSql subCatId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableCats
+    [DbColumn.colTitleCat, DbColumn.colSubCatCat]
+    [toSql title, toSql subCatId]
   Logger.logInfo logH "Category was successfully inserted in db."
 
 insertCatWOSubRecord ::
@@ -342,12 +341,11 @@ insertCatWOSubRecord ::
   m (Either Text ServerSynonyms.Title)
 insertCatWOSubRecord handle title = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableCats
-      [DbColumn.colTitleCat]
-      [toSql title]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableCats
+    [DbColumn.colTitleCat]
+    [toSql title]
   Logger.logInfo logH "Category was successfully inserted in db."
   return $ Right title
 
@@ -359,14 +357,13 @@ updateCatTitleRecord ::
   m ()
 updateCatTitleRecord handle catId newTitle = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tableCats
-      [DbColumn.colTitleCat]
-      [DbColumn.colIdCat]
-      [toSql newTitle]
-      [toSql catId]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tableCats
+    [DbColumn.colTitleCat]
+    [DbColumn.colIdCat]
+    [toSql newTitle]
+    [toSql catId]
   Logger.logInfo logH $
     "Updating Category title with id: "
       <> ServerUtil.convertValue catId
@@ -379,14 +376,13 @@ updateCatSubRecord ::
   m ()
 updateCatSubRecord handle catId subId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tableCats
-      [DbColumn.colSubCatCat]
-      [DbColumn.colIdCat]
-      [toSql subId]
-      [toSql catId]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tableCats
+    [DbColumn.colSubCatCat]
+    [DbColumn.colIdCat]
+    [toSql subId]
+    [toSql catId]
   Logger.logInfo logH $
     "Updating Category SubCategory with id: "
       <> ServerUtil.convertValue catId
@@ -398,12 +394,11 @@ deleteCatRecord ::
   m ()
 deleteCatRecord handle catId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tableCats
-      [DbColumn.colIdCat]
-      [toSql catId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tableCats
+    [DbColumn.colIdCat]
+    [toSql catId]
   Logger.logInfo logH $
     "Removing Category with id: "
       <> ServerUtil.convertValue catId

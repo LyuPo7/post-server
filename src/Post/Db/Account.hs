@@ -39,7 +39,7 @@ getToken handle login password = do
   case checkPass of
     Right _ -> do
       newUserToken <- ServerSpec.createToken handle
-      _ <- updateTokenRecord handle login newUserToken
+      updateTokenRecord handle login newUserToken
       Logger.logInfo logH $
         "User with login: '"
           <> convert login
@@ -238,14 +238,13 @@ updateTokenRecord ::
   m ()
 updateTokenRecord handle login userToken = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tableUsers
-      [DbColumn.colTokenUser]
-      [DbColumn.colLoginUser]
-      [toSql userToken]
-      [toSql login]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tableUsers
+    [DbColumn.colTokenUser]
+    [DbColumn.colLoginUser]
+    [toSql userToken]
+    [toSql login]
   Logger.logInfo logH $
     "Updating Token for User with login: '"
       <> convert login

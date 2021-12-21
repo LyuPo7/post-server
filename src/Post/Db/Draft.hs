@@ -28,7 +28,7 @@ createDraft handle postId text = do
     newEitherT $ DbPost.getPostDraftIdByPostId handle postId
   case draftIdE of
     Left _ -> runEitherT $ do
-      _ <- lift $ insertDraftRecord handle text postId
+      lift $ insertDraftRecord handle text postId
       draftId <- newEitherT $ getLastDraftRecord handle
       _ <- newEitherT $ DbPost.createPostDraftDep handle postId draftId
       return draftId
@@ -143,14 +143,13 @@ updateDraftRecord ::
   m (Either Text ServerSynonyms.DraftId)
 updateDraftRecord handle draftId text = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tableDrafts
-      [DbColumn.colTextDraft]
-      [DbColumn.colIdDraft]
-      [toSql text]
-      [toSql draftId]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tableDrafts
+    [DbColumn.colTextDraft]
+    [DbColumn.colIdDraft]
+    [toSql text]
+    [toSql draftId]
   Logger.logInfo logH $
     "Updating Draft with id: "
       <> ServerUtil.convertValue draftId
@@ -165,14 +164,13 @@ updatePostRecord ::
   m (Either Text ServerSynonyms.PostId)
 updatePostRecord handle postId text = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tablePosts
-      [DbColumn.colTextPost]
-      [DbColumn.colIdPost]
-      [toSql text]
-      [toSql postId]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tablePosts
+    [DbColumn.colTextPost]
+    [DbColumn.colIdPost]
+    [toSql text]
+    [toSql postId]
   Logger.logInfo logH $
     "Updating Post with id: "
       <> ServerUtil.convertValue postId
@@ -222,12 +220,11 @@ insertDraftRecord ::
   m ()
 insertDraftRecord handle text postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableDrafts
-      [DbColumn.colTextDraft, DbColumn.colIdPostDraft]
-      [toSql text, toSql postId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableDrafts
+    [DbColumn.colTextDraft, DbColumn.colIdPostDraft]
+    [toSql text, toSql postId]
   Logger.logInfo logH "Draft was successfully inserted in db."
 
 deleteDraftRecord ::
@@ -237,12 +234,11 @@ deleteDraftRecord ::
   m ()
 deleteDraftRecord handle draftId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tableDrafts
-      [DbColumn.colIdDraft]
-      [toSql draftId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tableDrafts
+    [DbColumn.colIdDraft]
+    [toSql draftId]
   Logger.logInfo logH $
     "Removing Draft with id: "
       <> ServerUtil.convertValue draftId

@@ -22,10 +22,10 @@ createComment ::
   Text ->
   m (Either Text ServerSynonyms.CommentId)
 createComment handle postId userId text = runEitherT $ do
-  _ <- lift $ insertCommentRecord handle text
+  lift $ insertCommentRecord handle text
   commentId <- newEitherT $ getLastCommentRecord handle
-  _ <- lift $ createCommentUserRecord handle commentId userId
-  _ <- lift $ createPostCommentRecord handle commentId postId
+  lift $ createCommentUserRecord handle commentId userId
+  lift $ createPostCommentRecord handle commentId postId
   return commentId
 
 getCommentRecord ::
@@ -99,12 +99,11 @@ insertCommentRecord ::
   m ()
 insertCommentRecord handle text = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableComs
-      [DbColumn.colTextCom]
-      [toSql text]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableComs
+    [DbColumn.colTextCom]
+    [toSql text]
   Logger.logInfo logH $
     "Comment with text: '"
       <> text
@@ -118,12 +117,11 @@ createCommentUserRecord ::
   m ()
 createCommentUserRecord handle commentId userId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableUserCom
-      [DbColumn.colIdComUserCom, DbColumn.colIdUserUserCom]
-      [toSql commentId, toSql userId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableUserCom
+    [DbColumn.colIdComUserCom, DbColumn.colIdUserUserCom]
+    [toSql commentId, toSql userId]
   Logger.logInfo logH "Creating dependency between Comment and User."
 
 createPostCommentRecord ::
@@ -134,12 +132,11 @@ createPostCommentRecord ::
   m ()
 createPostCommentRecord handle commentId postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePostCom
-      [DbColumn.colIdPostPostCom, DbColumn.colIdComPostCom]
-      [toSql postId, toSql commentId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePostCom
+    [DbColumn.colIdPostPostCom, DbColumn.colIdComPostCom]
+    [toSql postId, toSql commentId]
   Logger.logInfo logH "Creating dependency between Post and Comment."
 
 newComment ::

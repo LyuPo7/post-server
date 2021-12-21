@@ -46,24 +46,23 @@ createUser handle firstName lastName login password = do
       let encryptedPass = getEncryptedPass encrypted
       newToken <- ServerSpec.createToken handle
       let isAdmin = login `elem` adminList
-      _ <-
-        DbQuery.insertIntoValues
-          handle
-          DbTable.tableUsers
-          [ DbColumn.colIsAdminUser,
-            DbColumn.colFNUser,
-            DbColumn.colLNUser,
-            DbColumn.colLoginUser,
-            DbColumn.colPassUser,
-            DbColumn.colTokenUser
-          ]
-          [ toSql isAdmin,
-            toSql firstName,
-            toSql lastName,
-            toSql login,
-            toSql encryptedPass,
-            toSql newToken
-          ]
+      DbQuery.insertIntoValues
+        handle
+        DbTable.tableUsers
+        [ DbColumn.colIsAdminUser,
+          DbColumn.colFNUser,
+          DbColumn.colLNUser,
+          DbColumn.colLoginUser,
+          DbColumn.colPassUser,
+          DbColumn.colTokenUser
+        ]
+        [ toSql isAdmin,
+          toSql firstName,
+          toSql lastName,
+          toSql login,
+          toSql encryptedPass,
+          toSql newToken
+        ]
       Logger.logInfo logH $
         "User with login: '"
           <> convert login
@@ -91,7 +90,7 @@ removeUser handle userId = do
       idAuthorE <- getAuthorIdByUserId handle userId
       case idAuthorE of
         Left _ -> do
-          _ <- deleteUserRecord handle userId
+          deleteUserRecord handle userId
           _ <- removeUserPhotoDeps handle userId
           return $ Right userId
         Right _ -> do
@@ -311,12 +310,11 @@ deleteUserRecord ::
   m ()
 deleteUserRecord handle userId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tableUsers
-      [DbColumn.colIdUser]
-      [toSql userId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tableUsers
+    [DbColumn.colIdUser]
+    [toSql userId]
   Logger.logInfo logH $
     "Removing User with id: "
       <> ServerUtil.convertValue userId
@@ -330,12 +328,11 @@ insertUserPhotoRecord ::
   m ()
 insertUserPhotoRecord handle userId photoId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableUserPhoto
-      [DbColumn.colIdPhotoUserPhoto, DbColumn.colIdUserUserPhoto]
-      [toSql photoId, toSql userId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableUserPhoto
+    [DbColumn.colIdPhotoUserPhoto, DbColumn.colIdUserUserPhoto]
+    [toSql photoId, toSql userId]
   Logger.logInfo logH "Creating dependencies between User and Photo in db."
 
 updateUserPhotoRecord ::
@@ -346,14 +343,13 @@ updateUserPhotoRecord ::
   m ()
 updateUserPhotoRecord handle userId photoIdNew = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tableUserPhoto
-      [DbColumn.colIdPhotoUserPhoto]
-      [DbColumn.colIdUserUserPhoto]
-      [toSql photoIdNew]
-      [toSql userId]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tableUserPhoto
+    [DbColumn.colIdPhotoUserPhoto]
+    [DbColumn.colIdUserUserPhoto]
+    [toSql photoIdNew]
+    [toSql userId]
   Logger.logInfo logH "Updating dependencies between User and Photo in db."
 
 deleteUserPhotoRecord ::
@@ -363,12 +359,11 @@ deleteUserPhotoRecord ::
   m ()
 deleteUserPhotoRecord handle userId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tableUserPhoto
-      [DbColumn.colIdUserUserPhoto]
-      [toSql userId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tableUserPhoto
+    [DbColumn.colIdUserUserPhoto]
+    [toSql userId]
   Logger.logInfo logH "Removing dependencies between User and Photo from db."
 
 newUser ::

@@ -26,7 +26,7 @@ savePhoto handle path = do
   idPhotoE <- getPhotoIdByName handle pathToPhoto
   case idPhotoE of
     Left _ -> do
-      _ <- insertPhotoRecord handle pathToPhoto
+      insertPhotoRecord handle pathToPhoto
       getLastPhotoRecord handle
     Right _ -> do
       let msg =
@@ -144,12 +144,11 @@ insertPhotoRecord ::
   m ()
 insertPhotoRecord handle pathToPhoto = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePhotos
-      [DbColumn.colLinkPhoto]
-      [toSql pathToPhoto]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePhotos
+    [DbColumn.colLinkPhoto]
+    [toSql pathToPhoto]
   Logger.logInfo logH $
     "Inserting photo: '"
       <> pathToPhoto

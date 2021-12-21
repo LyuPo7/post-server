@@ -116,7 +116,7 @@ removePost handle postId = runEitherT $ do
   _ <- lift $ removePostAddPhotoDep handle postId
   _ <- lift $ removePostCommentDep handle postId
   _ <- lift $ removePostDraftDep handle postId
-  _ <- lift $ deletePostRecord handle postId
+  lift $ deletePostRecord handle postId
   return postId
 
 setPostMainPhoto ::
@@ -170,7 +170,7 @@ createPostAuthorDep handle postId authorId = do
   postAuthorDepE <- getPostAuthorIdByPostId handle postId
   case postAuthorDepE of
     Left _ -> do
-      _ <- insertPostAuthorRecord handle postId authorId
+      insertPostAuthorRecord handle postId authorId
       return $ Right authorId
     Right _ -> do
       let msg = "Dependency between Post and Author already exists."
@@ -188,7 +188,7 @@ createPostCatDep handle postId catId = do
   postCatDepE <- getPostCategoryIdByPostId handle postId
   case postCatDepE of
     Left _ -> do
-      _ <- insertPostCatRecord handle postId catId
+      insertPostCatRecord handle postId catId
       return $ Right catId
     Right _ -> do
       let msg =
@@ -676,12 +676,11 @@ insertPostRecord handle title text = do
   let logH = ServerSpec.hLogger handle
   time <- ServerSpec.getCurrentTime handle
   let day = utctDay time
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePosts
-      [DbColumn.colTitlePost, DbColumn.colTextPost, DbColumn.colCreatedAtPost]
-      [toSql title, toSql text, toSql day]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePosts
+    [DbColumn.colTitlePost, DbColumn.colTextPost, DbColumn.colCreatedAtPost]
+    [toSql title, toSql text, toSql day]
   Logger.logInfo logH $
     "Post with title: '"
       <> convert title
@@ -695,14 +694,13 @@ updatePostMainPhotoRecord ::
   m (Either Text ServerSynonyms.PhotoId)
 updatePostMainPhotoRecord handle postId photoId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tablePostMainPhoto
-      [DbColumn.colIdPhotoPostMainPhoto]
-      [DbColumn.colIdPostPostMainPhoto]
-      [toSql photoId]
-      [toSql postId]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tablePostMainPhoto
+    [DbColumn.colIdPhotoPostMainPhoto]
+    [DbColumn.colIdPostPostMainPhoto]
+    [toSql photoId]
+    [toSql postId]
   Logger.logInfo logH "Post's Main Photo was successfully set."
   return $ Right photoId
 
@@ -714,12 +712,11 @@ insertPostMainPhotoRecord ::
   m (Either Text ServerSynonyms.PhotoId)
 insertPostMainPhotoRecord handle postId photoId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePostMainPhoto
-      [DbColumn.colIdPhotoPostMainPhoto, DbColumn.colIdPostPostMainPhoto]
-      [toSql photoId, toSql postId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePostMainPhoto
+    [DbColumn.colIdPhotoPostMainPhoto, DbColumn.colIdPostPostMainPhoto]
+    [toSql photoId, toSql postId]
   Logger.logInfo logH "Post's Main Photo was successfully updated."
   return $ Right photoId
 
@@ -731,12 +728,11 @@ insertPostAddPhotoRecord ::
   m (Either Text ServerSynonyms.PhotoId)
 insertPostAddPhotoRecord handle postId photoId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePostAddPhoto
-      [DbColumn.colIdPhotoPostAddPhoto, DbColumn.colIdPostPostAddPhoto]
-      [toSql photoId, toSql postId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePostAddPhoto
+    [DbColumn.colIdPhotoPostAddPhoto, DbColumn.colIdPostPostAddPhoto]
+    [toSql photoId, toSql postId]
   Logger.logInfo logH "Post's Add Photo was successfully inserted in db."
   return $ Right photoId
 
@@ -748,12 +744,11 @@ insertPostAuthorRecord ::
   m ()
 insertPostAuthorRecord handle postId authorId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePostAuthor
-      [DbColumn.colIdPostPostAuthor, DbColumn.colIdAuthorPostAuthor]
-      [toSql postId, toSql authorId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePostAuthor
+    [DbColumn.colIdPostPostAuthor, DbColumn.colIdAuthorPostAuthor]
+    [toSql postId, toSql authorId]
   Logger.logInfo logH "Creating dependency between Post and Author."
 
 insertPostCatRecord ::
@@ -764,12 +759,11 @@ insertPostCatRecord ::
   m ()
 insertPostCatRecord handle postId catId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePostCat
-      [DbColumn.colIdPostPostCat, DbColumn.colIdCatPostCat]
-      [toSql postId, toSql catId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePostCat
+    [DbColumn.colIdPostPostCat, DbColumn.colIdCatPostCat]
+    [toSql postId, toSql catId]
   Logger.logInfo logH "Creating dependency between Post and Category."
 
 insertPostTagRecord ::
@@ -780,12 +774,11 @@ insertPostTagRecord ::
   m (Either Text ServerSynonyms.TagId)
 insertPostTagRecord handle postId tagId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePostTag
-      [DbColumn.colIdTagPostTag, DbColumn.colIdPostPostTag]
-      [toSql tagId, toSql postId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePostTag
+    [DbColumn.colIdTagPostTag, DbColumn.colIdPostPostTag]
+    [toSql tagId, toSql postId]
   Logger.logInfo logH "Creating dependency between Post and Tag."
   return $ Right tagId
 
@@ -797,12 +790,11 @@ insertPostDraftRecord ::
   m (Either Text ServerSynonyms.DraftId)
 insertPostDraftRecord handle postId draftId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tablePostDraft
-      [DbColumn.colIdDraftPostDraft, DbColumn.colIdPostPostDraft]
-      [toSql draftId, toSql postId]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tablePostDraft
+    [DbColumn.colIdDraftPostDraft, DbColumn.colIdPostPostDraft]
+    [toSql draftId, toSql postId]
   Logger.logInfo logH "Creating dependency between Post and Draft."
   return $ Right draftId
 
@@ -813,12 +805,11 @@ deletePostRecord ::
   m ()
 deletePostRecord handle postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePosts
-      [DbColumn.colIdPost]
-      [toSql postId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePosts
+    [DbColumn.colIdPost]
+    [toSql postId]
   Logger.logInfo logH $
     "Removing Post with id: "
       <> ServerUtil.convertValue postId
@@ -831,12 +822,11 @@ deletePostAuthorRecord ::
   m ()
 deletePostAuthorRecord handle postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePostAuthor
-      [DbColumn.colIdPostPostAuthor]
-      [toSql postId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePostAuthor
+    [DbColumn.colIdPostPostAuthor]
+    [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Author."
 
 deletePostCatRecord ::
@@ -846,12 +836,11 @@ deletePostCatRecord ::
   m ()
 deletePostCatRecord handle postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePostCat
-      [DbColumn.colIdPostPostCat]
-      [toSql postId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePostCat
+    [DbColumn.colIdPostPostCat]
+    [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Category."
 
 deletePostTagRecord ::
@@ -861,12 +850,11 @@ deletePostTagRecord ::
   m ()
 deletePostTagRecord handle postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePostTag
-      [DbColumn.colIdPostPostTag]
-      [toSql postId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePostTag
+    [DbColumn.colIdPostPostTag]
+    [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Tag."
 
 deletePostMainPhotoRecord ::
@@ -876,12 +864,11 @@ deletePostMainPhotoRecord ::
   m ()
 deletePostMainPhotoRecord handle postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePostMainPhoto
-      [DbColumn.colIdPostPostMainPhoto]
-      [toSql postId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePostMainPhoto
+    [DbColumn.colIdPostPostMainPhoto]
+    [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Main Photo from db."
 
 deletePostAddPhotoRecords ::
@@ -891,12 +878,11 @@ deletePostAddPhotoRecords ::
   m ()
 deletePostAddPhotoRecords handle postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePostAddPhoto
-      [DbColumn.colIdPostPostAddPhoto]
-      [toSql postId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePostAddPhoto
+    [DbColumn.colIdPostPostAddPhoto]
+    [toSql postId]
   Logger.logInfo
     logH
     "Removing dependency between \
@@ -909,12 +895,11 @@ deletePostComRecords ::
   m ()
 deletePostComRecords handle postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePostCom
-      [DbColumn.colIdPostPostCom]
-      [toSql postId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePostCom
+    [DbColumn.colIdPostPostCom]
+    [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Comment from db."
 
 deletePostDraftRecord ::
@@ -924,12 +909,11 @@ deletePostDraftRecord ::
   m ()
 deletePostDraftRecord handle postId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePostDraft
-      [DbColumn.colIdPostPostDraft]
-      [toSql postId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePostDraft
+    [DbColumn.colIdPostPostDraft]
+    [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Draft from db."
 
 newPost ::

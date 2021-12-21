@@ -25,7 +25,7 @@ createTag handle tagTitle = do
   tagIdE <- getTagIdByTitle handle tagTitle
   case tagIdE of
     Left _ -> do
-      _ <- insertTagRecord handle tagTitle
+      insertTagRecord handle tagTitle
       return $ Right tagTitle
     Right _ -> do
       let msg =
@@ -58,7 +58,7 @@ removeTag handle tagTitle = do
   tagIdE <- getTagIdByTitle handle tagTitle
   case tagIdE of
     Right tagId -> do
-      _ <- deleteTagRecord handle tagId
+      deleteTagRecord handle tagId
       _ <- removeTagPostsDeps handle tagId
       return $ Right tagId
     Left _ -> return tagIdE
@@ -221,12 +221,11 @@ deleteTagPostsRecords ::
   m ()
 deleteTagPostsRecords handle tagId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tablePostTag
-      [DbColumn.colIdTagPostTag]
-      [toSql tagId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tablePostTag
+    [DbColumn.colIdTagPostTag]
+    [toSql tagId]
   Logger.logInfo logH "Removing dependencies between Post and Tag from db."
 
 insertTagRecord ::
@@ -236,12 +235,11 @@ insertTagRecord ::
   m ()
 insertTagRecord handle tagTitle = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.insertIntoValues
-      handle
-      DbTable.tableTags
-      [DbColumn.colTitleTag]
-      [toSql tagTitle]
+  DbQuery.insertIntoValues
+    handle
+    DbTable.tableTags
+    [DbColumn.colTitleTag]
+    [toSql tagTitle]
   Logger.logInfo logH $
     "Tag with title: '"
       <> convert tagTitle
@@ -254,12 +252,11 @@ deleteTagRecord ::
   m ()
 deleteTagRecord handle tagId = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.deleteWhere
-      handle
-      DbTable.tableTags
-      [DbColumn.colIdTag]
-      [toSql tagId]
+  DbQuery.deleteWhere
+    handle
+    DbTable.tableTags
+    [DbColumn.colIdTag]
+    [toSql tagId]
   Logger.logInfo logH $
     "Removing Tag with id: "
       <> ServerUtil.convertValue tagId
@@ -273,14 +270,13 @@ updateTagRecord ::
   m ()
 updateTagRecord handle tagId newTitle = do
   let logH = ServerSpec.hLogger handle
-  _ <-
-    DbQuery.updateSetWhere
-      handle
-      DbTable.tableTags
-      [DbColumn.colTitleTag]
-      [DbColumn.colIdTag]
-      [toSql newTitle]
-      [toSql tagId]
+  DbQuery.updateSetWhere
+    handle
+    DbTable.tableTags
+    [DbColumn.colTitleTag]
+    [DbColumn.colIdTag]
+    [toSql newTitle]
+    [toSql tagId]
   Logger.logInfo logH $
     "Updating Tag with id: "
       <> ServerUtil.convertValue tagId
