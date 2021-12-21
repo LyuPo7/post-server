@@ -29,17 +29,18 @@
             <ul>
                 <li><b>sudo su - postgres</b> # create super user postgres;</li>
                 <li><b>psql</b> #connect the database;</li>
-                <li><b>CREATE USER 'user' CREATEDB;</b> #create user without password (option CREATEDB enable to create dbbase); </li>
+                <li><b>CREATE ROLE your_username WITH LOGIN CREATEDB ENCRYPTED PASSWORD 'your_password';</b> #create user with password (option CREATEDB enable to create dbbase); </li>
             </ul>
         <li>Create PostgreSQL BD:</li>
             <ul>
-                <li><b>su 'user'</b> # switch to user account (for which was created PostgreSQL user in previous step);</li>
+                <li><b>su 'your_username'</b> # switch to user account (for which was created PostgreSQL user in previous step);</li>
                 <li><b>createdb 'dbName'</b> #connect the database;</li>
             </ul>
         <li>Using PostgreSQL BD in data/config.json:</li>
             <ul>
-                <li>Use <b>'user'</b> for field <b>db_settings.user</b>;</li>
                 <li>Use <b>'dbName'</b> for field <b>db_settings.dbName</b>;</li>
+                <li>Use <b>'your_username'</b> for field <b>db_settings.user</b>;</li>
+                <li>Use <b>'your_password'</b> for field <b>db_settings.password</b>;</li>
             </ul>
     </ol>
 <h3>How to use?</h3>

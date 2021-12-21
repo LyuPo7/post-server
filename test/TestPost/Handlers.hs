@@ -55,7 +55,8 @@ dbC :: DbSpec.Config
 dbC =
   DbSpec.Config
     { DbSpec.dbName = "post-server",
-      DbSpec.user = Just "lyupo",
+      DbSpec.user = "lyupo",
+      DbSpec.password = "******",
       DbSpec.admins = fmap ServerSynonyms.Login ["lyupo"]
     }
 

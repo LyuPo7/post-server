@@ -17,12 +17,14 @@ withHandleIO ::
   (DbSpec.Handle IO -> IO a) ->
   IO a
 withHandleIO logger config serverConfig f = do
-  let db = "dbname=" <> DbSpec.dbName config
-      db' = case DbSpec.user config of
-        Nothing -> db
-        Just dbUser -> db <> " user=" <> dbUser
+  let db =
+        "dbname=" <> DbSpec.dbName config
+          <> " user="
+          <> DbSpec.user config
+          <> " password="
+          <> DbSpec.password config
   Logger.logDebug logger $ "Connecting to db: " <> db
-  dbh <- connect db'
+  dbh <- connect db
   let handle = DbSpec.createHandleIO logger config serverConfig dbh
   prepDb handle
   f handle

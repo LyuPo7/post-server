@@ -17,7 +17,8 @@ import qualified Post.Server.ServerConfig as ServerConfig
 
 data Config = Config
   { dbName :: Text,
-    user :: Maybe Text,
+    user :: Text,
+    password :: Text,
     admins :: [ServerSynonyms.Login]
   }
   deriving (Show, Generic, Eq, FromJSON, ToJSON)
