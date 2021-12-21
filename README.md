@@ -56,9 +56,10 @@
              <ul>
                  <li><b>"db_settings"</b></li>
                     <ul>
-                        <li><b>"dbname":</b> [Required]-[String] dbname of PostgreSQL DB using for Server;</li>
-                        <li><b>"user":</b> [Optional]-[String] user-owner of PostgreSQL DB using for Server;</li>
-                        <li><b>"admins":</b> [Optional]-[Array of String] List of admins;</li>
+                        <li><b>"dbName":</b> [Required]-[String] dbname of PostgreSQL DB using for Server;</li>
+                        <li><b>"user":</b> [Required]-[String] user-owner of PostgreSQL DB using for Server;</li>
+                        <li><b>"password":</b> [Required]-[String] user-password of PostgreSQL DB using for Server;</li>
+                        <li><b>"admins":</b> [Required]-[Array of String] List of admins;</li>
                     </ul>
              </ul>
              <ul>
