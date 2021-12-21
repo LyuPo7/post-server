@@ -39,7 +39,8 @@ migrations handle =
     DbMigration.Migration 15 "create table 'post_draft'" (createTable handle DbTable.tablePostDraft),
     DbMigration.Migration 16 "create table 'post_tag'" (createTable handle DbTable.tablePostTag),
     DbMigration.Migration 17 "create table 'post_main_photo'" (createTable handle DbTable.tablePostMainPhoto),
-    DbMigration.Migration 18 "create table 'post_add_photo'" (createTable handle DbTable.tablePostAddPhoto)
+    DbMigration.Migration 18 "create table 'post_add_photo'" (createTable handle DbTable.tablePostAddPhoto),
+    DbMigration.Migration 19 "add column 'patronymic' to table 'users' with default value NULL" (addColumn handle DbTable.tableUsers DbColumn.colPatronymicUser)
   ]
 
 validateDb :: DbSpec.Handle IO -> IO ()
@@ -205,12 +206,13 @@ dropColumn handle tableName colName = do
 
 addColumn ::
   DbSpec.Handle IO ->
-  DbSynonyms.TableName ->
+  DbTable.Table ->
   DbColumn.Column ->
   IO ()
-addColumn handle tableName column = do
+addColumn handle table column = do
   let dbh = DbSpec.conn handle
       logH = DbSpec.hLogger handle
+      tableName = DbTable.name table
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let query =

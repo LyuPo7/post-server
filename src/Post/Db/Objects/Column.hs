@@ -212,6 +212,14 @@ colLNUser =
       properties = []
     }
 
+colPatronymicUser :: Column
+colPatronymicUser =
+  Column
+    { name = "patronymic",
+      columnType = DbColumnType.TEXT,
+      properties = []
+    }
+
 colLoginUser :: Column
 colLoginUser =
   Column
