@@ -138,7 +138,7 @@
                                                 <li><b>-y</b> Host server name;</li>
                                                 <li><b>-p</b> Port server number;</li>
                                                 <li><b>-k</b> User password;</li>
-                                                <li><b>-k</b> User login;</li>
+                                                <li><b>-n</b> User login;</li>
                                             </ul>
                                         </li>
                                     </ul>
@@ -523,6 +523,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-i</b> <b>User's</b> id (corresponding to proper <b>Author</b>);</li>
                                                 <li><b>-d</b> New <b>Author's</b> description;</li>
@@ -575,6 +576,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-i</b> <b>User's</b> id (corresponding to proper Author);</li>
                                             </ul>
@@ -692,7 +694,7 @@
                                                 <li><b>-y</b> Host server name;</li>
                                                 <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
-                                                <li><b>-i</b> <b>Category's</b> title;</li>
+                                                <li><b>-n</b> <b>Category's</b> title;</li>
                                                 <li><b>[-s]</b> <b>SubCategory's</b> title (if <b>Category</b> expects to have one);</li>
                                             </ul>
                                         </li>
@@ -755,6 +757,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-i</b> <b>Category's</b> id;</li>
                                                 <li><b>[-s]</b> <b>SubCategory's</b> title (if You want to change/set SubCategory of <b>Category</b>);</li>
@@ -808,6 +811,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-i</b> <b>Category's</b> id;</li>
                                             </ul>
@@ -975,6 +979,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-n</b> New <b>Tag's</b> title;</li>
                                                 <li><b>-o</b> Old <b>Tag's</b> title;</li>
@@ -1027,6 +1032,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions</li>
                                                 <li><b>-n</b> <b>Tag's</b> title;</li>
                                             </ul>
@@ -1454,6 +1460,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-i</b> <b>Post's</b> id;</li>
                                             </ul>
@@ -1628,6 +1635,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-b</b> New Draft's text;</li>
                                                 <li><b>-i</b> <b>Post's</b> id corresponding to <b>Draft</b>;</li>
@@ -1680,6 +1688,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-i</b> <b>Post's</b> id corresponding to <b>Draft</b>;</li>
                                             </ul>
@@ -1731,6 +1740,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request. For successful request <b>User</b> must have Admin Permissions;</li>
                                                 <li><b>-i</b> <b>Post's</b> id corresponding to <b>Draft</b>;</li>
                                             </ul>
@@ -1792,6 +1802,7 @@
                                             <ul> 
                                                 <li><b>-h</b> Print help message and exit;</li>
                                                 <li><b>-y</b> Host server name;</li>
+                                                <li><b>-p</b> Port server number;</li>
                                                 <li><b>-p</b> Port server number;</li>
                                                 <li><b>-t</b> <b>User's</b> token. Token of <b>User</b> making request;</li>
                                                 <li><b>-c</b> <b>Comment's</b> text;</li>
