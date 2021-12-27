@@ -144,7 +144,39 @@ migrations handle =
       34
       "add constraint NOT NULL to column 'user_id' in table 'authors'"
       (addConstraintNotNull handle DbTable.tableAuthors DbColumn.colIdUserAuthor),
-    DbMigration.Migration 35 "drop table 'author_user'" (dropTable handle DbTable.tableAuthorUser)
+    DbMigration.Migration 35 "drop table 'author_user'" (dropTable handle DbTable.tableAuthorUser),
+    DbMigration.Migration
+      36
+      "add column 'author_id' to table 'posts' with default value NULL"
+      (addColumn handle DbTable.tablePosts DbColumn.colIdAuthorPost),
+    DbMigration.Migration
+      37
+      "add constraint FOREIGN KEY to column 'author_id' in table 'posts'"
+      ( addConstraintForeignKey
+          handle
+          DbTable.tableAuthors
+          DbTable.tablePosts
+          DbColumn.colIdPost
+          DbColumn.colIdAuthorPost
+          DbConstraint.constraintPostAuthorIdFK
+      ),
+    DbMigration.Migration
+      38
+      "copy post_author.author_id to posts.author_id"
+      ( copyColumnValues
+          handle
+          DbTable.tablePostAuthor
+          DbTable.tablePosts
+          DbColumn.colIdAuthorPostAuthor
+          DbColumn.colIdPostPostAuthor
+          DbColumn.colIdAuthorPost
+          DbColumn.colIdPost
+      ),
+    DbMigration.Migration
+      39
+      "add constraint NOT NULL to column 'author_id' in table 'posts'"
+      (addConstraintNotNull handle DbTable.tablePosts DbColumn.colIdAuthorPost),
+    DbMigration.Migration 40 "drop table 'post_author'" (dropTable handle DbTable.tablePostAuthor)
   ]
 
 validateDb :: DbSpec.Handle IO -> IO ()

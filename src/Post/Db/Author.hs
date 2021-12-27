@@ -231,9 +231,9 @@ getPostIdsByAuthorId handle authorId = do
   postsIdSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tablePostAuthor
-      [DbColumn.colIdPostPostAuthor]
-      [DbColumn.colIdAuthorPostAuthor]
+      DbTable.tablePosts
+      [DbColumn.colIdPost]
+      [DbColumn.colIdAuthorPost]
       [toSql authorId]
   case postsIdSql of
     [] -> do

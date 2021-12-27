@@ -1022,9 +1022,9 @@ spec_querySort =
             query = DbQuery.querySort Handlers.serverH args ids offset
             check =
               ( "SELECT id \
-                \FROM post_author \
+                \FROM posts \
                 \INNER JOIN authors \
-                \ON post_author.author_id=authors.id \
+                \ON posts.author_id=authors.id \
                 \INNER JOIN users ON authors.user_id=users.id \
                 \WHERE id IN (?,?,?,?,?) \
                 \ORDER BY last_name, first_name \

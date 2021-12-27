@@ -93,7 +93,8 @@ tablePosts =
         [ DbColumn.colIdPost,
           DbColumn.colTitlePost,
           DbColumn.colCreatedAtPost,
-          DbColumn.colTextPost
+          DbColumn.colTextPost,
+          DbColumn.colIdAuthorPost
         ]
     }
 

@@ -15,3 +15,6 @@ constraintCommentsPostIdFK = Constraint "comments_post_id_fk"
 
 constraintAuthorUserIdFK :: Constraint
 constraintAuthorUserIdFK = Constraint "authors_user_id_fk"
+
+constraintPostAuthorIdFK :: Constraint
+constraintPostAuthorIdFK = Constraint "post_author_id_fk"

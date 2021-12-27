@@ -80,6 +80,14 @@ colTextPost =
       properties = []
     }
 
+colIdAuthorPost :: Column
+colIdAuthorPost =
+  Column
+    { name = "author_id",
+      columnType = DbColumnType.INTEGER,
+      properties = []
+    }
+
 colIdCat :: Column
 colIdCat =
   Column

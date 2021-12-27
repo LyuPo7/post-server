@@ -705,7 +705,7 @@ searchAuthor handle params = do
   searchQuery <- runEitherT $ do
     search <- newEitherT $ querySearchAuthor handle tagParams
     newEitherT $
-      querySpecialPosts DbTable.tablePostAuthor DbColumn.colIdPostPostAuthor search
+      querySpecialPosts DbTable.tablePosts DbColumn.colIdPost search
   case searchQuery of
     Right query -> do
       idPosts <- ServerSpec.makeDbRequest handle query
@@ -808,8 +808,8 @@ findIn handle params = do
     queryIdAuthor <-
       newEitherT $
         querySpecialPosts
-          DbTable.tablePostAuthor
-          DbColumn.colIdPostPostAuthor
+          DbTable.tablePosts
+          DbColumn.colIdPost
           postFindInAuthors
     idAuthorSPosts <- lift (concat <$> ServerSpec.makeDbRequest handle queryIdAuthor)
     postFindInCats <- newEitherT $ findInCats handle findParams
@@ -1234,10 +1234,10 @@ querySort handle [(key, _)] ids offset = do
       return $ Right (query, ids)
     "order_by_author" -> do
       let tAuthors = DbTable.name DbTable.tableAuthors
-          tPostAuthor = DbTable.name DbTable.tablePostAuthor
+          tPosts = DbTable.name DbTable.tablePosts
           tUsers = DbTable.name DbTable.tableUsers
           cIdPostP = DbColumn.name DbColumn.colIdPost
-          cIdAuthorPostPA = DbColumn.name DbColumn.colIdAuthorPostAuthor
+          cIdAuthorP = DbColumn.name DbColumn.colIdAuthorPost
           cIdAuthorA = DbColumn.name DbColumn.colIdAuthor
           cIdUserA = DbColumn.name DbColumn.colIdUserAuthor
           cIdUserU = DbColumn.name DbColumn.colIdUser
@@ -1247,15 +1247,15 @@ querySort handle [(key, _)] ids offset = do
             "SELECT " <> cIdPostP
               <> " \
                  \FROM "
-              <> tPostAuthor
+              <> tPosts
               <> " \
                  \INNER JOIN "
               <> tAuthors
               <> " \
                  \ON "
-              <> tPostAuthor
+              <> tPosts
               <> "."
-              <> cIdAuthorPostPA
+              <> cIdAuthorP
               <> "\
                  \="
               <> tAuthors
