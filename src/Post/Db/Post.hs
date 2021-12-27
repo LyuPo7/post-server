@@ -200,25 +200,6 @@ createPostTagDep handle postId tagId = do
           Logger.logInfo logH "Inserting dependency between Post and Tag in db."
           insertPostTagRecord handle postId tagId
 
-createPostDraftDep ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  ServerSynonyms.DraftId ->
-  m (Either Text ServerSynonyms.DraftId)
-createPostDraftDep handle postId draftId = do
-  let logH = ServerSpec.hLogger handle
-  draftIdDbE <- getPostDraftIdByPostId handle postId
-  case draftIdDbE of
-    Left _ -> insertPostDraftRecord handle postId draftId
-    Right _ -> do
-      let msg =
-            "Draft for Post with id: "
-              <> ServerUtil.convertValue postId
-              <> " already exists!"
-      Logger.logError logH msg
-      return $ Left msg
-
 removePostCatDep ::
   Monad m =>
   ServerSpec.Handle m ->
@@ -557,9 +538,9 @@ getPostDraftIdByPostId handle postId = do
   draftIdSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tablePostDraft
-      [DbColumn.colIdDraftPostDraft]
-      [DbColumn.colIdPostPostDraft]
+      DbTable.tableDrafts
+      [DbColumn.colIdDraft]
+      [DbColumn.colIdPostDraft]
       [toSql postId]
   case draftIdSql of
     [] -> do
@@ -589,9 +570,9 @@ getPostDraftIdsByPostIds handle postIds = do
   draftIdsSql <-
     DbQuery.selectFromWhereIn
       handle
-      DbTable.tablePostDraft
-      [DbColumn.colIdDraftPostDraft]
-      DbColumn.colIdPostPostDraft
+      DbTable.tableDrafts
+      [DbColumn.colIdDraft]
+      DbColumn.colIdPostDraft
       $ map toSql postIds
   case draftIdsSql of
     [] -> do
@@ -738,22 +719,6 @@ insertPostTagRecord handle postId tagId = do
   Logger.logInfo logH "Creating dependency between Post and Tag."
   return $ Right tagId
 
-insertPostDraftRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  ServerSynonyms.DraftId ->
-  m (Either Text ServerSynonyms.DraftId)
-insertPostDraftRecord handle postId draftId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.insertIntoValues
-    handle
-    DbTable.tablePostDraft
-    [DbColumn.colIdDraftPostDraft, DbColumn.colIdPostPostDraft]
-    [toSql draftId, toSql postId]
-  Logger.logInfo logH "Creating dependency between Post and Draft."
-  return $ Right draftId
-
 deletePostRecord ::
   Monad m =>
   ServerSpec.Handle m ->
@@ -853,8 +818,8 @@ deletePostDraftRecord handle postId = do
   let logH = ServerSpec.hLogger handle
   DbQuery.deleteWhere
     handle
-    DbTable.tablePostDraft
-    [DbColumn.colIdPostPostDraft]
+    DbTable.tableDrafts
+    [DbColumn.colIdPostDraft]
     [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Draft from db."
 

@@ -176,7 +176,8 @@ migrations handle =
       39
       "add constraint NOT NULL to column 'author_id' in table 'posts'"
       (addConstraintNotNull handle DbTable.tablePosts DbColumn.colIdAuthorPost),
-    DbMigration.Migration 40 "drop table 'post_author'" (dropTable handle DbTable.tablePostAuthor)
+    DbMigration.Migration 40 "drop table 'post_author'" (dropTable handle DbTable.tablePostAuthor),
+    DbMigration.Migration 41 "drop table 'post_draft'" (dropTable handle DbTable.tablePostDraft)
   ]
 
 validateDb :: DbSpec.Handle IO -> IO ()

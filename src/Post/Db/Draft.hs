@@ -29,9 +29,7 @@ createDraft handle postId text = do
   case draftIdE of
     Left _ -> runEitherT $ do
       lift $ insertDraftRecord handle text postId
-      draftId <- newEitherT $ getLastDraftRecord handle
-      _ <- newEitherT $ DbPost.createPostDraftDep handle postId draftId
-      return draftId
+      newEitherT $ getLastDraftRecord handle
     Right _ -> do
       let msg =
             "Post with id: "
