@@ -156,7 +156,7 @@ migrations handle =
           handle
           DbTable.tableAuthors
           DbTable.tablePosts
-          DbColumn.colIdPost
+          DbColumn.colIdAuthor
           DbColumn.colIdAuthorPost
           DbConstraint.constraintPostAuthorIdFK
       ),
@@ -177,7 +177,39 @@ migrations handle =
       "add constraint NOT NULL to column 'author_id' in table 'posts'"
       (addConstraintNotNull handle DbTable.tablePosts DbColumn.colIdAuthorPost),
     DbMigration.Migration 40 "drop table 'post_author'" (dropTable handle DbTable.tablePostAuthor),
-    DbMigration.Migration 41 "drop table 'post_draft'" (dropTable handle DbTable.tablePostDraft)
+    DbMigration.Migration 41 "drop table 'post_draft'" (dropTable handle DbTable.tablePostDraft),
+    DbMigration.Migration
+      42
+      "add column 'category_id' to table 'posts' with default value NULL"
+      (addColumn handle DbTable.tablePosts DbColumn.colIdCategoryPost),
+    DbMigration.Migration
+      43
+      "add constraint FOREIGN KEY to column 'category_id' in table 'posts'"
+      ( addConstraintForeignKey
+          handle
+          DbTable.tableCats
+          DbTable.tablePosts
+          DbColumn.colIdCat
+          DbColumn.colIdCategoryPost
+          DbConstraint.constraintCategoryPostIdFK
+      ),
+    DbMigration.Migration
+      44
+      "copy post_category.category_id to posts.category_id"
+      ( copyColumnValues
+          handle
+          DbTable.tablePostCat
+          DbTable.tablePosts
+          DbColumn.colIdCatPostCat
+          DbColumn.colIdPostPostCat
+          DbColumn.colIdCategoryPost
+          DbColumn.colIdPost
+      ),
+    DbMigration.Migration
+      45
+      "add constraint NOT NULL to column 'category_id' in table 'posts'"
+      (addConstraintNotNull handle DbTable.tablePosts DbColumn.colIdCategoryPost),
+    DbMigration.Migration 46 "drop table 'post_category'" (dropTable handle DbTable.tablePostCat)
   ]
 
 validateDb :: DbSpec.Handle IO -> IO ()

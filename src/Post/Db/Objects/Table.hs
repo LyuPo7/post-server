@@ -94,7 +94,8 @@ tablePosts =
           DbColumn.colTitlePost,
           DbColumn.colCreatedAtPost,
           DbColumn.colTextPost,
-          DbColumn.colIdAuthorPost
+          DbColumn.colIdAuthorPost,
+          DbColumn.colIdCategoryPost
         ]
     }
 

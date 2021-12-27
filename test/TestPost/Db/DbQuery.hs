@@ -979,9 +979,9 @@ spec_querySort =
             query = DbQuery.querySort Handlers.serverH args ids offset
             check =
               ( "SELECT id \
-                \FROM post_category \
+                \FROM posts \
                 \JOIN categories \
-                \ON post_category.category_id=categories.id \
+                \ON posts.category_id=categories.id \
                 \WHERE post_id \
                 \IN (?,?,?) \
                 \ORDER by title \

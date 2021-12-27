@@ -527,7 +527,7 @@ searchCat handle params = do
   searchQuery <- runEitherT $ do
     search <- newEitherT $ querySearchCat handle catParams
     newEitherT $
-      querySpecialPosts DbTable.tablePostCat DbColumn.colIdPostPostCat search
+      querySpecialPosts DbTable.tablePosts DbColumn.colIdPost search
   case searchQuery of
     Right query -> do
       idPosts <- ServerSpec.makeDbRequest handle query
@@ -816,8 +816,8 @@ findIn handle params = do
     queryIdCat <-
       newEitherT $
         querySpecialPosts
-          DbTable.tablePostCat
-          DbColumn.colIdPostPostCat
+          DbTable.tablePosts
+          DbColumn.colIdPost
           postFindInCats
     idCatSPosts <- lift (concat <$> ServerSpec.makeDbRequest handle queryIdCat)
     postFindInTags <- newEitherT $ findInTags handle findParams
@@ -1143,34 +1143,34 @@ querySort handle [(key, _)] ids offset = do
       Logger.logDebug logH msg
       return $ Right (query, ids)
     "order_by_category" -> do
-      let tPC = DbTable.name DbTable.tablePostCat
-          tC = DbTable.name DbTable.tableCats
-          cIdP = DbColumn.name DbColumn.colIdPost
-          cIdCPC = DbColumn.name DbColumn.colIdCatPostCat
-          cIdPPC = DbColumn.name DbColumn.colIdPostPostCat
-          cIdC = DbColumn.name DbColumn.colIdCat
+      let tPosts = DbTable.name DbTable.tablePosts
+          tCategory = DbTable.name DbTable.tableCats
+          cIdPostP = DbColumn.name DbColumn.colIdPost
+          cIdCategoryP = DbColumn.name DbColumn.colIdCategoryPost
+          cIdPostPC = DbColumn.name DbColumn.colIdPostPostCat
+          cIdCategoryC = DbColumn.name DbColumn.colIdCat
           cTitleP = DbColumn.name DbColumn.colTitlePost
           query =
-            "SELECT " <> cIdP
+            "SELECT " <> cIdPostP
               <> " \
                  \FROM "
-              <> tPC
+              <> tPosts
               <> " \
                  \JOIN "
-              <> tC
+              <> tCategory
               <> " \
                  \ON "
-              <> tPC
+              <> tPosts
               <> "."
-              <> cIdCPC
+              <> cIdCategoryP
               <> "\
                  \="
-              <> tC
+              <> tCategory
               <> "."
-              <> cIdC
+              <> cIdCategoryC
               <> " \
                  \WHERE "
-              <> cIdPPC
+              <> cIdPostPC
               <> " \
                  \IN ("
               <> qString

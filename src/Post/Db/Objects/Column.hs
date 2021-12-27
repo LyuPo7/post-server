@@ -88,6 +88,14 @@ colIdAuthorPost =
       properties = []
     }
 
+colIdCategoryPost :: Column
+colIdCategoryPost =
+  Column
+    { name = "category_id",
+      columnType = DbColumnType.INTEGER,
+      properties = []
+    }
+
 colIdCat :: Column
 colIdCat =
   Column

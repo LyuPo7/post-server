@@ -18,3 +18,6 @@ constraintAuthorUserIdFK = Constraint "authors_user_id_fk"
 
 constraintPostAuthorIdFK :: Constraint
 constraintPostAuthorIdFK = Constraint "post_author_id_fk"
+
+constraintCategoryPostIdFK :: Constraint
+constraintCategoryPostIdFK = Constraint "post_category_id_fk"

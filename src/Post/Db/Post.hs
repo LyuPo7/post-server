@@ -43,9 +43,8 @@ createPost handle title text authorId catId tagIds = do
     Left _ -> runEitherT $ do
       _ <- newEitherT $ DbCategory.getCatRecordByCatId handle catId
       _ <- newEitherT $ DbTag.getTagRecordsByIds handle tagIds
-      lift $ insertPostRecord handle title text authorId
+      lift $ insertPostRecord handle title text authorId catId
       postId <- newEitherT $ getLastPostRecord handle
-      _ <- newEitherT $ createPostCatDep handle postId catId
       lift $ mapM_ (createPostTagDep handle postId) tagIds
       return postId
     Right _ -> do
@@ -108,7 +107,6 @@ removePost ::
   m (Either Text ServerSynonyms.PostId)
 removePost handle postId = runEitherT $ do
   _ <- newEitherT $ getPostRecord handle postId
-  _ <- lift $ removePostCatDep handle postId
   _ <- lift $ removePostTagDep handle postId
   _ <- lift $ removePostMainPhotoDep handle postId
   _ <- lift $ removePostAddPhotoDep handle postId
@@ -157,26 +155,6 @@ setPostAddPhoto handle postId path = do
       return $ Left msg
     Right photoId -> insertPostAddPhotoRecord handle postId photoId
 
-createPostCatDep ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  ServerSynonyms.CategoryId ->
-  m (Either Text ServerSynonyms.CategoryId)
-createPostCatDep handle postId catId = do
-  let logH = ServerSpec.hLogger handle
-  postCatDepE <- getPostCategoryIdByPostId handle postId
-  case postCatDepE of
-    Left _ -> do
-      insertPostCatRecord handle postId catId
-      return $ Right catId
-    Right _ -> do
-      let msg =
-            "Dependency between \
-            \Post and Category already exists."
-      Logger.logError logH msg
-      return $ Left msg
-
 createPostTagDep ::
   Monad m =>
   ServerSpec.Handle m ->
@@ -199,16 +177,6 @@ createPostTagDep handle postId tagId = do
         else do
           Logger.logInfo logH "Inserting dependency between Post and Tag in db."
           insertPostTagRecord handle postId tagId
-
-removePostCatDep ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  m (Either Text ServerSynonyms.CategoryId)
-removePostCatDep handle postId = runEitherT $ do
-  catId <- newEitherT $ getPostCategoryIdByPostId handle postId
-  lift $ deletePostCatRecord handle postId
-  return catId
 
 removePostTagDep ::
   Monad m =>
@@ -408,9 +376,9 @@ getPostCategoryIdByPostId handle postId = do
   catIdSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tablePostCat
-      [DbColumn.colIdCatPostCat]
-      [DbColumn.colIdPostPostCat]
+      DbTable.tablePosts
+      [DbColumn.colIdCategoryPost]
+      [DbColumn.colIdPost]
       [toSql postId]
   case catIdSql of
     [] -> do
@@ -623,16 +591,17 @@ insertPostRecord ::
   ServerSynonyms.Title ->
   Text ->
   ServerSynonyms.AuthorId ->
+  ServerSynonyms.CategoryId ->
   m ()
-insertPostRecord handle title text authorId = do
+insertPostRecord handle title text authorId catId = do
   let logH = ServerSpec.hLogger handle
   time <- ServerSpec.getCurrentTime handle
   let day = utctDay time
   DbQuery.insertIntoValues
     handle
     DbTable.tablePosts
-    [DbColumn.colTitlePost, DbColumn.colTextPost, DbColumn.colCreatedAtPost, DbColumn.colIdAuthorPost]
-    [toSql title, toSql text, toSql day, toSql authorId]
+    [DbColumn.colTitlePost, DbColumn.colTextPost, DbColumn.colCreatedAtPost, DbColumn.colIdAuthorPost, DbColumn.colIdCategoryPost]
+    [toSql title, toSql text, toSql day, toSql authorId, toSql catId]
   Logger.logInfo logH $
     "Post with title: '"
       <> convert title
@@ -688,21 +657,6 @@ insertPostAddPhotoRecord handle postId photoId = do
   Logger.logInfo logH "Post's Add Photo was successfully inserted in db."
   return $ Right photoId
 
-insertPostCatRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  ServerSynonyms.CategoryId ->
-  m ()
-insertPostCatRecord handle postId catId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.insertIntoValues
-    handle
-    DbTable.tablePostCat
-    [DbColumn.colIdPostPostCat, DbColumn.colIdCatPostCat]
-    [toSql postId, toSql catId]
-  Logger.logInfo logH "Creating dependency between Post and Category."
-
 insertPostTagRecord ::
   Monad m =>
   ServerSpec.Handle m ->
@@ -735,20 +689,6 @@ deletePostRecord handle postId = do
     "Removing Post with id: "
       <> ServerUtil.convertValue postId
       <> " from db."
-
-deletePostCatRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  m ()
-deletePostCatRecord handle postId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.deleteWhere
-    handle
-    DbTable.tablePostCat
-    [DbColumn.colIdPostPostCat]
-    [toSql postId]
-  Logger.logInfo logH "Removing dependency between Post and Category."
 
 deletePostTagRecord ::
   Monad m =>

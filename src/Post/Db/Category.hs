@@ -272,9 +272,9 @@ getCatPostIdsByCatId handle catId = do
   postsIdSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tablePostCat
-      [DbColumn.colIdPostPostCat]
-      [DbColumn.colIdCatPostCat]
+      DbTable.tablePosts
+      [DbColumn.colIdPost]
+      [DbColumn.colIdCategoryPost]
       [toSql catId]
   case postsIdSql of
     [] -> do
