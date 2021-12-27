@@ -162,7 +162,8 @@ tableAuthors =
     { name = "authors",
       columns =
         [ DbColumn.colIdAuthor,
-          DbColumn.colDescAuthor
+          DbColumn.colDescAuthor,
+          DbColumn.colIdUserAuthor
         ]
     }
 

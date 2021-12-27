@@ -285,6 +285,14 @@ colDescAuthor =
       properties = []
     }
 
+colIdUserAuthor :: Column
+colIdUserAuthor =
+  Column
+    { name = "user_id",
+      columnType = DbColumnType.INTEGER,
+      properties = []
+    }
+
 colIdPhoto :: Column
 colIdPhoto =
   Column

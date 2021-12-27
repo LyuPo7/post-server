@@ -26,10 +26,8 @@ createAuthor handle userId description = do
   authorIdE <- getAuthorIdByUserId handle userId
   case authorIdE of
     Left _ -> runEitherT $ do
-      lift $ insertAuthorRecord handle description
-      authorId <- newEitherT $ getLastAuthorRecord handle
-      lift $ createAuthorUserDep handle authorId userId
-      return authorId
+      lift $ insertAuthorRecord handle description userId
+      newEitherT $ getLastAuthorRecord handle
     Right _ -> do
       let msg =
             "User with id: "
@@ -52,7 +50,6 @@ removeAuthor handle userId = do
       case postsIdE of
         Left _ -> do
           deleteAuthorRecord handle authorId
-          _ <- removeAuthorUserDep handle userId
           return $ Right authorId
         Right _ -> do
           let msg =
@@ -72,33 +69,6 @@ editAuthor ::
 editAuthor handle userId newDescription = runEitherT $ do
   authorId <- newEitherT $ getAuthorIdByUserId handle userId
   lift $ updateAuthorRecord handle authorId newDescription
-  return authorId
-
-createAuthorUserDep ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.AuthorId ->
-  ServerSynonyms.UserId ->
-  m ()
-createAuthorUserDep handle authorId userId = do
-  let logH = ServerSpec.hLogger handle
-  oldAuthorIdE <- getAuthorIdByUserId handle userId
-  case oldAuthorIdE of
-    Left _ -> insertAuthorUserRecord handle authorId userId
-    Right _ -> do
-      let msg =
-            "Dependency between \
-            \Author and User already exists."
-      Logger.logError logH msg
-
-removeAuthorUserDep ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.UserId ->
-  m (Either Text ServerSynonyms.AuthorId)
-removeAuthorUserDep handle userId = runEitherT $ do
-  authorId <- newEitherT $ getAuthorIdByUserId handle userId
-  lift $ deleteAuthorUserRecord handle userId
   return authorId
 
 getAuthorRecord ::
@@ -143,9 +113,9 @@ getUserIdByAuthorId handle authorId = do
   idUserSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tableAuthorUser
-      [DbColumn.colIdUserAuthorUser]
-      [DbColumn.colIdAuthorAuthorUser]
+      DbTable.tableAuthors
+      [DbColumn.colIdUserAuthor]
+      [DbColumn.colIdAuthor]
       [toSql authorId]
   case idUserSql of
     [] -> do
@@ -178,9 +148,9 @@ getAuthorIdByUserId handle userId = do
   authorIdSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tableAuthorUser
-      [DbColumn.colIdAuthorAuthorUser]
-      [DbColumn.colIdUserAuthorUser]
+      DbTable.tableAuthors
+      [DbColumn.colIdAuthor]
+      [DbColumn.colIdUserAuthor]
       [toSql userId]
   case authorIdSql of
     [] -> do
@@ -280,14 +250,15 @@ insertAuthorRecord ::
   Monad m =>
   ServerSpec.Handle m ->
   ServerSynonyms.Description ->
+  ServerSynonyms.UserId ->
   m ()
-insertAuthorRecord handle description = do
+insertAuthorRecord handle description userId = do
   let logH = ServerSpec.hLogger handle
   DbQuery.insertIntoValues
     handle
     DbTable.tableAuthors
-    [DbColumn.colDescAuthor]
-    [toSql description]
+    [DbColumn.colDescAuthor, DbColumn.colIdUserAuthor]
+    [toSql description, toSql userId]
   Logger.logInfo logH "Author was successfully inserted in db."
 
 updateAuthorRecord ::
@@ -326,35 +297,6 @@ deleteAuthorRecord handle authorId = do
     "Removing Author with id: "
       <> ServerUtil.convertValue authorId
       <> " from db."
-
-insertAuthorUserRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.AuthorId ->
-  ServerSynonyms.UserId ->
-  m ()
-insertAuthorUserRecord handle authorId userId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.insertIntoValues
-    handle
-    DbTable.tableAuthorUser
-    [DbColumn.colIdAuthorAuthorUser, DbColumn.colIdUserAuthorUser]
-    [toSql authorId, toSql userId]
-  Logger.logInfo logH "Creating dependency between Author and User."
-
-deleteAuthorUserRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.UserId ->
-  m ()
-deleteAuthorUserRecord handle userId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.deleteWhere
-    handle
-    DbTable.tableAuthorUser
-    [DbColumn.colIdUserAuthorUser]
-    [toSql userId]
-  Logger.logInfo logH "Removing dependency between Author and User."
 
 newAuthor ::
   Monad m =>

@@ -281,9 +281,9 @@ getAuthorIdByUserId handle userId = do
   authorIdSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tableAuthorUser
-      [DbColumn.colIdAuthorAuthorUser]
-      [DbColumn.colIdUserAuthorUser]
+      DbTable.tableAuthors
+      [DbColumn.colIdAuthor]
+      [DbColumn.colIdUserAuthor]
       [toSql userId]
   case authorIdSql of
     [] -> do

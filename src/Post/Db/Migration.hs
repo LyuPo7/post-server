@@ -112,7 +112,39 @@ migrations handle =
     DbMigration.Migration
       30
       "change type of column 'subcategory_id' in table 'categories'"
-      (changeColumnType handle DbTable.tableCats DbColumn.colSubCatCat DbColumnType.INTEGER)
+      (changeColumnType handle DbTable.tableCats DbColumn.colSubCatCat DbColumnType.INTEGER),
+    DbMigration.Migration
+      31
+      "add column 'user_id' to table 'authors' with default value NULL"
+      (addColumn handle DbTable.tableAuthors DbColumn.colIdUserAuthor),
+    DbMigration.Migration
+      32
+      "add constraint FOREIGN KEY to column 'user_id' in table 'authors'"
+      ( addConstraintForeignKey
+          handle
+          DbTable.tableUsers
+          DbTable.tableAuthors
+          DbColumn.colIdUser
+          DbColumn.colIdUserAuthor
+          DbConstraint.constraintAuthorUserIdFK
+      ),
+    DbMigration.Migration
+      33
+      "copy author_user.user_id to authors.user_id"
+      ( copyColumnValues
+          handle
+          DbTable.tableAuthorUser
+          DbTable.tableAuthors
+          DbColumn.colIdUserAuthorUser
+          DbColumn.colIdAuthorAuthorUser
+          DbColumn.colIdUserAuthor
+          DbColumn.colIdAuthor
+      ),
+    DbMigration.Migration
+      34
+      "add constraint NOT NULL to column 'user_id' in table 'authors'"
+      (addConstraintNotNull handle DbTable.tableAuthors DbColumn.colIdUserAuthor),
+    DbMigration.Migration 35 "drop table 'author_user'" (dropTable handle DbTable.tableAuthorUser)
   ]
 
 validateDb :: DbSpec.Handle IO -> IO ()

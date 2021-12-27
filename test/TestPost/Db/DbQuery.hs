@@ -773,8 +773,8 @@ spec_querySearchAuthor =
           query = DbQuery.querySearchAuthor Handlers.serverH args
           check =
             ( "WHERE author_id = (\
-              \SELECT author_id \
-              \FROM author_user \
+              \SELECT id \
+              \FROM authors \
               \WHERE user_id = (\
               \SELECT id \
               \FROM users \
@@ -840,8 +840,8 @@ spec_findInAuthors =
           query = DbQuery.findInAuthors Handlers.serverH args
           check =
             ( "WHERE author_id = (\
-              \SELECT author_id \
-              \FROM author_user \
+              \SELECT id \
+              \FROM authors \
               \WHERE user_id = (\
               \SELECT id \
               \FROM users \
@@ -1023,9 +1023,9 @@ spec_querySort =
             check =
               ( "SELECT id \
                 \FROM post_author \
-                \INNER JOIN author_user \
-                \ON post_author.author_id=author_user.author_id \
-                \INNER JOIN users ON author_user.user_id=users.id \
+                \INNER JOIN authors \
+                \ON post_author.author_id=authors.id \
+                \INNER JOIN users ON authors.user_id=users.id \
                 \WHERE id IN (?,?,?,?,?) \
                 \ORDER BY last_name, first_name \
                 \LIMIT 50 \

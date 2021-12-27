@@ -735,24 +735,25 @@ querySearchAuthor handle [(_, value)] = do
     Just param -> do
       if length (T.words param) == 2
         then do
-          let tAuthorUserAU = DbTable.name DbTable.tableAuthorUser
+          let tAuthors = DbTable.name DbTable.tableAuthors
               tUsersU = DbTable.name DbTable.tableUsers
-              cAuthorIdAU = DbColumn.name DbColumn.colIdAuthorAuthorUser
-              cUserIdAU = DbColumn.name DbColumn.colIdUserAuthorUser
+              cAuthorIdAP = DbColumn.name DbColumn.colIdAuthorPostAuthor
+              cAuthorIdA = DbColumn.name DbColumn.colIdAuthor
+              cUserIdA = DbColumn.name DbColumn.colIdUserAuthor
               cIdU = DbColumn.name DbColumn.colIdUser
               cFNU = DbColumn.name DbColumn.colFNUser
               cLNU = DbColumn.name DbColumn.colLNUser
               query =
-                "WHERE " <> cAuthorIdAU
+                "WHERE " <> cAuthorIdAP
                   <> " = (\
                      \SELECT "
-                  <> cAuthorIdAU
+                  <> cAuthorIdA
                   <> " \
                      \FROM "
-                  <> tAuthorUserAU
+                  <> tAuthors
                   <> " \
                      \WHERE "
-                  <> cUserIdAU
+                  <> cUserIdA
                   <> " = (\
                      \SELECT "
                   <> cIdU
@@ -909,24 +910,25 @@ findInAuthors handle [(key, value)] = do
       Logger.logWarning logH msg
       return $ Right ("", [])
     Just _ -> do
-      let tAuthorUserAU = DbTable.name DbTable.tableAuthorUser
+      let tAuthors = DbTable.name DbTable.tableAuthors
           tUsersU = DbTable.name DbTable.tableUsers
-          cAuthorIdAU = DbColumn.name DbColumn.colIdAuthorAuthorUser
-          cUserIdAU = DbColumn.name DbColumn.colIdUserAuthorUser
+          cAuthorIdAP = DbColumn.name DbColumn.colIdAuthorPostAuthor
+          cAuthorIdA = DbColumn.name DbColumn.colIdAuthor
+          cUserIdA = DbColumn.name DbColumn.colIdUserAuthor
           cIdU = DbColumn.name DbColumn.colIdUser
           cFNU = DbColumn.name DbColumn.colFNUser
           cLNU = DbColumn.name DbColumn.colLNUser
           query =
-            "WHERE " <> cAuthorIdAU
+            "WHERE " <> cAuthorIdAP
               <> " = (\
                  \SELECT "
-              <> cAuthorIdAU
+              <> cAuthorIdA
               <> " \
                  \FROM "
-              <> tAuthorUserAU
+              <> tAuthors
               <> " \
                  \WHERE "
-              <> cUserIdAU
+              <> cUserIdA
               <> " = (\
                  \SELECT "
               <> cIdU
@@ -1231,46 +1233,46 @@ querySort handle [(key, _)] ids offset = do
       Logger.logDebug logH msg
       return $ Right (query, ids)
     "order_by_author" -> do
-      let tAU = DbTable.name DbTable.tableAuthorUser
-          tPA = DbTable.name DbTable.tablePostAuthor
-          tU = DbTable.name DbTable.tableUsers
-          cIdP = DbColumn.name DbColumn.colIdPost
-          cIdAPA = DbColumn.name DbColumn.colIdAuthorPostAuthor
-          cIdAAU = DbColumn.name DbColumn.colIdAuthorAuthorUser
-          cIdUAU = DbColumn.name DbColumn.colIdUserAuthorUser
-          cIdU = DbColumn.name DbColumn.colIdUser
+      let tAuthors = DbTable.name DbTable.tableAuthors
+          tPostAuthor = DbTable.name DbTable.tablePostAuthor
+          tUsers = DbTable.name DbTable.tableUsers
+          cIdPostP = DbColumn.name DbColumn.colIdPost
+          cIdAuthorPostPA = DbColumn.name DbColumn.colIdAuthorPostAuthor
+          cIdAuthorA = DbColumn.name DbColumn.colIdAuthor
+          cIdUserA = DbColumn.name DbColumn.colIdUserAuthor
+          cIdUserU = DbColumn.name DbColumn.colIdUser
           cFNU = DbColumn.name DbColumn.colFNUser
           cLNU = DbColumn.name DbColumn.colLNUser
           query =
-            "SELECT " <> cIdP
+            "SELECT " <> cIdPostP
               <> " \
                  \FROM "
-              <> tPA
+              <> tPostAuthor
               <> " \
                  \INNER JOIN "
-              <> tAU
+              <> tAuthors
               <> " \
                  \ON "
-              <> tPA
+              <> tPostAuthor
               <> "."
-              <> cIdAPA
+              <> cIdAuthorPostPA
               <> "\
                  \="
-              <> tAU
+              <> tAuthors
               <> "."
-              <> cIdAAU
+              <> cIdAuthorA
               <> " \
                  \INNER JOIN "
-              <> tU
+              <> tUsers
               <> " ON "
-              <> tAU
+              <> tAuthors
               <> "."
-              <> cIdUAU
+              <> cIdUserA
               <> "\
                  \="
-              <> tU
+              <> tUsers
               <> "."
-              <> cIdU
+              <> cIdUserU
               <> " \
                  \WHERE id IN ("
               <> qString
