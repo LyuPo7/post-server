@@ -646,9 +646,9 @@ getPostCommentRecords handle postId = do
   comsIdSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tablePostCom
-      [DbColumn.colIdComPostCom]
-      [DbColumn.colIdPostPostCom]
+      DbTable.tableComs
+      [DbColumn.colIdCom]
+      [DbColumn.colIdPostCom]
       [toSql postId]
   case comsIdSql of
     [] -> do
@@ -897,8 +897,8 @@ deletePostComRecords handle postId = do
   let logH = ServerSpec.hLogger handle
   DbQuery.deleteWhere
     handle
-    DbTable.tablePostCom
-    [DbColumn.colIdPostPostCom]
+    DbTable.tableComs
+    [DbColumn.colIdPostCom]
     [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Comment from db."
 

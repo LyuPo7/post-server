@@ -38,6 +38,7 @@ library
       Post.Db.Migration
       Post.Db.Objects.Column
       Post.Db.Objects.ColumnType
+      Post.Db.Objects.Constraint
       Post.Db.Objects.Migration
       Post.Db.Objects.Property
       Post.Db.Objects.RequiredParams

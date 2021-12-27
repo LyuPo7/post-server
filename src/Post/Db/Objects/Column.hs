@@ -104,7 +104,7 @@ colSubCatCat :: Column
 colSubCatCat =
   Column
     { name = "subcategory_id",
-      columnType = DbColumnType.TEXT,
+      columnType = DbColumnType.INTEGER,
       properties = []
     }
 
@@ -127,6 +127,7 @@ colTitleTag =
         [ DbProperty.NotNull
         ]
     }
+
 colIdCom :: Column
 colIdCom =
   Column
@@ -143,6 +144,22 @@ colTextCom =
       properties =
         [ DbProperty.NotNull
         ]
+    }
+
+colIdPostCom :: Column
+colIdPostCom =
+  Column
+    { name = "post_id",
+      columnType = DbColumnType.INTEGER,
+      properties = []
+    }
+
+colIdUserCom :: Column
+colIdUserCom =
+  Column
+    { name = "user_id",
+      columnType = DbColumnType.INTEGER,
+      properties = []
     }
 
 colIdDraft :: Column

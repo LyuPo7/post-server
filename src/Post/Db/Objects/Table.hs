@@ -40,6 +40,8 @@ data Table = Table
 ** Table: comments (table contains info every Comment):
     - id - unique identifier for this Comment;
     - text - text of the Comment;
+    - post_id - unique identifier of the corresponding Post (one-to-one);
+    - user_id - unique identifier of the corresponding User (many-to-one);
 ** Table: drafts (table contains info every Draft):
     - id - unique identifier for this Draft;
     - text - text of the Draft;
@@ -53,9 +55,6 @@ data Table = Table
 ** Table: author_user (defines one-to-one relation between author and user):
     - author_id - Author id;
     - user_id - User id;
-** Table: comment_user (defines many-to-one relation between comment and user):
-    - comment_id - Comment id;
-    - user_id - User id;
 ** Table: post_author (defines many-to-one relation between post and author):
     - post_id - Post id;
     - author_id - Author id;
@@ -65,9 +64,6 @@ data Table = Table
 ** Table: post_tag (defines one-to-many relation between post and tag):
     - post_id - Post id;
     - tag_id - Tag id;
-** Table: post_comment (defines one-to-many relation between post and comment):
-    - post_id - Post id;
-    - comment_id - Comment id;
 ** Table: post_draft (defines one-to-one relation between post and draft):
     - post_id - Post id;
     - draft_id - Draft id;
@@ -128,7 +124,9 @@ tableComs =
     { name = "comments",
       columns =
         [ DbColumn.colIdCom,
-          DbColumn.colTextCom
+          DbColumn.colTextCom,
+          DbColumn.colIdPostCom,
+          DbColumn.colIdUserCom
         ]
     }
 

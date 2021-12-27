@@ -22,11 +22,8 @@ createComment ::
   Text ->
   m (Either Text ServerSynonyms.CommentId)
 createComment handle postId userId text = runEitherT $ do
-  lift $ insertCommentRecord handle text
-  commentId <- newEitherT $ getLastCommentRecord handle
-  lift $ createCommentUserRecord handle commentId userId
-  lift $ createPostCommentRecord handle commentId postId
-  return commentId
+  lift $ insertCommentRecord handle text userId postId
+  newEitherT $ getLastCommentRecord handle
 
 getCommentRecord ::
   Monad m =>
@@ -96,48 +93,20 @@ insertCommentRecord ::
   Monad m =>
   ServerSpec.Handle m ->
   Text ->
+  ServerSynonyms.UserId ->
+  ServerSynonyms.PostId ->
   m ()
-insertCommentRecord handle text = do
+insertCommentRecord handle text userId postId = do
   let logH = ServerSpec.hLogger handle
   DbQuery.insertIntoValues
     handle
     DbTable.tableComs
-    [DbColumn.colTextCom]
-    [toSql text]
+    [DbColumn.colTextCom, DbColumn.colIdUserCom, DbColumn.colIdPostCom]
+    [toSql text, toSql userId, toSql postId]
   Logger.logInfo logH $
     "Comment with text: '"
       <> text
       <> "' was successfully inserted in db."
-
-createCommentUserRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.CommentId ->
-  ServerSynonyms.UserId ->
-  m ()
-createCommentUserRecord handle commentId userId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.insertIntoValues
-    handle
-    DbTable.tableUserCom
-    [DbColumn.colIdComUserCom, DbColumn.colIdUserUserCom]
-    [toSql commentId, toSql userId]
-  Logger.logInfo logH "Creating dependency between Comment and User."
-
-createPostCommentRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.CommentId ->
-  ServerSynonyms.PostId ->
-  m ()
-createPostCommentRecord handle commentId postId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.insertIntoValues
-    handle
-    DbTable.tablePostCom
-    [DbColumn.colIdPostPostCom, DbColumn.colIdComPostCom]
-    [toSql postId, toSql commentId]
-  Logger.logInfo logH "Creating dependency between Post and Comment."
 
 newComment ::
   [SqlValue] ->

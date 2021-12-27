@@ -11,6 +11,7 @@ import qualified Post.Db.DbQueryIO as DbQueryIO
 import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Db.Objects.Column as DbColumn
 import qualified Post.Db.Objects.ColumnType as DbColumnType
+import qualified Post.Db.Objects.Constraint as DbConstraint
 import qualified Post.Db.Objects.Migration as DbMigration
 import qualified Post.Db.Objects.Synonyms as DbSynonyms
 import qualified Post.Db.Objects.Table as DbTable
@@ -40,7 +41,78 @@ migrations handle =
     DbMigration.Migration 16 "create table 'post_tag'" (createTable handle DbTable.tablePostTag),
     DbMigration.Migration 17 "create table 'post_main_photo'" (createTable handle DbTable.tablePostMainPhoto),
     DbMigration.Migration 18 "create table 'post_add_photo'" (createTable handle DbTable.tablePostAddPhoto),
-    DbMigration.Migration 19 "add column 'patronymic' to table 'users' with default value NULL" (addColumn handle DbTable.tableUsers DbColumn.colPatronymicUser)
+    DbMigration.Migration
+      19
+      "add column 'patronymic' to table 'users' with default value NULL"
+      (addColumn handle DbTable.tableUsers DbColumn.colPatronymicUser),
+    DbMigration.Migration
+      20
+      "add column 'user_id' to table 'comments' with default value NULL"
+      (addColumn handle DbTable.tableComs DbColumn.colIdUserCom),
+    DbMigration.Migration
+      21
+      "add constraint FOREIGN KEY to column 'user_id' in table 'comments'"
+      ( addConstraintForeignKey
+          handle
+          DbTable.tableUsers
+          DbTable.tableComs
+          DbColumn.colIdUser
+          DbColumn.colIdUserCom
+          DbConstraint.constraintCommentsUserIdFK
+      ),
+    DbMigration.Migration
+      22
+      "copy user_comment.user_id to comment.user_id"
+      ( copyColumnValues
+          handle
+          DbTable.tableUserCom
+          DbTable.tableComs
+          DbColumn.colIdUserUserCom
+          DbColumn.colIdComUserCom
+          DbColumn.colIdUserCom
+          DbColumn.colIdCom
+      ),
+    DbMigration.Migration
+      23
+      "add constraint NOT NULL to column 'user_id' in table 'comments'"
+      (addConstraintNotNull handle DbTable.tableComs DbColumn.colIdUserCom),
+    DbMigration.Migration 24 "drop table 'comment_user'" (dropTable handle DbTable.tableUserCom),
+    DbMigration.Migration
+      25
+      "add column 'post_id' to table 'comments' with default value NULL"
+      (addColumn handle DbTable.tableComs DbColumn.colIdPostCom),
+    DbMigration.Migration
+      26
+      "add constraint FOREIGN KEY to column 'post_id' in table 'comments'"
+      ( addConstraintForeignKey
+          handle
+          DbTable.tablePosts
+          DbTable.tableComs
+          DbColumn.colIdPost
+          DbColumn.colIdPostCom
+          DbConstraint.constraintCommentsPostIdFK
+      ),
+    DbMigration.Migration
+      27
+      "copy post_comment.post_id to comment.post_id"
+      ( copyColumnValues
+          handle
+          DbTable.tablePostCom
+          DbTable.tableComs
+          DbColumn.colIdPostPostCom
+          DbColumn.colIdComPostCom
+          DbColumn.colIdPostCom
+          DbColumn.colIdCom
+      ),
+    DbMigration.Migration
+      28
+      "add constraint NOT NULL to column 'post_id' in table 'comments'"
+      (addConstraintNotNull handle DbTable.tableComs DbColumn.colIdPostCom),
+    DbMigration.Migration 29 "drop table 'post_comment'" (dropTable handle DbTable.tablePostCom),
+    DbMigration.Migration
+      30
+      "change type of column 'subcategory_id' in table 'categories'"
+      (changeColumnType handle DbTable.tableCats DbColumn.colSubCatCat DbColumnType.INTEGER)
   ]
 
 validateDb :: DbSpec.Handle IO -> IO ()
@@ -132,13 +204,14 @@ createTable handle table = do
 
 dropTable ::
   DbSpec.Handle IO ->
-  DbSynonyms.TableName ->
+  DbTable.Table ->
   IO ()
-dropTable handle tableName = do
+dropTable handle table = do
   let dbh = DbSpec.conn handle
       logH = DbSpec.hLogger handle
+      tableName = DbTable.name table
   tables <- getTables dbh
-  when (T.unpack tableName `notElem` tables) $ do
+  when (T.unpack tableName `elem` tables) $ do
     let query =
           "DROP TABLE "
             ++ T.unpack tableName
@@ -229,28 +302,86 @@ addColumn handle table column = do
         <> "'"
   commit dbh
 
-changeColumnType ::
+copyColumnValues ::
   DbSpec.Handle IO ->
-  DbSynonyms.TableName ->
-  DbSynonyms.ColumnName ->
-  DbColumnType.ColumnType ->
+  DbTable.Table ->
+  DbTable.Table ->
+  DbColumn.Column ->
+  DbColumn.Column ->
+  DbColumn.Column ->
+  DbColumn.Column ->
   IO ()
-changeColumnType handle tableName colName propType = do
+copyColumnValues handle parentTable childTable parentCopyColumn parentCheckColumn childCopyColumn childCheckColumn = do
   let dbh = DbSpec.conn handle
       logH = DbSpec.hLogger handle
+      parentTableName = DbTable.name parentTable
+      childTableName = DbTable.name childTable
+      parentCopyColumnName = DbColumn.name parentCopyColumn
+      parentCheckColumnName = DbColumn.name parentCheckColumn
+      childCopyColumnName = DbColumn.name childCopyColumn
+      childCheckColumnName = DbColumn.name childCheckColumn
+  tables <- getTables dbh
+  when (T.unpack parentTableName `elem` tables && T.unpack childTableName `elem` tables) $ do
+    let query =
+          "UPDATE "
+            ++ T.unpack childTableName
+            ++ " SET "
+            ++ T.unpack childCopyColumnName
+            ++ "="
+            ++ T.unpack parentTableName
+            ++ "."
+            ++ T.unpack parentCopyColumnName
+            ++ " FROM "
+            ++ T.unpack parentTableName
+            ++ " WHERE "
+            ++ T.unpack childTableName
+            ++ "."
+            ++ T.unpack childCheckColumnName
+            ++ "="
+            ++ T.unpack parentTableName
+            ++ "."
+            ++ T.unpack parentCheckColumnName
+    Logger.logInfo logH $ T.pack query
+    _ <- run dbh query []
+    Logger.logInfo logH $
+      "Values from column '"
+        <> parentTableName
+        <> "."
+        <> parentCopyColumnName
+        <> "' was successfully copy to column '"
+        <> childTableName
+        <> "."
+        <> childCopyColumnName
+        <> "'"
+  commit dbh
+
+changeColumnType ::
+  DbSpec.Handle IO ->
+  DbTable.Table ->
+  DbColumn.Column ->
+  DbColumnType.ColumnType ->
+  IO ()
+changeColumnType handle table column propType = do
+  let dbh = DbSpec.conn handle
+      logH = DbSpec.hLogger handle
+      tableName = DbTable.name table
+      columnName = DbColumn.name column
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let query =
           "ALTER TABLE "
             ++ T.unpack tableName
             ++ " ALTER COLUMN "
-            ++ T.unpack colName
+            ++ T.unpack columnName
             ++ " TYPE "
             ++ show propType
+            ++ " USING "
+            ++ T.unpack columnName
+            ++ "::integer"
     _ <- run dbh query []
     Logger.logInfo logH $
       "Type of column '"
-        <> colName
+        <> columnName
         <> "' was successfully changed in table '"
         <> tableName
         <> "'"
@@ -258,28 +389,27 @@ changeColumnType handle tableName colName propType = do
 
 addConstraintNotNull ::
   DbSpec.Handle IO ->
-  DbSynonyms.TableName ->
-  DbSynonyms.ColumnName ->
-  DbColumnType.ColumnType ->
+  DbTable.Table ->
+  DbColumn.Column ->
   IO ()
-addConstraintNotNull handle tableName colName propType = do
+addConstraintNotNull handle table column = do
   let dbh = DbSpec.conn handle
       logH = DbSpec.hLogger handle
+      tableName = DbTable.name table
+      columnName = DbColumn.name column
   tables <- getTables dbh
   when (T.unpack tableName `elem` tables) $ do
     let query =
           "ALTER TABLE "
             ++ T.unpack tableName
-            ++ " MODIFY "
-            ++ T.unpack colName
-            ++ " "
-            ++ show propType
-            ++ " NOT NULL"
+            ++ " ALTER COLUMN "
+            ++ T.unpack columnName
+            ++ " SET NOT NULL"
     _ <- run dbh query []
     Logger.logInfo logH $
       "Constraint 'NOT NULL' \
       \was successfully added to column '"
-        <> colName
+        <> columnName
         <> "' in table '"
         <> tableName
         <> "'"
@@ -299,7 +429,7 @@ addConstraintUnique handle tableName colName conName = do
     let check =
           "SELECT constraint_name \
           \FROM information_schema.table_constraints \
-          \WHERE DbTable.name = '"
+          \WHERE table_name = '"
             ++ T.unpack tableName
             ++ "' AND constraint_name = '"
             ++ T.unpack conName
@@ -342,7 +472,7 @@ addConstraintPrimaryKey handle tableName colName conName = do
     let check =
           "SELECT constraint_name \
           \FROM information_schema.table_constraints \
-          \WHERE DbTable.name = '"
+          \WHERE table_name = '"
             ++ T.unpack tableName
             ++ "' AND constraint_name = '"
             ++ T.unpack conName
@@ -386,7 +516,7 @@ dropConstraint handle tableName conName = do
     let check =
           "SELECT constraint_name \
           \FROM information_schema.table_constraints \
-          \WHERE DbTable.name = '"
+          \WHERE table_name = '"
             ++ T.unpack tableName
             ++ "' AND constraint_name = '"
             ++ T.unpack conName
@@ -411,4 +541,61 @@ dropConstraint handle tableName conName = do
           "Constraint name '"
             <> conName
             <> "' isn't in use!"
+  commit dbh
+
+addConstraintForeignKey ::
+  DbSpec.Handle IO ->
+  DbTable.Table ->
+  DbTable.Table ->
+  DbColumn.Column ->
+  DbColumn.Column ->
+  DbConstraint.Constraint ->
+  IO ()
+addConstraintForeignKey handle parentTable childTable parentColumn childColumn constraint = do
+  let dbh = DbSpec.conn handle
+      logH = DbSpec.hLogger handle
+      parentTableName = DbTable.name parentTable
+      childTableName = DbTable.name childTable
+      parentColumnName = DbColumn.name parentColumn
+      childColumnName = DbColumn.name childColumn
+      constraintName = DbConstraint.name constraint
+  tables <- getTables dbh
+  when (T.unpack parentTableName `elem` tables && T.unpack childTableName `elem` tables) $ do
+    let check =
+          "SELECT constraint_name \
+          \FROM information_schema.table_constraints \
+          \WHERE table_name = '"
+            ++ T.unpack childTableName
+            ++ "' AND constraint_name = '"
+            ++ T.unpack constraintName
+            ++ "'"
+    r <- quickQuery' dbh check []
+    case r of
+      [] -> do
+        let query =
+              "ALTER TABLE "
+                ++ T.unpack childTableName
+                ++ " ADD CONSTRAINT "
+                ++ T.unpack constraintName
+                ++ " FOREIGN KEY ("
+                ++ T.unpack childColumnName
+                ++ ") \
+                   \ REFERENCES "
+                ++ T.unpack parentTableName
+                ++ " ("
+                ++ T.unpack parentColumnName
+                ++ " )"
+        _ <- run dbh query []
+        Logger.logInfo logH $
+          "Constraint 'FOREIGN KEY' \
+          \was successfully added to column '"
+            <> childColumnName
+            <> "' in table '"
+            <> childTableName
+            <> "'"
+      _ ->
+        Logger.logInfo logH $
+          "Constraint name '"
+            <> constraintName
+            <> "' is already in use!"
   commit dbh
