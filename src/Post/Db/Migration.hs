@@ -209,7 +209,35 @@ migrations handle =
       45
       "add constraint NOT NULL to column 'category_id' in table 'posts'"
       (addConstraintNotNull handle DbTable.tablePosts DbColumn.colIdCategoryPost),
-    DbMigration.Migration 46 "drop table 'post_category'" (dropTable handle DbTable.tablePostCat)
+    DbMigration.Migration 46 "drop table 'post_category'" (dropTable handle DbTable.tablePostCat),
+    DbMigration.Migration
+      47
+      "add column 'photo_id' to table 'users' with default value NULL"
+      (addColumn handle DbTable.tableUsers DbColumn.colIdPhotoUser),
+    DbMigration.Migration
+      48
+      "add constraint FOREIGN KEY to column 'photo_id' in table 'users'"
+      ( addConstraintForeignKey
+          handle
+          DbTable.tablePhotos
+          DbTable.tableUsers
+          DbColumn.colIdPhoto
+          DbColumn.colIdPhotoUser
+          DbConstraint.constraintUserPhotoIdFK
+      ),
+    DbMigration.Migration
+      49
+      "copy user_photo.photo_id to users.photo_id"
+      ( copyColumnValues
+          handle
+          DbTable.tableUserPhoto
+          DbTable.tableUsers
+          DbColumn.colIdPhotoUserPhoto
+          DbColumn.colIdUserUserPhoto
+          DbColumn.colIdPhotoUser
+          DbColumn.colIdUser
+      ),
+    DbMigration.Migration 50 "drop table 'user_photo'" (dropTable handle DbTable.tableUserPhoto)
   ]
 
 validateDb :: DbSpec.Handle IO -> IO ()

@@ -1,7 +1,5 @@
 module Post.Db.User where
 
-import Control.Monad.Trans (lift)
-import Control.Monad.Trans.Either (newEitherT, runEitherT)
 import Crypto.Scrypt (Pass (..), defaultParams, getEncryptedPass)
 import qualified Data.ByteString.Char8 as BC
 import Data.Convertible.Base (convert)
@@ -91,7 +89,6 @@ removeUser handle userId = do
       case idAuthorE of
         Left _ -> do
           deleteUserRecord handle userId
-          _ <- removeUserPhotoDeps handle userId
           return $ Right userId
         Right _ -> do
           let msg =
@@ -118,21 +115,8 @@ setUserPhoto handle userId path = do
       Logger.logError logH msg
       return $ Left msg
     Right photoId -> do
-      userPhotoDepE <- getUserPhotoRecord handle userId
-      case userPhotoDepE of
-        Left _ -> insertUserPhotoRecord handle userId photoId
-        Right _ -> updateUserPhotoRecord handle userId photoId
+      updateUserPhotoRecord handle userId photoId
       return $ Right photoId
-
-removeUserPhotoDeps ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.UserId ->
-  m (Either Text ServerSynonyms.PhotoId)
-removeUserPhotoDeps handle userId = runEitherT $ do
-  photo <- newEitherT $ getUserPhotoRecord handle userId
-  lift $ deleteUserPhotoRecord handle userId
-  return $ ServerPhoto.id photo
 
 getUserIdByLogin ::
   Monad m =>
@@ -246,9 +230,9 @@ getUserPhotoRecord handle userId = do
   idPhotoSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tableUserPhoto
-      [DbColumn.colIdUserUserPhoto]
-      [DbColumn.colIdUserUserPhoto]
+      DbTable.tableUsers
+      [DbColumn.colIdPhotoUser]
+      [DbColumn.colIdUser]
       [toSql userId]
   case idPhotoSql of
     [] -> do
@@ -257,12 +241,21 @@ getUserPhotoRecord handle userId = do
               <> ServerUtil.convertValue userId
       Logger.logWarning logH msg
       return $ Left msg
-    [[photoId]] -> do
-      Logger.logInfo logH $
-        "Getting Photo for User with id: "
-          <> ServerUtil.convertValue userId
-          <> " from db."
-      DbPhoto.getPhotoRecordById handle $ fromSql photoId
+    [[photoIdM]] -> do
+      case fromSql photoIdM :: Maybe ServerSynonyms.PhotoId of
+        Just photoId -> do
+          Logger.logInfo logH $
+            "Getting Photo for User with id: "
+              <> ServerUtil.convertValue userId
+              <> " from db."
+          DbPhoto.getPhotoRecordById handle photoId
+        Nothing -> do
+          let msg =
+                "User with id: "
+                  <> ServerUtil.convertValue userId
+                  <> " hasn't photo."
+          Logger.logInfo logH msg
+          return $ Left msg
     _ -> do
       let msg =
             "Violation of Unique record User-Photo in db: \
@@ -320,21 +313,6 @@ deleteUserRecord handle userId = do
       <> ServerUtil.convertValue userId
       <> " from db."
 
-insertUserPhotoRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.UserId ->
-  ServerSynonyms.PhotoId ->
-  m ()
-insertUserPhotoRecord handle userId photoId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.insertIntoValues
-    handle
-    DbTable.tableUserPhoto
-    [DbColumn.colIdPhotoUserPhoto, DbColumn.colIdUserUserPhoto]
-    [toSql photoId, toSql userId]
-  Logger.logInfo logH "Creating dependencies between User and Photo in db."
-
 updateUserPhotoRecord ::
   Monad m =>
   ServerSpec.Handle m ->
@@ -345,26 +323,12 @@ updateUserPhotoRecord handle userId photoIdNew = do
   let logH = ServerSpec.hLogger handle
   DbQuery.updateSetWhere
     handle
-    DbTable.tableUserPhoto
-    [DbColumn.colIdPhotoUserPhoto]
-    [DbColumn.colIdUserUserPhoto]
+    DbTable.tableUsers
+    [DbColumn.colIdPhotoUser]
+    [DbColumn.colIdUser]
     [toSql photoIdNew]
     [toSql userId]
   Logger.logInfo logH "Updating dependencies between User and Photo in db."
-
-deleteUserPhotoRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.UserId ->
-  m ()
-deleteUserPhotoRecord handle userId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.deleteWhere
-    handle
-    DbTable.tableUserPhoto
-    [DbColumn.colIdUserUserPhoto]
-    [toSql userId]
-  Logger.logInfo logH "Removing dependencies between User and Photo from db."
 
 newUser ::
   Monad m =>

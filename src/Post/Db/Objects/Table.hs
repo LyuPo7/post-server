@@ -154,7 +154,8 @@ tableUsers =
           DbColumn.colLNUser,
           DbColumn.colLoginUser,
           DbColumn.colPassUser,
-          DbColumn.colTokenUser
+          DbColumn.colTokenUser,
+          DbColumn.colIdPhotoUser
         ]
     }
 

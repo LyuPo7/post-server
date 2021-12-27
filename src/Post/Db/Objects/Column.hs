@@ -283,6 +283,14 @@ colTokenUser =
         ]
     }
 
+colIdPhotoUser :: Column
+colIdPhotoUser =
+  Column
+    { name = "photo_id",
+      columnType = DbColumnType.INTEGER,
+      properties = []
+    }
+
 colIdAuthor :: Column
 colIdAuthor =
   Column
