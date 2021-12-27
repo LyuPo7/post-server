@@ -108,7 +108,6 @@ removePost ::
 removePost handle postId = runEitherT $ do
   _ <- newEitherT $ getPostRecord handle postId
   _ <- lift $ removePostTagDep handle postId
-  _ <- lift $ removePostMainPhotoDep handle postId
   _ <- lift $ removePostAddPhotoDep handle postId
   _ <- lift $ removePostCommentDep handle postId
   _ <- lift $ removePostDraftDep handle postId
@@ -134,7 +133,7 @@ setPostMainPhoto handle postId path = do
     Right photoId -> do
       oldPhotoIdE <- getPostMainPhotoIdByPostId handle postId
       case oldPhotoIdE of
-        Left _ -> insertPostMainPhotoRecord handle postId photoId
+        Left _ -> updatePostMainPhotoRecord handle postId photoId
         Right _ -> updatePostMainPhotoRecord handle postId photoId
 
 setPostAddPhoto ::
@@ -187,16 +186,6 @@ removePostTagDep handle postId = runEitherT $ do
   tagsId <- newEitherT $ getPostTagIdsByPostId handle postId
   lift $ deletePostTagRecord handle postId
   return tagsId
-
-removePostMainPhotoDep ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  m (Either Text ServerSynonyms.PhotoId)
-removePostMainPhotoDep handle postId = runEitherT $ do
-  photoId <- newEitherT $ getPostMainPhotoIdByPostId handle postId
-  lift $ deletePostMainPhotoRecord handle postId
-  return $ ServerPhoto.id photoId
 
 removePostAddPhotoDep ::
   Monad m =>
@@ -441,9 +430,9 @@ getPostMainPhotoIdByPostId handle postId = do
   photoIdSql <-
     DbQuery.selectFromWhere
       handle
-      DbTable.tablePostMainPhoto
-      [DbColumn.colIdPhotoPostMainPhoto]
-      [DbColumn.colIdPostPostMainPhoto]
+      DbTable.tablePosts
+      [DbColumn.colIdMainPhotoPost]
+      [DbColumn.colIdPost]
       [toSql postId]
   case photoIdSql of
     [] -> do
@@ -452,12 +441,21 @@ getPostMainPhotoIdByPostId handle postId = do
               <> ServerUtil.convertValue postId
       Logger.logWarning logH msg
       return $ Left msg
-    [[photoId]] -> do
-      Logger.logInfo logH $
-        "Getting Main Photo for Post with id: "
-          <> ServerUtil.convertValue postId
-          <> "."
-      DbPhoto.getPhotoRecordById handle $ fromSql photoId
+    [[photoIdM]] -> do
+      case fromSql photoIdM :: Maybe ServerSynonyms.PhotoId of
+        Just photoId -> do
+          Logger.logInfo logH $
+            "Getting Main Photo for Post with id: "
+              <> ServerUtil.convertValue postId
+              <> "."
+          DbPhoto.getPhotoRecordById handle photoId
+        Nothing -> do
+          let msg =
+                "User with id: "
+                  <> ServerUtil.convertValue postId
+                  <> " hasn't photo."
+          Logger.logInfo logH msg
+          return $ Left msg
     _ -> do
       let msg =
             "Violation of Unique record Post-MainPhoto in db: \
@@ -617,28 +615,12 @@ updatePostMainPhotoRecord handle postId photoId = do
   let logH = ServerSpec.hLogger handle
   DbQuery.updateSetWhere
     handle
-    DbTable.tablePostMainPhoto
-    [DbColumn.colIdPhotoPostMainPhoto]
-    [DbColumn.colIdPostPostMainPhoto]
+    DbTable.tablePosts
+    [DbColumn.colIdMainPhotoPost]
+    [DbColumn.colIdPost]
     [toSql photoId]
     [toSql postId]
   Logger.logInfo logH "Post's Main Photo was successfully set."
-  return $ Right photoId
-
-insertPostMainPhotoRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  ServerSynonyms.PhotoId ->
-  m (Either Text ServerSynonyms.PhotoId)
-insertPostMainPhotoRecord handle postId photoId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.insertIntoValues
-    handle
-    DbTable.tablePostMainPhoto
-    [DbColumn.colIdPhotoPostMainPhoto, DbColumn.colIdPostPostMainPhoto]
-    [toSql photoId, toSql postId]
-  Logger.logInfo logH "Post's Main Photo was successfully updated."
   return $ Right photoId
 
 insertPostAddPhotoRecord ::
@@ -703,20 +685,6 @@ deletePostTagRecord handle postId = do
     [DbColumn.colIdPostPostTag]
     [toSql postId]
   Logger.logInfo logH "Removing dependency between Post and Tag."
-
-deletePostMainPhotoRecord ::
-  Monad m =>
-  ServerSpec.Handle m ->
-  ServerSynonyms.PostId ->
-  m ()
-deletePostMainPhotoRecord handle postId = do
-  let logH = ServerSpec.hLogger handle
-  DbQuery.deleteWhere
-    handle
-    DbTable.tablePostMainPhoto
-    [DbColumn.colIdPostPostMainPhoto]
-    [toSql postId]
-  Logger.logInfo logH "Removing dependency between Post and Main Photo from db."
 
 deletePostAddPhotoRecords ::
   Monad m =>

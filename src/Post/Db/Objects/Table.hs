@@ -95,7 +95,8 @@ tablePosts =
           DbColumn.colCreatedAtPost,
           DbColumn.colTextPost,
           DbColumn.colIdAuthorPost,
-          DbColumn.colIdCategoryPost
+          DbColumn.colIdCategoryPost,
+          DbColumn.colIdMainPhotoPost
         ]
     }
 

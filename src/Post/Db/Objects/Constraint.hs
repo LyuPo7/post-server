@@ -24,3 +24,6 @@ constraintCategoryPostIdFK = Constraint "post_category_id_fk"
 
 constraintUserPhotoIdFK :: Constraint
 constraintUserPhotoIdFK = Constraint "user_photo_id_fk"
+
+constraintMainPhotoPhotoIdFK :: Constraint
+constraintMainPhotoPhotoIdFK = Constraint "post_main_photo_id_fk"

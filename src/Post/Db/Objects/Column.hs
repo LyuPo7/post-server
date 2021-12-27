@@ -96,6 +96,14 @@ colIdCategoryPost =
       properties = []
     }
 
+colIdMainPhotoPost :: Column
+colIdMainPhotoPost =
+  Column
+    { name = "main_photo_id",
+      columnType = DbColumnType.INTEGER,
+      properties = []
+    }
+
 colIdCat :: Column
 colIdCat =
   Column
