@@ -5,7 +5,8 @@ import qualified Data.Text as T
 import Database.HDBC.PostgreSQL (Connection, connectPostgreSQL)
 
 import qualified Post.Db.DbSpec as DbSpec
-import qualified Post.Db.Migration as Migration
+import qualified Post.Db.Migration.Common as MigrationCommon
+import qualified Post.Db.Migration.Validation as MigrationValidation
 import qualified Post.Db.Objects.Table as DbTable
 import qualified Post.Logger as Logger
 import qualified Post.Server.ServerConfig as ServerConfig
@@ -34,5 +35,5 @@ connect db = connectPostgreSQL (T.unpack db)
 
 prepDb :: DbSpec.Handle IO -> IO ()
 prepDb handle = do
-  Migration.createTable handle DbTable.tableMigrations
-  Migration.validateDb handle
+  MigrationCommon.createTable handle DbTable.tableMigrations
+  MigrationValidation.validateDb handle

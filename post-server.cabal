@@ -35,7 +35,9 @@ library
       Post.Db.DbQueryIO
       Post.Db.DbSpec
       Post.Db.Draft
-      Post.Db.Migration
+      Post.Db.Migration.Common
+      Post.Db.Migration.MigrationList
+      Post.Db.Migration.Validation
       Post.Db.Objects.Column
       Post.Db.Objects.ColumnType
       Post.Db.Objects.Constraint
