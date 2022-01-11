@@ -85,6 +85,18 @@ tableMigrations =
         ]
     }
 
+tablePostsFirstVersion :: Table
+tablePostsFirstVersion =
+  Table
+    { name = "posts",
+      columns =
+        [ DbColumn.colIdPost,
+          DbColumn.colTitlePost,
+          DbColumn.colCreatedAtPost,
+          DbColumn.colTextPost
+        ]
+    }
+
 tablePosts :: Table
 tablePosts =
   Table
@@ -121,6 +133,16 @@ tableTags =
         ]
     }
 
+tableComsFirstVersion :: Table
+tableComsFirstVersion =
+  Table
+    { name = "comments",
+      columns =
+        [ DbColumn.colIdCom,
+          DbColumn.colTextCom
+        ]
+    }
+
 tableComs :: Table
 tableComs =
   Table
@@ -144,6 +166,21 @@ tableDrafts =
         ]
     }
 
+tableUsersFirstVersion :: Table
+tableUsersFirstVersion =
+  Table
+    { name = "users",
+      columns =
+        [ DbColumn.colIdUser,
+          DbColumn.colIsAdminUser,
+          DbColumn.colFNUser,
+          DbColumn.colLNUser,
+          DbColumn.colLoginUser,
+          DbColumn.colPassUser,
+          DbColumn.colTokenUser
+        ]
+    }
+
 tableUsers :: Table
 tableUsers =
   Table
@@ -157,6 +194,16 @@ tableUsers =
           DbColumn.colPassUser,
           DbColumn.colTokenUser,
           DbColumn.colIdPhotoUser
+        ]
+    }
+
+tableAuthorsFirstVersion :: Table
+tableAuthorsFirstVersion =
+  Table
+    { name = "authors",
+      columns =
+        [ DbColumn.colIdAuthor,
+          DbColumn.colDescAuthor
         ]
     }
 

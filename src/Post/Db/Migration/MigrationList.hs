@@ -12,12 +12,12 @@ migrations ::
   DbSpec.Handle IO ->
   [DbMigration.Migration]
 migrations handle =
-  [ DbMigration.Migration 1 "create table 'users'" (MigrationCommon.createTable handle DbTable.tableUsers),
-    DbMigration.Migration 2 "create table 'authors'" (MigrationCommon.createTable handle DbTable.tableAuthors),
+  [ DbMigration.Migration 1 "create table 'users'" (MigrationCommon.createTable handle DbTable.tableUsersFirstVersion),
+    DbMigration.Migration 2 "create table 'authors'" (MigrationCommon.createTable handle DbTable.tableAuthorsFirstVersion),
     DbMigration.Migration 3 "create table 'categories'" (MigrationCommon.createTable handle DbTable.tableCats),
     DbMigration.Migration 4 "create table 'tags'" (MigrationCommon.createTable handle DbTable.tableTags),
-    DbMigration.Migration 5 "create table 'posts'" (MigrationCommon.createTable handle DbTable.tablePosts),
-    DbMigration.Migration 6 "create table 'comments'" (MigrationCommon.createTable handle DbTable.tableComs),
+    DbMigration.Migration 5 "create table 'posts'" (MigrationCommon.createTable handle DbTable.tablePostsFirstVersion),
+    DbMigration.Migration 6 "create table 'comments'" (MigrationCommon.createTable handle DbTable.tableComsFirstVersion),
     DbMigration.Migration 7 "create table 'drafts'" (MigrationCommon.createTable handle DbTable.tableDrafts),
     DbMigration.Migration 8 "create table 'photos'" (MigrationCommon.createTable handle DbTable.tablePhotos),
     DbMigration.Migration 9 "create table 'user_photo'" (MigrationCommon.createTable handle DbTable.tableUserPhoto),
