@@ -1120,18 +1120,22 @@ querySort handle [(key, _)] ids offset = do
           cIdP = DbColumn.name DbColumn.colIdPost
           createdAt = DbColumn.name DbColumn.colCreatedAtPost
           query =
-            "SELECT " <> cIdP
+            "SELECT " <> tPosts <> "." <> cIdP
               <> " \
                  \FROM "
               <> tPosts
               <> " \
                  \WHERE "
+              <> tPosts
+              <> "."
               <> cIdP
               <> " \
                  \IN ("
               <> qString
               <> ") \
                  \ORDER BY "
+              <> tPosts
+              <> "."
               <> createdAt
               <> " \
                  \LIMIT "
@@ -1147,11 +1151,10 @@ querySort handle [(key, _)] ids offset = do
           tCategory = DbTable.name DbTable.tableCats
           cIdPostP = DbColumn.name DbColumn.colIdPost
           cIdCategoryP = DbColumn.name DbColumn.colIdCategoryPost
-          cIdPostPC = DbColumn.name DbColumn.colIdPostPostCat
           cIdCategoryC = DbColumn.name DbColumn.colIdCat
           cTitleP = DbColumn.name DbColumn.colTitlePost
           query =
-            "SELECT " <> cIdPostP
+            "SELECT " <> tPosts <> "." <> cIdPostP
               <> " \
                  \FROM "
               <> tPosts
@@ -1170,12 +1173,16 @@ querySort handle [(key, _)] ids offset = do
               <> cIdCategoryC
               <> " \
                  \WHERE "
-              <> cIdPostPC
+              <> tPosts
+              <> "."
+              <> cIdPostP
               <> " \
                  \IN ("
               <> qString
               <> ") \
                  \ORDER by "
+              <> tPosts
+              <> "."
               <> cTitleP
               <> " \
                  \LIMIT "
@@ -1244,7 +1251,7 @@ querySort handle [(key, _)] ids offset = do
           cFNU = DbColumn.name DbColumn.colFNUser
           cLNU = DbColumn.name DbColumn.colLNUser
           query =
-            "SELECT " <> cIdPostP
+            "SELECT " <> tPosts <> "." <> cIdPostP
               <> " \
                  \FROM "
               <> tPosts
@@ -1274,12 +1281,21 @@ querySort handle [(key, _)] ids offset = do
               <> "."
               <> cIdUserU
               <> " \
-                 \WHERE id IN ("
+                 \WHERE "
+              <> tPosts
+              <> "."
+              <> cIdPostP
+              <> " \
+                 \IN ("
               <> qString
               <> ") \
                  \ORDER BY "
+              <> tUsers
+              <> "."
               <> cLNU
               <> ", "
+              <> tUsers
+              <> "."
               <> cFNU
               <> " \
                  \LIMIT "

@@ -960,10 +960,10 @@ spec_querySort =
             ids = map toSql ([1, 10, 25] :: [Integer])
             query = DbQuery.querySort Handlers.serverH args ids offset
             check =
-              ( "SELECT id \
+              ( "SELECT posts.id \
                 \FROM posts \
-                \WHERE id IN (?,?,?) \
-                \ORDER BY created_at \
+                \WHERE posts.id IN (?,?,?) \
+                \ORDER BY posts.created_at \
                 \LIMIT 50 \
                 \OFFSET 10",
                 ids
@@ -978,13 +978,13 @@ spec_querySort =
             ids = map toSql ([1, 10, 25] :: [Integer])
             query = DbQuery.querySort Handlers.serverH args ids offset
             check =
-              ( "SELECT id \
+              ( "SELECT posts.id \
                 \FROM posts \
                 \JOIN categories \
                 \ON posts.category_id=categories.id \
-                \WHERE post_id \
+                \WHERE posts.id \
                 \IN (?,?,?) \
-                \ORDER by title \
+                \ORDER by posts.title \
                 \LIMIT 50 \
                 \OFFSET 10",
                 ids
@@ -1021,13 +1021,13 @@ spec_querySort =
             ids = map toSql ([1, 10, 25, 2, 7] :: [Integer])
             query = DbQuery.querySort Handlers.serverH args ids offset
             check =
-              ( "SELECT id \
+              ( "SELECT posts.id \
                 \FROM posts \
                 \INNER JOIN authors \
                 \ON posts.author_id=authors.id \
                 \INNER JOIN users ON authors.user_id=users.id \
-                \WHERE id IN (?,?,?,?,?) \
-                \ORDER BY last_name, first_name \
+                \WHERE posts.id IN (?,?,?,?,?) \
+                \ORDER BY users.last_name, users.first_name \
                 \LIMIT 50 \
                 \OFFSET 10",
                 ids
