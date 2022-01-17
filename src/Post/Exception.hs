@@ -10,6 +10,7 @@ data PostError
   | ConfigServerHostEmptyError
   | CreationObjectError
   | IncorrectMethodError
+  | InternalError
   | ParseConfigError String
   | DbError String
   | DbQueryError String
@@ -22,6 +23,7 @@ instance Show PostError where
   show ConfigServerHostEmptyError = "Host server can't be empty"
   show CreationObjectError = "Error while creating Object"
   show IncorrectMethodError = "Trying to use incorrect method"
+  show InternalError = "Internal error!"
   show (ParseConfigError err) =
     "Error while parsing config file \
     \(config.json): "

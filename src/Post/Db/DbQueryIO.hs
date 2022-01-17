@@ -15,6 +15,7 @@ import qualified Post.Db.DbSpec as DbSpec
 import qualified Post.Db.Objects.Synonyms as DbSynonyms
 import qualified Post.Exception as E
 import qualified Post.Logger as Logger
+import qualified Post.Server.Util as ServerUtil
 
 makeDbRequest ::
   DbSpec.Handle IO ->
@@ -34,10 +35,9 @@ makeDbRequest handle dbQuery = handleSql errorHandler $ do
   quickQuery' dbh (T.unpack queryString) queryArgs
  where
   errorHandler e = do
-    Exc.throwIO $
-      E.DbError $
-        "Error: Error in makeDbRequest!\n"
-          <> show e
+    let logH = DbSpec.hLogger handle
+    Logger.logError logH $ ServerUtil.convertValue e
+    Exc.throwIO E.InternalError
 
 runDbRequest ::
   DbSpec.Handle IO ->
@@ -58,7 +58,6 @@ runDbRequest handle dbQuery = handleSql errorHandler $ do
   commit dbh
  where
   errorHandler e = do
-    Exc.throwIO $
-      E.DbError $
-        "Error: Error in runDbRequest!\n"
-          <> show e
+    let logH = DbSpec.hLogger handle
+    Logger.logError logH $ ServerUtil.convertValue e
+    Exc.throwIO E.InternalError
